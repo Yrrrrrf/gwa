@@ -1,3 +1,0 @@
-fastapi>=0.115.10
-prism-py>=0.0.1rc1
-uvicorn>=0.34.0

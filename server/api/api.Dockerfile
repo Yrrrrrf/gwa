@@ -1,34 +1,36 @@
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 WORKDIR /app
 
 # Set environment variables
-# PYTHONDONTWRITEBYTECODE: Prevents Python from writing pyc files to disc (equivalent to python -B option)
-# PYTHONUNBUFFERED: Prevents Python from buffering stdout and stderr (equivalent to python -u option)
+# PYTHONDONTWRITEBYTECODE: Prevents Python from writing pyc files to disc
+# PYTHONUNBUFFERED: Prevents Python from buffering stdout and stderr
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    # Use system Python by default
+    UV_SYSTEM_PYTHON=1 \
+    # Compile bytecode for better runtime performance
+    UV_COMPILE_BYTECODE=1 \
+    # Use copy instead of hard links for better compatibility with Docker layers
+    UV_LINK_MODE=copy
 
-# Install system dependencies
+# Install system dependencies for PostgreSQL and build tools
 RUN apt-get update && apt-get install -y \
-    gcc \
     libpq-dev \
+    gcc \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create and activate a virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Copy the project
+COPY ./src /app/src
+COPY ./pyproject.toml /app/
 
-# Copy only the requirements file first
-COPY requirements.txt .
+# Sync the project with uv (using psycopg2-binary instead of psycopg2)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system psycopg2-binary && \
+    uv pip install --system -e .
 
-# Install dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application
-COPY . .
-
-# Define environment variables but don't set default values
+# Define environment variables for the application
 ENV DB_NAME='' \
     DB_HOST='' \
     DB_OWNER_ADMIN='' \
@@ -37,13 +39,9 @@ ENV DB_NAME='' \
 # Expose the port the app runs on
 EXPOSE 8000
 
-# CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
-# * same as above but with hot reload
+# Start FastAPI with hot reload for development
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app"]
 
-
-# todo: Impl healthcheck
-# 30s interval between checks, 30s timeout for each check, 3 retries before marking as unhealthy
-# wait 5 seconds before starting the checks
-# HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-#     CMD curl -f http://localhost:8000/health || exit 1
+# Healthcheck configuration
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
