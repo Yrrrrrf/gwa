@@ -1,0 +1,80 @@
+# GWA Docker Compose
+
+services:
+  db:
+    build:
+      context: ./server/db/
+      dockerfile: db.Dockerfile
+    container_name: gwa-db
+    environment:
+      - POSTGRES_DB=${DB_NAME:-gwa}
+      - POSTGRES_USER=${DB_OWNER_ADMIN:-gwa_owner}
+      - POSTGRES_PASSWORD=${DB_OWNER_PWORD:-password}
+      # Pass these variables explicitly for the init script
+      - DB_NAME=${DB_NAME:-gwa}
+      - DB_OWNER_ADMIN=${DB_OWNER_ADMIN:-gwa_owner}
+      - DB_OWNER_PWORD=${DB_OWNER_PWORD:-password}
+      - TZ=UTC
+    ports:
+      - "5432:5432"
+    networks:
+      - gwa-network
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U ${DB_OWNER_ADMIN:-gwa_owner} -d ${DB_NAME:-gwa}"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 10s
+
+  api:
+    build:
+      context: ./server/api/
+      dockerfile: api.Dockerfile
+    container_name: gwa-api
+    environment:
+      - DB_NAME=${DB_NAME:-gwa}
+      - DB_HOST=gwa-db
+      - DB_OWNER_ADMIN=${DB_OWNER_ADMIN:-gwa_owner}
+      - DB_OWNER_PWORD=${DB_OWNER_PWORD:-password}
+      - PYTHONDONTWRITEBYTECODE=1  # Prevents Python from writing pyc files to disc
+      - PYTHONUNBUFFERED=1  # Prevents Python from buffering stdout and stderr
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server/api:/app
+    depends_on:
+      - db
+    networks:
+      - gwa-network
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
+
+  # gwa-hub:
+  #   build:
+  #     context: ./core
+  #     dockerfile: hub.Dockerfile
+  #   container_name: gwa-hub
+  #   volumes:
+  #     - ./core:/app
+  #     - ../rune-lab:/app/node_modules/rune-lab
+  #     - ../../typescript/ts-forge/ts-forge:/app/node_modules/ts-forge
+  #     - /app/node_modules  # This prevents the mounted volume from overwriting node_modules
+  #   ports:
+  #     - "5173:5173"
+  #   environment:
+  #     - NODE_ENV=development
+  #   networks:
+  #     - gwa-network
+
+networks:
+  gwa-network:
+    name: gwa-network
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: gwa-postgres-data

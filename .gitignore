@@ -1,0 +1,13 @@
+.env
+
+__pycache__/
+
+.idea/
+
+resources/static.lnk
+.venv/
+old*
+
+uv.lock
+
+
