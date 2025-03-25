@@ -21,9 +21,6 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the project
-COPY ./src /app/src
-COPY ./pyproject.toml /app/
 
 # Sync the project with uv (using psycopg2-binary instead of psycopg2)
 RUN --mount=type=cache,target=/root/.cache/uv \

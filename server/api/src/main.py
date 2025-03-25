@@ -9,6 +9,7 @@ app = FastAPI()
 db = os.getenv("DB_NAME", "gwa")
 user = os.getenv("DB_OWNER_ADMIN", "gwa_owner")
 password = os.getenv("DB_OWNER_PWORD", "password")
+host = os.getenv("DB_HOST", "localhost")
 host = os.getenv("DB_HOST", "localhost.docker.internal")
 
 # Database connection setup
