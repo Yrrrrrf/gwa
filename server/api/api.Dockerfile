@@ -1,7 +1,5 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-WORKDIR /app
-
 # Set environment variables
 # PYTHONDONTWRITEBYTECODE: Prevents Python from writing pyc files to disc
 # PYTHONUNBUFFERED: Prevents Python from buffering stdout and stderr
