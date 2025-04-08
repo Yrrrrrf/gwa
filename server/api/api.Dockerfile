@@ -1,5 +1,7 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+WORKDIR /app
+
 # Set environment variables
 # PYTHONDONTWRITEBYTECODE: Prevents Python from writing pyc files to disc
 # PYTHONUNBUFFERED: Prevents Python from buffering stdout and stderr
@@ -19,6 +21,9 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# COPY project files before installing
+COPY pyproject.toml .
+COPY src/ ./src/
 
 # Sync the project with uv (using psycopg2-binary instead of psycopg2)
 RUN --mount=type=cache,target=/root/.cache/uv \
