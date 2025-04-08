@@ -1,5 +1,11 @@
 # GWA Docker Compose
 
+# Define common environment variables
+x-common-env: &common-env
+  DB_NAME: ${DB_NAME:-gwa}
+  DB_OWNER_ADMIN: ${DB_OWNER_ADMIN:-gwa_owner}
+  DB_OWNER_PWORD: ${DB_OWNER_PWORD:-password}
+
 services:
   db:
     build:
@@ -7,14 +13,12 @@ services:
       dockerfile: db.Dockerfile
     container_name: gwa-db
     environment:
-      - POSTGRES_DB=${DB_NAME:-gwa}
-      - POSTGRES_USER=${DB_OWNER_ADMIN:-gwa_owner}
-      - POSTGRES_PASSWORD=${DB_OWNER_PWORD:-password}
-      # Pass these variables explicitly for the init script
-      - DB_NAME=${DB_NAME:-gwa}
-      - DB_OWNER_ADMIN=${DB_OWNER_ADMIN:-gwa_owner}
-      - DB_OWNER_PWORD=${DB_OWNER_PWORD:-password}
-      - TZ=UTC
+      <<: *common-env  # Inserta todas las variables comunes
+      # PostgreSQL-specific variables
+      POSTGRES_DB: ${DB_NAME:-gwa}
+      POSTGRES_USER: ${DB_OWNER_ADMIN:-gwa_owner}
+      POSTGRES_PASSWORD: ${DB_OWNER_PWORD:-password}
+      TZ: UTC
     ports:
       - "5432:5432"
     networks:
@@ -32,12 +36,10 @@ services:
       dockerfile: api.Dockerfile
     container_name: gwa-api
     environment:
-      - DB_NAME=${DB_NAME:-gwa}
-      - DB_HOST=gwa-db
-      - DB_OWNER_ADMIN=${DB_OWNER_ADMIN:-gwa_owner}
-      - DB_OWNER_PWORD=${DB_OWNER_PWORD:-password}
-      - PYTHONDONTWRITEBYTECODE=1  # Prevents Python from writing pyc files to disc
-      - PYTHONUNBUFFERED=1  # Prevents Python from buffering stdout and stderr
+      <<: *common-env  # Inserta todas las variables comunes
+      DB_HOST: gwa-db
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
     ports:
       - "8000:8000"
     volumes:
@@ -66,6 +68,7 @@ services:
   #   ports:
   #     - "5173:5173"
   #   environment:
+  #     <<: *common-env  # También podría usar las variables comunes aquí
   #     - NODE_ENV=development
   #   networks:
   #     - gwa-network

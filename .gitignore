@@ -1,13 +1,10 @@
+# env variables
 .env
 
-__pycache__/
-
+# db
 .idea/
 
-resources/static.lnk
+# python
 .venv/
-old*
-
+__pycache__/
 uv.lock
-
-
