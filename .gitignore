@@ -1,10 +1,14 @@
 # env variables
 .env
 
-# db
+# IDE
 .idea/
+.vscode/
 
 # python
 .venv/
 __pycache__/
 uv.lock
+
+# some
+docs/

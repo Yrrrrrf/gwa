@@ -64,16 +64,7 @@ sudo apt install docker-compose-plugin -y
 docker compose version
 ```
 
-## 5. Configurar Docker sin sudo (opcional)
-
-```sh
-sudo usermod -aG docker ubuntu
-# Cierra la sesión y vuelve a conectarte para aplicar cambios
-exit
-# Reconéctate por SSH
-```
-
-## 6. Implementación de [GWA](https://github.com/Yrrrrrf/gwa)
+## 5. Implementación de [GWA](https://github.com/Yrrrrrf/gwa)
 
 ### Clonar el Repositorio
 
@@ -109,7 +100,7 @@ docker compose up -d
 docker compose ps
 ```
 
-## 7. Configuración del Firewall (opcional)
+## 6. Configuración del Firewall (opcional)
 
 ```sh
 # Instalar y configurar UFW (Uncomplicated Firewall)
@@ -128,7 +119,7 @@ sudo ufw --force enable
 sudo ufw status
 ```
 
-## 8. Acceso a la Aplicación
+## 7. Acceso a la Aplicación
 
 Obtén la IP pública de tu instancia desde la consola AWS o con:
 ```sh
