@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="./resources/atom.png" alt="General Web App Icon" width="128" height="128" description="Some atom that represents the app (like the most basic element of some complex system)">
+  <img src="./resources/img/gwa-no-bg.png" alt="General Web App Icon" width="128" height="128" description="Some atom that represents the app (like the most basic element of some complex system)">
   <div align="center">General Web App</div>
 </h1>
 
