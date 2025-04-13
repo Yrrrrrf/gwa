@@ -1,6 +1,7 @@
 # Configuración en Servidores Unix ([AWS EC2](https://aws.amazon.com/ec2/))
 
-Esta guía detalla cómo desplegar GWA en un servidor Unix, específicamente en una instancia EC2 de AWS.
+Esta guía detalla cómo desplegar GWA en un servidor Unix, específicamente en una
+instancia EC2 de AWS.
 
 ## Requisitos Previos
 
@@ -17,7 +18,6 @@ chmod 400 clave.pem
 # Conectar vía SSH
 ssh -i "clave.pem" ubuntu@tu-dns-público-ec2.amazonaws.com
 ```
-
 
 ## 2. Preparación del Servidor
 
@@ -122,11 +122,13 @@ sudo ufw status
 ## 7. Acceso a la Aplicación
 
 Obtén la IP pública de tu instancia desde la consola AWS o con:
+
 ```sh
 curl -s http://checkip.amazonaws.com/
 ```
 
 Accede a la API:
+
 ```
 http://[IP-PÚBLICA-DE-TU-INSTANCIA]:8000/docs
 ```

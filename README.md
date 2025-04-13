@@ -13,35 +13,55 @@
 
 ## 🚀 Overview
 
-General Web App (GWA) is a comprehensive, full-stack application template designed for rapidly developing modern, type-safe, and data-driven applications. By integrating best-in-class technologies, GWA provides a robust foundation that seamlessly bridges backend database operations with type-safe frontend interfaces.
+General Web App (GWA) is a comprehensive, full-stack application template
+designed for rapidly developing modern, type-safe, and data-driven applications.
+By integrating best-in-class technologies, GWA provides a robust foundation that
+seamlessly bridges backend database operations with type-safe frontend
+interfaces.
 
-The key innovation in GWA is the **zero-friction data pipeline** between your database schema and client applications, powered by [**prism-py**](https://github.com/Yrrrrrf/prism-py) and [**prism-ts**](https://jsr.io/@yrrrrrf/prism-ts). This ensures complete type safety and automatic API generation from your database to your frontend with minimal configuration.
+The key innovation in GWA is the **zero-friction data pipeline** between your
+database schema and client applications, powered by
+[**prism-py**](https://github.com/Yrrrrrf/prism-py) and
+[**prism-ts**](https://jsr.io/@yrrrrrf/prism-ts). This ensures complete type
+safety and automatic API generation from your database to your frontend with
+minimal configuration.
 
 ## ✨ Features
 
-- **Automatic API Generation** - Generate complete REST APIs directly from your database schema
-- **End-to-End Type Safety** - Seamless type propagation from database to frontend
+- **Automatic API Generation** - Generate complete REST APIs directly from your
+  database schema
+- **End-to-End Type Safety** - Seamless type propagation from database to
+  frontend
 - **Cross-Platform** - Deploy as a web app, desktop application, or mobile app
-- **Modern Stack** - Built with cutting-edge technologies focused on developer experience
-- **Deno Integration** - First-class support for Deno's secure runtime environment
-- **Production Ready** - Includes Docker setup, authentication, and CI/CD templates
+- **Modern Stack** - Built with cutting-edge technologies focused on developer
+  experience
+- **Deno Integration** - First-class support for Deno's secure runtime
+  environment
+- **Production Ready** - Includes Docker setup, authentication, and CI/CD
+  templates
 
 ## 🛠️ Technology Stack
 
 ### Backend
 
 - **[Python](https://www.python.org/)** - High-level programming language
-    - **[FastAPI](https://fastapi.tiangolo.com/)** - High-performance API framework
-    - **[prism-py](https://github.com/Yrrrrrf/prism-py)** - Automatic API generation from database schemas
+  - **[FastAPI](https://fastapi.tiangolo.com/)** - High-performance API
+    framework
+  - **[prism-py](https://github.com/Yrrrrrf/prism-py)** - Automatic API
+    generation from database schemas
 - **[PostgreSQL](https://www.postgresql.org/)** - Robust and scalable database
 
 ### Frontend
 
 - **[Deno](https://deno.land/)** - Modern JavaScript/TypeScript runtime
-- **[SvelteKit](https://kit.svelte.dev/)** - Full-stack Svelte framework with SSR capabilities
-    - **[Tauri](https://tauri.app/)** - Build desktop applications with web technologies
-- **[rune-lab](https://jsr.io/@yrrrrrf/rune-lab)** - UI component library built with Svelte 5
-    - **[prism-ts](https://jsr.io/@yrrrrrf/prism-ts)** - Type-safe API client generation
+- **[SvelteKit](https://kit.svelte.dev/)** - Full-stack Svelte framework with
+  SSR capabilities
+  - **[Tauri](https://tauri.app/)** - Build desktop applications with web
+    technologies
+- **[rune-lab](https://jsr.io/@yrrrrrf/rune-lab)** - UI component library built
+  with Svelte 5
+  - **[prism-ts](https://jsr.io/@yrrrrrf/prism-ts)** - Type-safe API client
+    generation
 - **[TailwindCSS](https://tailwindcss.com/)** - Utility-first CSS framework
 - **[DaisyUI](https://daisyui.com/)** - Component library for TailwindCSS
 
@@ -110,7 +130,8 @@ GWA supports a streamlined development workflow:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
+for details.
 
 ## 👥 Contributing
 

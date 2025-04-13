@@ -1,21 +1,21 @@
 {
-	"name": "generic-app",
-	"version": "0.1.0",
+	"name": "@yrrrrrf/generic-app",
+	"version": "0.0.3",
 	"description": "A comprehensive full-stack application template with Tauri integration",
 	"license": "MIT",
 	"exports": "./src/lib/index.ts",
 	"tasks": {
-		"dev": "NODE_OPTIONS='--import=data:text/javascript,import { register } from \"node:module\"; register(\"node:assert\", import.meta.url);' deno run --allow-all --node-modules-dir npm:vite dev",
-		"build": "NODE_OPTIONS='--import=data:text/javascript,import { register } from \"node:module\"; register(\"node:assert\", import.meta.url);' deno run --allow-all --node-modules-dir npm:vite build",
-		"preview": "NODE_OPTIONS='--import=data:text/javascript,import { register } from \"node:module\"; register(\"node:assert\", import.meta.url);' deno run --allow-all --node-modules-dir npm:vite preview",
+		"dev": "deno run --allow-all --node-modules-dir npm:vite dev",
+		"build": "deno run --allow-all --node-modules-dir npm:vite build",
+		"preview": "deno run --allow-all --node-modules-dir npm:vite preview",
 		"check": "deno run --allow-all --node-modules-dir npm:svelte-kit sync && deno run --allow-all --node-modules-dir npm:svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "deno run --allow-all --node-modules-dir npm:svelte-kit sync && deno run --allow-all --node-modules-dir npm:svelte-check --tsconfig ./tsconfig.json --watch",
 		"tauri": "deno run --allow-all --node-modules-dir npm:@tauri-apps/cli"
 	},
 	"imports": {
-		"svelte": "npm:svelte@^5.0.0",
-		"@sveltejs/kit": "npm:@sveltejs/kit@^2.9.0",
-		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static@^3.0.6",
+		"svelte": "npm:svelte@^5.26.2",
+		"@sveltejs/kit": "npm:@sveltejs/kit@^2.20.5",
+		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static@^3.0.8",
 		"@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte@^5.0.0",
 		"@tauri-apps/api": "npm:@tauri-apps/api@^2",
 		"@tauri-apps/cli": "npm:@tauri-apps/cli@^2",
@@ -26,8 +26,8 @@
 		"@tailwindcss/typography": "npm:@tailwindcss/typography",
 		"@tailwindcss/vite": "npm:@tailwindcss/vite",
 		"tailwindcss": "npm:tailwindcss",
-		"vite": "npm:vite@^6.0.3",
-		"daisyui": "npm:daisyui"
+		"vite": "npm:vite@^6.2.6",
+		"daisyui": "npm:daisyui@^5.0.19"
 	},
 	"compilerOptions": {
 		"strict": true,

@@ -1,14 +1,17 @@
 # Configuración Local con Docker
 
-Esta guía muestra los comandos necesarios para ejecutar GWA localmente usando Docker.
+Esta guía muestra los comandos necesarios para ejecutar GWA localmente usando
+Docker.
 
 ## Configuración Inicial
 
 Antes de comenzar, asegúrate de tener:
+
 - Docker y Docker Compose instalados
 - Archivo `.env` con la configuración básica
 
 Crea un archivo `.env` en la raíz del proyecto:
+
 ```sh
 cat > .env << 'EOF'
 DB_NAME=gwa

@@ -13,7 +13,7 @@ services:
       dockerfile: db.Dockerfile
     container_name: gwa-db
     environment:
-      <<: *common-env  # Inserta todas las variables comunes
+      <<: *common-env # Include all common variables
       # PostgreSQL-specific variables
       POSTGRES_DB: ${DB_NAME:-gwa}
       POSTGRES_USER: ${DB_OWNER_ADMIN:-gwa_owner}
@@ -21,14 +21,19 @@ services:
       TZ: UTC
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - gwa-network
-    # healthcheck:
-    #   test: ["CMD-SHELL", "pg_isready -U ${DB_OWNER_ADMIN:-gwa_owner} -d ${DB_NAME:-gwa}"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
-    #   start_period: 10s
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "pg_isready -U ${DB_OWNER_ADMIN:-gwa_owner} -d ${DB_NAME:-gwa}",
+      ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   api:
     build:
@@ -36,7 +41,7 @@ services:
       dockerfile: api.Dockerfile
     container_name: gwa-api
     environment:
-      <<: *common-env  # Inserta todas las variables comunes
+      <<: *common-env # Include all common variables
       DB_HOST: gwa-db
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
@@ -45,33 +50,36 @@ services:
     volumes:
       - ./server/api:/app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - gwa-network
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3f
-    #   start_period: 10s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-  # gwa-hub:
-  #   build:
-  #     context: ./core
-  #     dockerfile: hub.Dockerfile
-  #   container_name: gwa-hub
-  #   volumes:
-  #     - ./core:/app
-  #     - ../rune-lab:/app/node_modules/rune-lab
-  #     - ../../typescript/ts-forge/ts-forge:/app/node_modules/ts-forge
-  #     - /app/node_modules  # This prevents the mounted volume from overwriting node_modules
-  #   ports:
-  #     - "5173:5173"
-  #   environment:
-  #     <<: *common-env  # También podría usar las variables comunes aquí
-  #     - NODE_ENV=development
-  #   networks:
-  #     - gwa-network
+  app:
+    build:
+      context: ./generic-app/
+      dockerfile: app.Dockerfile
+    container_name: gwa-app
+    volumes:
+      - ./generic-app:/app
+      - deno-cache:/deno-dir # Persistent cache volume
+    ports:
+      - "1420:1420" # Main app port
+      - "1421:1421" # HMR port
+    environment:
+      <<: *common-env
+      TAURI_DEV_HOST: "0.0.0.0" # Allow connections from outside the container
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - gwa-network
 
 networks:
   gwa-network:
@@ -81,3 +89,5 @@ networks:
 volumes:
   postgres_data:
     name: gwa-postgres-data
+  deno-cache:
+    name: gwa-deno-cache
