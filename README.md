@@ -5,7 +5,7 @@
 
 <div align="center">
 
-<!-- ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg) -->
+[![Version](https://img.shields.io/badge/version-0.0.3-blue.svg)](https://github.com/Yrrrrrf/gwa/releases/tag/v0.0.3)
 [![GitHub: GWA](https://img.shields.io/badge/GitHub-GWA-181717?logo=github)](https://github.com/Yrrrrrf/gwa)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://choosealicense.com/licenses/mit/)
 
@@ -15,7 +15,7 @@
 
 General Web App (GWA) is a comprehensive, full-stack application template designed for rapidly developing modern, type-safe, and data-driven applications. By integrating best-in-class technologies, GWA provides a robust foundation that seamlessly bridges backend database operations with type-safe frontend interfaces.
 
-The key innovation in GWA is the **zero-friction data pipeline** between your database schema and client applications, powered by [**prism-py**](https://github.com/Yrrrrrf/prism-py) and [**ts-forge**](https://github.com/Yrrrrrf/ts-forge). This ensures complete type safety and automatic API generation from your database to your frontend with minimal configuration.
+The key innovation in GWA is the **zero-friction data pipeline** between your database schema and client applications, powered by [**prism-py**](https://github.com/Yrrrrrf/prism-py) and [**prism-ts**](https://jsr.io/@yrrrrrf/prism-ts). This ensures complete type safety and automatic API generation from your database to your frontend with minimal configuration.
 
 ## ✨ Features
 
@@ -23,6 +23,7 @@ The key innovation in GWA is the **zero-friction data pipeline** between your da
 - **End-to-End Type Safety** - Seamless type propagation from database to frontend
 - **Cross-Platform** - Deploy as a web app, desktop application, or mobile app
 - **Modern Stack** - Built with cutting-edge technologies focused on developer experience
+- **Deno Integration** - First-class support for Deno's secure runtime environment
 - **Production Ready** - Includes Docker setup, authentication, and CI/CD templates
 
 ## 🛠️ Technology Stack
@@ -36,10 +37,11 @@ The key innovation in GWA is the **zero-friction data pipeline** between your da
 
 ### Frontend
 
+- **[Deno](https://deno.land/)** - Modern JavaScript/TypeScript runtime
 - **[SvelteKit](https://kit.svelte.dev/)** - Full-stack Svelte framework with SSR capabilities
     - **[Tauri](https://tauri.app/)** - Build desktop applications with web technologies
-- **[rune-lab](https://github.com/Yrrrrrf/rune-lab)** - UI component library built with Svelte 5
-    - **[ts-forge](https://github.com/Yrrrrrf/ts-forge)** - Type-safe API client generation
+- **[rune-lab](https://jsr.io/@yrrrrrf/rune-lab)** - UI component library built with Svelte 5
+    - **[prism-ts](https://jsr.io/@yrrrrrf/prism-ts)** - Type-safe API client generation
 - **[TailwindCSS](https://tailwindcss.com/)** - Utility-first CSS framework
 - **[DaisyUI](https://daisyui.com/)** - Component library for TailwindCSS
 
@@ -47,31 +49,37 @@ The key innovation in GWA is the **zero-friction data pipeline** between your da
 
 ### Prerequisites
 
-- [Python](https://www.python.org/) >=3.10
-- [Node.js](https://nodejs.org/) >=18 or [Bun](https://bun.sh/) >=1.0
+- [Deno](https://deno.land/) >=1.40.0
+- [Python](https://www.python.org/) >=3.12
 - [PostgreSQL](https://www.postgresql.org/) >=13
 - [Docker](https://www.docker.com/) (optional, for containerized setup)
+- [Rust](https://www.rust-lang.org/) >=1.76 (optional, for Tauri desktop builds)
 
-### Quick Start
+### Quick Start with Deno
 
 ```bash
 # Clone the repository
 git clone https://github.com/Yrrrrrf/gwa.git
-cd general-web-app
+cd gwa
 
-# # Option 1: Local Setup
-# # Backend setup
-# cd backend
-# pip install -r requirements.txt
-# python -m src.main
+# Start development server
+deno task dev
 
-# # Frontend setup
-# cd ../core
-# bun install  # or npm install
-# bun dev      # or npm run dev
+# Build for production
+deno task build
 
-# Option 2 *recommended*: Docker Setup
-docker-compose up -d
+# Preview production build
+deno task preview
+
+# Build Tauri desktop app
+deno task tauri build
+```
+
+### Docker Setup (Recommended for Backend)
+
+```bash
+# Start backend services with Docker Compose
+docker compose up -d
 ```
 
 ### Database Configuration
@@ -85,38 +93,26 @@ DB_OWNER_PWORD=password
 DB_HOST=localhost
 ```
 
-<!-- ## 📖 Documentation
+## 📚 Documentation
 
-- [Project Structure](./docs/project-structure.md)
-- [API Documentation](./docs/api.md)
-- [Component Library](./docs/components.md)
-- [Deployment Guide](./docs/deployment.md) -->
+- [Local Setup Guide](./resources/docs/local-setup.md)
+- [Unix Server Deployment](./resources/docs/unix-setup.md)
 
-<!-- ## 🧪 Testing
+## 🔁 Development Workflow
 
-```bash
-# Backend tests
-cd backend
-pytest
+GWA supports a streamlined development workflow:
 
-# Frontend tests
-cd frontend
-bun test  # or npm test
-``` -->
-
-<!-- ## 🔄 CI/CD
-
-GWA includes GitHub Actions workflows for:
-
-- Automated testing
-- Docker image building
-- Deployment to various environments -->
+1. **Define database schema** in PostgreSQL
+2. **Auto-generate API** with prism-py
+3. **Auto-generate TypeScript clients** with prism-ts
+4. **Build UI** with Svelte 5 runes and rune-lab components
+5. **Deploy** as web app or package as desktop app with Tauri
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-<!-- ## 👥 Contributing
+## 👥 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -124,4 +120,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request -->
+5. Open a Pull Request

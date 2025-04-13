@@ -9,6 +9,3 @@
 .venv/
 __pycache__/
 uv.lock
-
-# some
-docs/
