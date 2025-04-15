@@ -63,25 +63,11 @@ services:
 
   app:
     build:
-      context: ./generic-app/
+      context: ./generic-app  # Sets build context to generic-app directory
       dockerfile: app.Dockerfile
     container_name: gwa-app
-    volumes:
-      - ./generic-app:/app
-      - /app/node_modules # Don't overwrite node_modules
     ports:
-      - "1420:1420" # Main app port
-      - "1421:1421" # HMR port
-    environment:
-      <<: *common-env
-      TAURI_DEV_HOST: "0.0.0.0"
-    command: >
-      sh -c "
-        echo '⏳ Waiting for services to be ready...' &&
-        sleep 10 &&
-        echo '🚀 Starting Vite dev server...' &&
-        deno run --allow-all --node-modules-dir npm:vite dev --host 0.0.0.0
-      "
+      - "1420:1420"
     depends_on:
       - db
       - api

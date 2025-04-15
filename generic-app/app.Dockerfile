@@ -27,7 +27,7 @@ RUN deno cache --node-modules-dir npm:vite npm:@sveltejs/kit npm:@tailwindcss/vi
 RUN chown -R deno:deno /app
 
 # Switch to deno user for security
-USER deno
+# USER deno
 
 # Run the SvelteKit application with ALL permissions granted
 CMD ["run", "--allow-all", "--node-modules-dir", "npm:vite", "dev", "--host", "0.0.0.0"]
