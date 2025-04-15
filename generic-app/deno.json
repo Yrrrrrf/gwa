@@ -4,6 +4,7 @@
 	"description": "A comprehensive full-stack application template with Tauri integration",
 	"license": "MIT",
 	"exports": "./src/lib/index.ts",
+	"type": "module",
 	"tasks": {
 		"dev": "deno run --allow-all --node-modules-dir npm:vite dev",
 		"build": "deno run --allow-all --node-modules-dir npm:vite build",
@@ -29,15 +30,14 @@
 		"vite": "npm:vite@^6.2.6",
 		"daisyui": "npm:daisyui@^5.0.19"
 	},
-	"compilerOptions": {
-		"strict": true,
-		"types": ["./svelte-runes.d.ts"]
-	},
+	"compilerOptions": { "strict": true },
 	"lint": {
 		"include": ["src/"],
 		"exclude": [
-			"node_modules/",
-			".svelte-kit/"
+			".svelte-kit/",
+			".vite/",
+			"build/",
+			"node_modules/"
 		],
 		"rules": {
 			"tags": ["recommended"]
