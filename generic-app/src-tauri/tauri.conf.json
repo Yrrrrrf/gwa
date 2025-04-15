@@ -12,7 +12,7 @@
 	"app": {
 		"windows": [
 			{
-				"title": "generic-app",
+				"title": "Generic App",
 				"width": 1080,
 				"height": 720
 			}

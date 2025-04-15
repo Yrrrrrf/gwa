@@ -12,8 +12,6 @@
   }
 
   onMount(() => {
-    // This is a good place to perform any setup or initialization
-    // that needs to happen when the component mounts.
     console.log("Component mounted");
   });
 </script>

@@ -4,7 +4,6 @@
 	"description": "A comprehensive full-stack application template with Tauri integration",
 	"license": "MIT",
 	"exports": "./src/lib/index.ts",
-	"type": "module",
 	"tasks": {
 		"dev": "deno run --allow-all --node-modules-dir npm:vite dev",
 		"build": "deno run --allow-all --node-modules-dir npm:vite build",
