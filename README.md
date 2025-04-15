@@ -5,7 +5,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.0.3-blue.svg)](https://github.com/Yrrrrrf/gwa/releases/tag/v0.0.3)
+[![Version](https://img.shields.io/badge/version-0.0.4-blue.svg)](https://github.com/Yrrrrrf/gwa/releases/tag/v0.0.4)
 [![GitHub: GWA](https://img.shields.io/badge/GitHub-GWA-181717?logo=github)](https://github.com/Yrrrrrf/gwa)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://choosealicense.com/licenses/mit/)
 
