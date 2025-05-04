@@ -1,6 +1,6 @@
 {
 	"name": "@yrrrrrf/generic-app",
-	"version": "0.0.4",
+	"version": "0.1.0-rc0",
 	"description": "A comprehensive full-stack application template with Tauri integration",
 	"license": "MIT",
 	"exports": "./src/lib/index.ts",

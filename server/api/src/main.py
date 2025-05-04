@@ -10,7 +10,6 @@ db = os.getenv("DB_NAME", "gwa")
 user = os.getenv("DB_OWNER_ADMIN", "gwa_owner")
 password = os.getenv("DB_OWNER_PWORD", "password")
 host = os.getenv("DB_HOST", "localhost")
-host = os.getenv("DB_HOST", "localhost.docker.internal")
 
 # Database connection setup
 db_client = DbClient(
@@ -19,7 +18,11 @@ db_client = DbClient(
         driver_type=os.getenv("DRIVER_TYPE", "sync"),
         # * these values will be read from the environment variables!
         # So, the current values are just defaults in case the environment variables are not set
-        database=db, user=user, password=password, host=host, port=int(os.getenv("DB_PORT", 5432)),
+        database=db,
+        user=user,
+        password=password,
+        host=host,
+        port=int(os.getenv("DB_PORT", 5432)),
         echo=False,
         pool_config=PoolConfig(
             pool_size=5, max_overflow=10, pool_timeout=30, pool_pre_ping=True
@@ -45,7 +48,7 @@ model_manager.log_metadata_stats()
 # Initialize API generator
 api_prism = ApiPrism(
     config=PrismConfig(
-        project_name=f"{db_client.config.database}Hub",
+        project_name=f"{db_client.config.database.upper()} Hub",
         version="0.1.0",
     ),
     app=app,

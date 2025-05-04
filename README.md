@@ -5,7 +5,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.0.4-blue.svg)](https://github.com/Yrrrrrf/gwa/releases/tag/v0.0.4)
+[![Version](https://img.shields.io/badge/version-0.1.0--rc0-blue.svg)](https://github.com/Yrrrrrf/gwa/releases/tag/v0.1.0-rc0)
 [![GitHub: GWA](https://img.shields.io/badge/GitHub-GWA-181717?logo=github)](https://github.com/Yrrrrrf/gwa)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://choosealicense.com/licenses/mit/)
 
@@ -82,17 +82,10 @@ minimal configuration.
 git clone https://github.com/Yrrrrrf/gwa.git
 cd gwa
 
-# Start development server
-deno task dev
-
-# Build for production
-deno task build
-
-# Preview production build
-deno task preview
-
-# Build Tauri desktop app
-deno task tauri build
+deno task dev  # Start development server
+deno task build  # Build for production
+deno task preview  # Preview production build
+deno task tauri build  # Build Tauri desktop app
 ```
 
 ### Docker Setup (Recommended for Backend)
@@ -142,3 +135,11 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+<!--
+[![Deno](https://img.shields.io/badge/Powered%20by-Deno-000000?logo=deno)](https://deno.land/)
+[![Python](https://img.shields.io/badge/Powered%20by-Python-3776AB?logo=python)](https://www.python.org/)
+[![PostgreSQL](https://img.shields.io/badge/Powered%20by-PostgreSQL-336791?logo=postgresql)](https://www.postgresql.org/)
+[![Svelte](https://img.shields.io/badge/Powered%20by-Svelte-FF3E00?logo=svelte)](https://svelte.dev/)
+[![Tauri](https://img.shields.io/badge/Powered%20by-Tauri-000000?logo=tauri)](https://tauri.app/)
+-->
