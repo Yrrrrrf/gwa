@@ -1,0 +1,28 @@
+name: Docker Compose Build & Run
+
+on:
+  push:
+    branches:
+      - main  # or your default branch
+
+jobs:
+  docker-compose:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Set up Docker Buildx (for multi‐architecture builds if needed)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # 3. Build & start all services from docker-compose
+      - name: Build and start containers
+        run: |
+          docker-compose up -d --build
+
+      # 4. Verify running containers
+      - name: List running containers
+        run: docker ps

@@ -1,0 +1,44 @@
+name: Generic Environment Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Get the code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'  # adjust as needed
+
+      # 3. Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'    # adjust as needed
+
+      # 4. Print tool versions
+      - name: Print versions
+        run: |
+          python --version
+          node --version
+          npm --version
+          deno --version || echo "Deno not installed"
+
+      # 5. Placeholder: formatting/lint checks
+      - name: Lint / Format checks
+        run: |
+          echo "→ run your lint or format commands here"
+
+      # 6. Placeholder: run your tests
+      - name: Run tests
+        run: |
+          echo "→ run your test suite here"
