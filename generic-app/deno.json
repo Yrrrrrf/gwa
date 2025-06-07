@@ -1,6 +1,6 @@
 {
 	"name": "@yrrrrrf/generic-app",
-	"version": "0.1.0-rc0",
+	"version": "0.1.0",
 	"description": "A comprehensive full-stack application template with Tauri integration",
 	"license": "MIT",
 	"exports": "./src/lib/index.ts",
@@ -13,10 +13,10 @@
 		"tauri": "deno run --allow-all --node-modules-dir npm:@tauri-apps/cli"
 	},
 	"imports": {
-		"svelte": "npm:svelte@^5.26.2",
-		"@sveltejs/kit": "npm:@sveltejs/kit@^2.20.5",
-		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static@^3.0.8",
-		"@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte@^5.0.0",
+		"svelte": "npm:svelte",
+		"@sveltejs/kit": "npm:@sveltejs/kit",
+		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static",
+		"@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte",
 		"@tauri-apps/api": "npm:@tauri-apps/api@^2",
 		"@tauri-apps/cli": "npm:@tauri-apps/cli@^2",
 		"@tauri-apps/plugin-opener": "npm:@tauri-apps/plugin-opener@^2",
@@ -26,8 +26,8 @@
 		"@tailwindcss/typography": "npm:@tailwindcss/typography",
 		"@tailwindcss/vite": "npm:@tailwindcss/vite",
 		"tailwindcss": "npm:tailwindcss",
-		"vite": "npm:vite@^6.2.6",
-		"daisyui": "npm:daisyui@^5.0.19"
+		"vite": "npm:vite",
+		"daisyui": "npm:daisyui"
 	},
 	"compilerOptions": { "strict": true },
 	"lint": {
