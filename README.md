@@ -5,8 +5,8 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.1.0--rc0-blue.svg)](https://github.com/Yrrrrrf/gwa/releases/tag/v0.1.0-rc0)
 [![GitHub: GWA](https://img.shields.io/badge/GitHub-GWA-181717?logo=github)](https://github.com/Yrrrrrf/gwa)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/Yrrrrrf/gwa/releases/tag/v0.1.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://choosealicense.com/licenses/mit/)
 
 </div>
@@ -58,8 +58,6 @@ minimal configuration.
   SSR capabilities
   - **[Tauri](https://tauri.app/)** - Build desktop applications with web
     technologies
-- **[rune-lab](https://jsr.io/@yrrrrrf/rune-lab)** - UI component library built
-  with Svelte 5
   - **[prism-ts](https://jsr.io/@yrrrrrf/prism-ts)** - Type-safe API client
     generation
 - **[TailwindCSS](https://tailwindcss.com/)** - Utility-first CSS framework
@@ -118,7 +116,7 @@ GWA supports a streamlined development workflow:
 1. **Define database schema** in PostgreSQL
 2. **Auto-generate API** with prism-py
 3. **Auto-generate TypeScript clients** with prism-ts
-4. **Build UI** with Svelte 5 runes and rune-lab components
+4. **Build UI** with Svelte 5 runes
 5. **Deploy** as web app or package as desktop app with Tauri
 
 ## 📄 License

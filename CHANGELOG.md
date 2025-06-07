@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2025-06-07
+
+> **The Foundation** — First official template release.
+
+This release marks GWA's first stable version intended as a comprehensive starting point for new full-stack applications. It focuses on core stability, documentation, and a clear path for manual adaptation.
+
+### Added
+
+*   **Project Documentation Overhaul**:
+    *   Created [`ROADMAP.md`](/ROADMAP.md) outlining future development plans and version milestones.
+    *   Added detailed [`README.md`](/server/README.md) for the [`server/`](./server/README.md) directory, explaining its components (PostgreSQL, FastAPI, `prism-py`) and usage.
+    *   Added detailed [`README.md`](/generic-app/README.md) for the [`generic-app/`](./generic-app/README.md) directory, detailing its SvelteKit, Deno, and Tauri setup, along with usage guidelines.
+*   Updated main [`README.md`](./README.md) with clearer instructions for getting started and database configuration.
+*   Refined Deno task setup in [`generic-app/deno.json`](./generic-app/deno.json) for smoother frontend development initialization (e.g., ensuring `deno task dev` handles necessary bootstrapping).
+*   Added `"nodeModulesDir": true` to [`generic-app/deno.json`](./generic-app/deno.json) for more consistent `node_modules` handling with Deno.
+
+### Changed
+
+*   **Version Bump**: Officially bumped project version to `0.1.0` across all relevant metadata files and documentation.
+*   Stabilized core functionalities of the database, API, and generic-app components for template use.
+*   Minor cleanup and consistency improvements across the codebase in preparation for the template release.
+
 ## [0.1.0-rc-0] - 2025-05-04
 
 ### Added
@@ -91,6 +113,7 @@ A significant milestone featuring complete containerization and mobile platform 
 * Containerized PostgreSQL setup with initialization scripts.
 * Basic project scaffolding: [`README.md`](./README.md), [`license`](./LICENSE), and starter files.
 
+[0.1.0]: https://github.com/Yrrrrrf/gwa/compare/v0.1.0-rc-0...v0.1.0
 [0.1.0-rc-0]: https://github.com/Yrrrrrf/gwa/compare/v0.0.5...v0.1.0-rc-0
 [0.0.5]: https://github.com/Yrrrrrf/gwa/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/Yrrrrrf/gwa/compare/v0.0.3...v0.0.4
