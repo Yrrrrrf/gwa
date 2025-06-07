@@ -42,40 +42,6 @@ This document outlines the planned development trajectory for the General Web Ap
     *   **Improved Documentation:** Update setup guides to incorporate the new scaffolding tool.
     *   **Frontend Testing Foundation:** Introduce basic frontend unit/component testing setup (e.g., Vitest).
 
-### Future (v0.3.0+): "Enrichment & Expansion"
-
-*   **Theme:** Add more features, examples, and improve maturity.
-*   **Potential Features (Order & Inclusion TBD based on feedback & priority):**
-    *   **Full-fledged Authentication Example:**
-        *   Complete JWT-based authentication flow (login, registration, refresh tokens).
-        *   Role-based access control (RBAC) demonstrated in API and UI.
-        *   Password reset, email verification flows.
-    *   **Enhanced `prism-py` / `prism-ts` Capabilities & Examples:**
-        *   More complex query examples.
-        *   Demonstrate handling of relationships and advanced database features.
-        *   Guides on extending auto-generated APIs.
-    *   **Concrete Mobile Implementation:**
-        *   Full example of building and deploying for Android/iOS using Tauri's mobile support.
-        *   Address mobile-specific UI/UX considerations.
-    *   **Advanced `rune-lab` Integration:**
-        *   Showcase a wider array of `rune-lab` components in a demo application.
-        *   Potentially a dedicated "kitchen sink" page for `rune-lab`.
-    *   **Real-time Features:**
-        *   Example integration of WebSockets for real-time updates (e.g., notifications, live data).
-    *   **Database Migration Strategy:**
-        *   Integrate or recommend a database migration tool (e.g., Alembic for Python, Deno-based tool).
-        *   Provide guidance on managing schema changes.
-    *   **More Sophisticated Backend Examples:**
-        *   Demonstrate background tasks, caching strategies, and interaction with other services.
-    *   **Internationalization (i18n) Support:**
-        *   Showcase how to implement multi-language support in the SvelteKit frontend.
-    *   **Comprehensive Test Suite:**
-        *   Expand backend and frontend test coverage, including integration and E2E tests.
-    *   **Performance Optimization Guides:**
-        *   Tips and examples for optimizing frontend and backend performance.
-    *   **Deployment Guides for Various Platforms:**
-        *   Expand beyond local Docker and basic Unix server (e.g., Vercel, Netlify, Fly.io, Kubernetes).
-
 ### Long-Term Vision (v1.0.0 and Beyond)
 
 *   **Theme:** GWA as a mature, highly reliable, and widely adopted project starter.
