@@ -48,3 +48,4 @@ ignore = [ "generic-app/" ]
 ignore = [ "generic-app/src-tauri/" ]
 
 # ... you might add more conditionals here later
+at_symbol = { type = "string", default = "@" }
