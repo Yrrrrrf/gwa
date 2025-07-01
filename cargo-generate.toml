@@ -1,0 +1,50 @@
+# In your Yrrrrrf/gwa repository's cargo-generate.toml
+
+[template]
+cargo_generate_version = ">=0.18.0"
+
+# -- FIX: Add this 'exclude' section --
+# Tell cargo-generate to NOT process binary files as templates.
+# It will just copy them over as-is, solving the error.
+exclude = [
+    ".github/",
+    "**/*.ico",
+    "**/*.png",
+    "**/*.jpg",
+]
+
+
+# --- Placeholders Section ---
+# This is the key section. Define ALL your placeholders here.
+
+[placeholders]
+project_name = { type = "string", prompt = "Project name (e.g., my-app)", default = "gwa" }
+author_name = { type = "string", prompt = "Author's full name", default = "Fernando Bryan Reza Campos" }
+author_email = { type = "string", prompt = "Author's email", default = "fer.rezac@outlook.com" }
+app_identifier = { type = "string", prompt = "Application Identifier (e.g., com.company.app)", default = "com.gwa.default-app" }
+
+# Database Configuration
+db_name = { type = "string", prompt = "Database name", default = "gwa" }
+db_owner_admin = { type = "string", prompt = "Database owner username", default = "gwa_owner" }
+db_owner_pword = { type = "string", prompt = "Database owner password", default = "password", secret = true }
+db_host = { type = "string", prompt = "Database host (for .env file)", default = "localhost" }
+
+# For modularity
+include_server = { type = "bool", prompt = "Include the backend server (PostgreSQL + FastAPI)?", default = true }
+include_frontend = { type = "bool", prompt = "Include the frontend application (SvelteKit + Tauri)?", default = true }
+include_tauri_desktop = { type = "bool", prompt = "Include Tauri for Desktop?", default = true }
+
+
+# --- Conditional Section ---
+# This section allows you to ignore entire directories based on user choices.
+
+[conditional.'include_server == "false"']
+ignore = [ "server/", "docker-compose.yml" ] 
+
+[conditional.'include_frontend == false"']
+ignore = [ "generic-app/" ]
+
+[conditional.'include_tauri_desktop == false"']
+ignore = [ "generic-app/src-tauri/" ]
+
+# ... you might add more conditionals here later

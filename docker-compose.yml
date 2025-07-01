@@ -2,9 +2,9 @@
 
 # Define common environment variables
 x-common-env: &common-env
-  DB_NAME: ${DB_NAME:-gwa}
-  DB_OWNER_ADMIN: ${DB_OWNER_ADMIN:-gwa_owner}
-  DB_OWNER_PWORD: ${DB_OWNER_PWORD:-password}
+  DB_NAME: ${DB_NAME:-{{ db_name }}}
+  DB_OWNER_ADMIN: ${DB_OWNER_ADMIN:-{{ db_owner_admin }}}
+  DB_OWNER_PWORD: ${DB_OWNER_PWORD:-{{ db_owner_pword }}}
 
 services:
   db:

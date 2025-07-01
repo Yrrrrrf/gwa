@@ -1,8 +1,10 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "generic-app",
-	"version": "0.0.4",
-	"identifier": "com.generic-app.app",
+
+  "productName": "{{ project_name }}",
+  "version": "0.1.0",
+  "identifier": "{{ app_identifier }}",
+
 	"build": {
 		"beforeDevCommand": "deno task dev",
 		"devUrl": "http://localhost:1420",

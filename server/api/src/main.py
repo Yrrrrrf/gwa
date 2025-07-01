@@ -6,10 +6,16 @@ from prism import *
 
 app = FastAPI()
 
-db = os.getenv("DB_NAME", "gwa")
-user = os.getenv("DB_OWNER_ADMIN", "gwa_owner")
-password = os.getenv("DB_OWNER_PWORD", "password")
-host = os.getenv("DB_HOST", "localhost")
+# * read directly from the environment variables
+# todo: Check if these environment variables are set before using them
+# todo: Check where does this values are get from!
+# todo: * Handle a way to manage the {{ placeholders }} from cargo-generate!
+# todo: * Handle a way to manage the {{ placeholders }} from cargo-generate!
+# todo: * Handle a way to manage the {{ placeholders }} from cargo-generate!
+db = os.getenv("DB_NAME")
+user = os.getenv("DB_OWNER_ADMIN")
+password = os.getenv("DB_OWNER_PWORD")
+host = os.getenv("DB_HOST")
 
 # Database connection setup
 db_client = DbClient(
