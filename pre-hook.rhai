@@ -1,4 +1,4 @@
-// gwa/pre-hook.rhai (Robust and Compatible Version)
+// gwa/pre-hook.rhai (Ultra-Minimalist, Pure ASCII Math Version)
 
 // Get the values provided by the user.
 let author = variable::get("author_name");
@@ -8,19 +8,31 @@ let project = variable::get("project_name");
 let author_slug = "";
 let last_char_was_hyphen = false;
 
+// ASCII values for 'A', 'Z', 'a', 'z', '0', '9'
+const A = 65; const Z = 90;
+const a = 97; const z = 122;
+const zero = 48; const nine = 57;
+const space = 32;
+
 for (ch, i) in author {
-    // Convert character to lowercase manually
-    let lower_ch = if ch >= 'A' && ch <= 'Z' {
-        // This is a simplified ASCII lowercase conversion
-        (ch.to_int() + 32).to_char()
+    let ascii_val = ch.to_int();
+    let lower_ascii = if ascii_val >= A && ascii_val <= Z {
+        ascii_val + 32
     } else {
-        ch
+        ascii_val
     };
 
-    // Replace spaces and invalid characters with a hyphen,
-    // and avoid consecutive hyphens.
-    if (lower_ch >= 'a' && lower_ch <= 'z') || (lower_ch >= '0' && lower_ch <= '9') {
-        author_slug += lower_ch;
+    if (lower_ascii >= a && lower_ascii <= z) || (lower_ascii >= zero && lower_ascii <= nine) {
+        // Here's the key difference: we cannot rely on `to_char()`.
+        // We have to build up the string from existing characters.
+        // So, we iterate through the original 'author' string again to find the char.
+        // This is inefficient but guaranteed to work without external functions.
+        for (original_ch, j) in author {
+            if i == j {
+                author_slug += original_ch.to_lowercase();
+                break;
+            }
+        }
         last_char_was_hyphen = false;
     } else if !last_char_was_hyphen {
         author_slug += "-";
