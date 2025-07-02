@@ -18,6 +18,7 @@ pre = ["pre-hook.rhai"]
 # --- Placeholders Section ---
 [placeholders]
 # General Info
+deno_package_name = { type = "string", prompt = "Deno package name (e.g., @user/project)", default = "@gwa/default-project" }
 project_name = { type = "string", prompt = "Project name (e.g., my-app)", default = "gwa" }
 author_name = { type = "string", prompt = "Author's full name", default = "Fernando Bryan Reza Campos" }
 author_email = { type = "string", prompt = "Author's email", default = "fer.rezac@outlook.com" }
