@@ -1,5 +1,5 @@
 {
-	"name": "{{ at_symbol }}{{ author_name | slugify }}/{{ project_name }}",
+	"name": "{{ deno_package_name }}",
 	"version": "0.1.0",
 	"description": "A comprehensive full-stack application template with Tauri integration",
 	"license": "MIT",
