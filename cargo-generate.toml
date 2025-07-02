@@ -11,10 +11,6 @@ exclude = [
     ".github/",
 ]
 
-# This section tells cargo-generate to run our script BEFORE processing files.
-[hooks]
-pre = ["pre-hook.rhai"]
-
 # --- Placeholders Section ---
 [placeholders]
 # General Info
