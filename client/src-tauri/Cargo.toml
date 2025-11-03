@@ -1,5 +1,5 @@
 [package]
-name = "generic-app"
+name = "client"
 version = "0.0.4"
 description = "A comprehensive full-stack application template with Tauri integration, featuring type-safe data flow from database to UI"
 authors = ["Fernando Bryan Reza Campos <fer.rezac@outlook.com>", "Yrrrrrf"]

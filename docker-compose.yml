@@ -63,7 +63,7 @@ services:
 
   app:
     build:
-      context: ./generic-app  # Sets build context to generic-app directory
+      context: ./client  # Sets build context to client directory
       dockerfile: app.Dockerfile
     container_name: gwa-app
     ports:

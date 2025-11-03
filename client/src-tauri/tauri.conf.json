@@ -1,8 +1,8 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "generic-app",
+	"productName": "client",
 	"version": "0.0.4",
-	"identifier": "com.generic-app.app",
+	"identifier": "com.client.app",
 	"build": {
 		"beforeDevCommand": "deno task dev",
 		"devUrl": "http://localhost:1420",

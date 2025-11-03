@@ -16,15 +16,15 @@ This release marks GWA's first stable version intended as a comprehensive starti
 *   **Project Documentation Overhaul**:
     *   Created [`ROADMAP.md`](/ROADMAP.md) outlining future development plans and version milestones.
     *   Added detailed [`README.md`](/server/README.md) for the [`server/`](./server/README.md) directory, explaining its components (PostgreSQL, FastAPI, `prism-py`) and usage.
-    *   Added detailed [`README.md`](/generic-app/README.md) for the [`generic-app/`](./generic-app/README.md) directory, detailing its SvelteKit, Deno, and Tauri setup, along with usage guidelines.
+    *   Added detailed [`README.md`](/client/README.md) for the [`client/`](./client/README.md) directory, detailing its SvelteKit, Deno, and Tauri setup, along with usage guidelines.
 *   Updated main [`README.md`](./README.md) with clearer instructions for getting started and database configuration.
-*   Refined Deno task setup in [`generic-app/deno.json`](./generic-app/deno.json) for smoother frontend development initialization (e.g., ensuring `deno task dev` handles necessary bootstrapping).
-*   Added `"nodeModulesDir": true` to [`generic-app/deno.json`](./generic-app/deno.json) for more consistent `node_modules` handling with Deno.
+*   Refined Deno task setup in [`client/deno.json`](./client/deno.json) for smoother frontend development initialization (e.g., ensuring `deno task dev` handles necessary bootstrapping).
+*   Added `"nodeModulesDir": true` to [`client/deno.json`](./client/deno.json) for more consistent `node_modules` handling with Deno.
 
 ### Changed
 
 *   **Version Bump**: Officially bumped project version to `0.1.0` across all relevant metadata files and documentation.
-*   Stabilized core functionalities of the database, API, and generic-app components for template use.
+*   Stabilized core functionalities of the database, API, and client components for template use.
 *   Minor cleanup and consistency improvements across the codebase in preparation for the template release.
 
 ## [0.1.0-rc-0] - 2025-05-04

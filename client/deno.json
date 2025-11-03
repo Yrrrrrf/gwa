@@ -1,5 +1,5 @@
 {
-	"name": "@yrrrrrf/generic-app",
+	"name": "@yrrrrrf/client",
 	"version": "0.1.0",
 	"description": "A comprehensive full-stack application template with Tauri integration",
 	"license": "MIT",
