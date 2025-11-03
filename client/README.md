@@ -28,7 +28,7 @@ Ensure you have [Deno](https://deno.land/) installed. For Tauri desktop builds, 
 
 1.  **Navigate to this directory:**
     ```bash
-    cd generic-app
+    cd client
     ```
 
 2.  **Initialize & Start Development Server:**
