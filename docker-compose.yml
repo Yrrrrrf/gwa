@@ -1,4 +1,4 @@
-# GWA Docker Compose
+# GWA Docker Compose with Traefik
 
 # Define common environment variables
 x-common-env: &common-env
@@ -7,6 +7,57 @@ x-common-env: &common-env
   DB_OWNER_PWORD: ${DB_OWNER_PWORD:-password}
 
 services:
+  # * Traefik reverse proxy service
+  # ^ Handles HTTPS termination, SSL certificates, and routing to services
+  traefik:
+    image: traefik:v3.5.4
+    container_name: gwa-traefik
+    command:
+      # * Enable Docker provider with exposedByDefault=false for security
+      # ^ Traefik will only route services that have specific labels
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      # * Use the configuration file we created
+      - --configFile=/etc/traefik/traefik.yml
+      # * Enable dashboard access for monitoring
+      # ^ Access at http://localhost:8080 when insecure mode is enabled
+      # - --api.insecure=true
+      - --api.dashboard=true
+    ports:
+      # * HTTP entry point - redirects to HTTPS
+      - "8080:80"
+      # * HTTPS entry point - main service entry
+      - "8443:443"
+    volumes:
+      # * Mount Docker/Podman socket for service discovery
+      # ^ For root Podman: /var/run/docker.sock (same as Docker)
+      # ^ For rootless Podman: typically $XDG_RUNTIME_DIR/podman/podman.sock
+      # ^ Uncomment the appropriate line below for your setup:
+      # - /var/run/docker.sock:/var/run/docker.sock:ro  # * For Docker or root Podman
+      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:ro  # * For rootless Podman (uncomment if needed)
+      # * Mount our Traefik configuration file
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      # * Mount volume for storing certificates
+      - traefik-certs:/etc/traefik/acme.json
+    networks:
+      - gwa-network
+    labels:
+      # * Route traffic to Traefik dashboard
+      # ^ Only accessible through the configured domain
+      - traefik.enable=true
+      - traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)  # * Change this to your domain
+      - traefik.http.routers.dashboard.service=api@internal
+      - traefik.http.routers.dashboard.entrypoints=https
+      - traefik.http.routers.dashboard.tls=true
+      # - traefik.http.routers.dashboard.tls.certresolver=letsencrypt  # Comment out for dev
+      # - traefik.http.routers.dashboard.middlewares=auth # Commented out for dev
+      # * Enable basic authentication for dashboard
+      # ^ Generate with: htpasswd -nb username password
+      # ^ Replace with your own encrypted credentials in production
+      # - traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$11z26...$$7QJgP4oY6YF2X0.jeJw9r/  # * Example only - change this!
+    depends_on:
+      - db
+
   db:
     build:
       context: ./server/db/
@@ -19,8 +70,7 @@ services:
       POSTGRES_USER: ${DB_OWNER_ADMIN:-gwa_owner}
       POSTGRES_PASSWORD: ${DB_OWNER_PWORD:-password}
       TZ: UTC
-    ports:
-      - "5432:5432"
+    # * Removed direct port exposure - now accessible via internal network only
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -41,21 +91,33 @@ services:
       dockerfile: api.Dockerfile
     container_name: gwa-api
     environment:
-      <<: *common-env # Include all common variables
+      <<: *common-env
       DB_HOST: gwa-db
       PYTHONDONTWRITEBYTECODE: 1
       PYTHONUNBUFFERED: 1
-    ports:
-      - "8000:8000"
     volumes:
-      - ./server/api:/app
+      - ./server/api/src:/app/src:ro
     depends_on:
       db:
         condition: service_healthy
     networks:
       - gwa-network
+    # --- VERIFY THIS SECTION CAREFULLY ---
+    labels:
+      # Enable Traefik for this service
+      - traefik.enable=true
+
+      # Define the router for the API
+      - traefik.http.routers.api.rule=Host(`api.localhost`)
+      - traefik.http.routers.api.entrypoints=https
+      
+      # Enable TLS for this router
+      - traefik.http.routers.api.tls=true
+      
+      # Define the service and its port
+      - traefik.http.services.api.loadbalancer.server.port=8000
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:8000/health"]
       interval: 10s # Reduced from 30s
       timeout: 5s # Reduced from 10s
       retries: 5 # Increased from 3
@@ -66,15 +128,25 @@ services:
       context: ./client  # Sets build context to client directory
       dockerfile: app.Dockerfile
     container_name: gwa-app
-    ports:
-      - "1420:1420"
-      - "5173:5173"
-      - "5174:5174"
+    # * Removed direct port exposure - now accessible via labels and Traefik routing
     depends_on:
       - db
       - api
     networks:
       - gwa-network
+    # * Traefik labels for routing traffic to this service
+    # ^ These labels tell Traefik how to route traffic to the web app service
+    labels:
+      # * Enable Traefik routing for this service
+      - traefik.enable=true
+      # * Define the router for the web app service
+      - traefik.http.routers.app.rule=Host(`app.localhost`)  # * Changed to app.localhost for consistency
+      - traefik.http.routers.app.entrypoints=https
+      # * Enable TLS with self-signed certificates for development
+      - traefik.http.routers.app.tls=true
+      # - traefik.http.routers.app.tls.certresolver=letsencrypt  # Comment out for dev
+      # * Define the service and target port (Vite runs on 5173)
+      - traefik.http.services.app.loadbalancer.server.port=5173
 
 networks:
   gwa-network:
@@ -84,3 +156,7 @@ networks:
 volumes:
   postgres_data:
     name: gwa-postgres-data
+  # * Volume for storing Let's Encrypt certificates
+  # ^ This ensures certificates persist across container restarts
+  traefik-certs:
+    name: gwa-traefik-certs

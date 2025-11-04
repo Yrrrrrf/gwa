@@ -1,0 +1,48 @@
+# traefik.yml - Traefik configuration for GWA project
+# * This file configures Traefik as a reverse proxy with automatic SSL
+# ^ EntryPoints define the ports Traefik will listen on
+
+entryPoints:
+  # * HTTP entry point for redirecting to HTTPS
+  # ^ Redirect all HTTP traffic to HTTPS for security
+  http:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: https
+          scheme: https
+
+  # * HTTPS entry point for secure connections
+  # ^ This is where your secure traffic will come in
+  https:
+    address: ":443"
+
+# * API and dashboard configuration
+# ^ Enable Traefik's dashboard for monitoring and management
+api:
+  dashboard: true
+  insecure: true  # * Only for development - disable in production
+
+# * Certificate resolver using Let's Encrypt
+# ^ ACME handles automatic SSL certificate generation and renewal
+certificatesResolvers:
+  # * Name of the certificate resolver
+  # ^ This will be referenced in Docker labels to enable SSL
+  letsencrypt:
+    # * ACME configuration for Let's Encrypt
+    # ^ Using the production server (use staging for testing)
+    acme:
+      email: fer.rezac@outlook.com
+      storage: /etc/traefik/acme.json  # * File to store certificates
+      # * Use Let's Encrypt staging server for testing
+      # ^ Comment out the next line and uncomment the production line for production
+      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+      # caServer: https://acme-v02.api.letsencrypt.org/directory  # * Production
+      keyType: EC384  # * Use ECDSA keys for better performance
+
+# * Enable Docker provider for automatic service discovery
+# ^ Traefik will automatically detect and route to services via Docker labels
+providers:
+  docker:
+    exposedByDefault: false  # * Security: Don't expose all containers by default

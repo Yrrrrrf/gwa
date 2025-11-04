@@ -1,11 +1,7 @@
-FROM denoland/deno:2.2.9
+FROM denoland/deno:2.5.3
 
-# The port that your SvelteKit application will listen on
-EXPOSE 3000
-EXPOSE 1420
-EXPOSE 1421
+# Expose main Vite production port
 EXPOSE 5173
-EXPOSE 5174
 
 WORKDIR /app
 
