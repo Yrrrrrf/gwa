@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     python3-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # COPY project files before installing
@@ -42,6 +43,6 @@ EXPOSE 8000
 # Start FastAPI with hot reload for development
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app"]
 
-# Healthcheck configuration
+# # Healthcheck configuration
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://0.0.0.0:8000/health || exit 1
