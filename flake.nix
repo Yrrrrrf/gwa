@@ -1,5 +1,5 @@
 {
-  description = "Xibalbá";
+  description = "GWA";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -26,7 +26,7 @@
       in
       {
         devShells.default = pkgs.mkShell {
-          name = "xibalba";
+          name = "gwa";
 
           inputsFrom = [
             clientShell
@@ -36,7 +36,7 @@
           shellHook = ''
             PURPLE=$(tput setaf 5)
             RESET=$(tput sgr0)
-            echo "🦇 ''${PURPLE}Xibalbá''${RESET} — all systems go"
+            echo "🦇 ''${PURPLE}GWA''${RESET} — all systems go"
           '';
         };
       }

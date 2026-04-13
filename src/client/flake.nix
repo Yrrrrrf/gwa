@@ -1,5 +1,5 @@
 {
-  description = "xibalbá · client — Bun workspace (SvelteKit + SDK)";
+  description = "GWA · client";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -19,7 +19,7 @@
       in
       {
         devShells.default = pkgs.mkShell {
-          name = "xibalba-client";
+          name = "gwa-client";
 
           packages = with pkgs; [
             bun # runtime · install · test · task runner
@@ -41,7 +41,7 @@
             PODMAN_V=$(podman --version | awk '{print $3}')
 
             # Use ''${} so Nix ignores it and lets bash evaluate the variables!
-            echo "🦇 ''${PURPLE}Xibalbá Client ''${RESET}[🐰 ''${CYAN}v''${BUN_V}''${RESET} | ✅ ''${CYAN}v''${JUST_V}''${RESET} | 📦 ''${CYAN}v''${PODMAN_V}''${RESET}]"
+            echo "🦇 ''${PURPLE}GWA Client ''${RESET}[🐰 ''${CYAN}v''${BUN_V}''${RESET} | ✅ ''${CYAN}v''${JUST_V}''${RESET} | 📦 ''${CYAN}v''${PODMAN_V}''${RESET}]"
           '';
         };
       }

@@ -1,5 +1,5 @@
 {
-  description = "Xibalbá · Server — DB & Infrastructure workspace";
+  description = "GWA · Server";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -19,7 +19,7 @@
       in
       {
         devShells.default = pkgs.mkShell {
-          name = "xibalba-server";
+          name = "gwa-server";
 
           packages = with pkgs; [
             just # command runner
@@ -40,7 +40,7 @@
             PODMAN_V=$(podman --version | awk '{print $3}')
 
             # Use ''${} so Nix ignores it and lets bash evaluate the variables!
-            echo "🦇 ''${PURPLE}Xibalbá Server ''${RESET}[✅ ''${CYAN}v''${JUST_V}''${RESET} | 📦 ''${CYAN}v''${PODMAN_V}''${RESET}]"
+            echo "🦇 ''${PURPLE}GWA Server ''${RESET}[✅ ''${CYAN}v''${JUST_V}''${RESET} | 📦 ''${CYAN}v''${PODMAN_V}''${RESET}]"
           '';
         };
       }
