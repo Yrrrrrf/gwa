@@ -1,0 +1,14 @@
+[package]
+name = "wasm"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = { workspace = true }
+serde = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
+domain = { path = "../../core/domain" }
+regex = "1.10"

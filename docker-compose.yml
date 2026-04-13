@@ -34,7 +34,7 @@ services:
       # ^ For rootless Podman: typically $XDG_RUNTIME_DIR/podman/podman.sock
       # ^ Uncomment the appropriate line below for your setup:
       # - /var/run/docker.sock:/var/run/docker.sock:ro  # * For Docker or root Podman
-      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:ro  # * For rootless Podman (uncomment if needed)
+      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:ro # * For rootless Podman (uncomment if needed)
       # * Mount our Traefik configuration file
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
       # * Mount volume for storing certificates
@@ -45,7 +45,7 @@ services:
       # * Route traffic to Traefik dashboard
       # ^ Only accessible through the configured domain
       - traefik.enable=true
-      - traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)  # * Change this to your domain
+      - traefik.http.routers.dashboard.rule=Host(`traefik.localhost`) # * Change this to your domain
       - traefik.http.routers.dashboard.service=api@internal
       - traefik.http.routers.dashboard.entrypoints=https
       - traefik.http.routers.dashboard.tls=true
@@ -110,10 +110,10 @@ services:
       # Define the router for the API
       - traefik.http.routers.api.rule=Host(`api.localhost`)
       - traefik.http.routers.api.entrypoints=https
-      
+
       # Enable TLS for this router
       - traefik.http.routers.api.tls=true
-      
+
       # Define the service and its port
       - traefik.http.services.api.loadbalancer.server.port=8000
     healthcheck:
@@ -125,7 +125,7 @@ services:
 
   app:
     build:
-      context: ./client  # Sets build context to client directory
+      context: ./client # Sets build context to client directory
       dockerfile: app.Dockerfile
     container_name: gwa-app
     # * Removed direct port exposure - now accessible via labels and Traefik routing
@@ -140,7 +140,7 @@ services:
       # * Enable Traefik routing for this service
       - traefik.enable=true
       # * Define the router for the web app service
-      - traefik.http.routers.app.rule=Host(`app.localhost`)  # * Changed to app.localhost for consistency
+      - traefik.http.routers.app.rule=Host(`app.localhost`) # * Changed to app.localhost for consistency
       - traefik.http.routers.app.entrypoints=https
       # * Enable TLS with self-signed certificates for development
       - traefik.http.routers.app.tls=true

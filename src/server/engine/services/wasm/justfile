@@ -1,0 +1,16 @@
+# Builds the `wasm` crate → generates JS/TS bindings → formats output.
+# The generated pkg/ is consumed by @sdk/core on the client side.
+
+# wasm_out := "../../../../src/client/sdk/core/src/pkg"
+# wasm_artifact := "target/wasm32-unknown-unknown/release/wasm.wasm"
+
+# todo: Add these ones as individual steps with better error handling and output formatting
+build:
+    @echo "✓ Building wasm crate..."
+    cd .. && cargo build --release -p wasm --target wasm32-unknown-unknown
+    # todo: Add clean 
+    @echo "Cleaning cache"  # add param to also clear rust cache if needed
+    # todo: Add gen (wasm)
+    @echo "✓ Generating WASM bindings..."
+    # todo: Add gen (bindings for js/ts)
+    @echo "✓ Generating JS/TS bindings..."

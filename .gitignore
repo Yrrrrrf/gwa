@@ -1,12 +1,26 @@
-# env variables
-.env
+# all that start with a dot except .gitignore
+.*
+!.gitignore
 
-# IDE
-.idea/
-.vscode/
-
-# python
-.venv/
-__pycache__/
+# lock files (from various package managers)
 *.lock
-.ruff_cache/
+
+# client generated files
+node_modules
+build
+gen
+
+# server generated files
+target
+*.sum
+
+# generated
+*.pdf
+
+# ide configuration files 
+**.code-workspace
+
+# one * means any characters except /
+# two ** means any characters including /
+temp
+translations

@@ -1,0 +1,11 @@
+{
+	"name": "xibalba-vision",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"dependencies": {
+		"@sdk/core": "workspace:*",
+		"@sdk/state": "workspace:*",
+		"@sdk/ui": "workspace:*"
+	}
+}

@@ -1,0 +1,52 @@
+[workspace]
+resolver = "2"
+members = ["core/domain", "core/store", "services/api", "services/wasm"]
+
+# Optimize development compile times
+[profile.dev]
+opt-level = 1
+
+# Enable high optimizations for dependencies
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
+lto = "thin"  # Enables Link Time Optimization (ThinLTO) for better performance across crate boundariesopt-level = 3
+# lto = true  # Enables full LTO for maximum runtime performance at the cost of build time
+# codegen-units = 1  # Increases optimization potential by using a single codegen unit
+# strip = true  # Automatically strips symbols from the binary to reduce file size
+
+[workspace.dependencies]
+# Runtime
+tokio = { version = "1.50.0", features = ["full"] }
+async-trait = { version = "0.1.89" }
+# Web
+axum = { version = "0.8.8" }
+tower = { version = "0.5.3" }
+tower-http = { version = "0.6.8", features = ["cors", "trace"] }
+# DB
+surrealdb = { version = "3.0.5" }
+surrealdb-types = { version = "3.0.5" }
+# Serialization
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1.0.149" }
+# Auth
+jsonwebtoken = { version = "10.3.0" }
+argon2 = { version = "0.5.3" }
+# Observability
+tracing = { version = "0.1.44" }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+# Error handling
+thiserror = { version = "2.0.18" }
+anyhow = { version = "1.0.102" }
+# Utils
+uuid = { version = "1.23.0", features = ["v4", "js", "serde"] }
+chrono = { version = "0.4.44", features = ["serde"] }
+secrecy = { version = "0.10.3", features = ["serde"] }
+trait-variant = { version = "0.1.2" }
+# WASM
+wasm-bindgen = { version = "0.2.117" }
+serde-wasm-bindgen = { version = "0.6.5" }
+# Axion
+axion = { version = "0.0.4" }

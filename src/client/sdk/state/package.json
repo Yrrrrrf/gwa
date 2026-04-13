@@ -1,0 +1,11 @@
+{
+	"name": "@sdk/state",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "./src/mod.ts",
+	"types": "./src/mod.ts",
+	"dependencies": {
+		"@sdk/core": "workspace:*"
+	}
+}

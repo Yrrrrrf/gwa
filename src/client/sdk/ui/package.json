@@ -1,0 +1,14 @@
+{
+	"name": "@sdk/ui",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "./src/mod.ts",
+	"types": "./src/mod.ts",
+	"dependencies": {
+		"@sdk/core": "workspace:*",
+		"@sdk/state": "workspace:*",
+		"leaflet-choropleth": "*",
+		"leaflet.markercluster": "*"
+	}
+}
