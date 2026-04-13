@@ -1,10 +1,12 @@
 use crate::client::SurrealClient;
 use async_trait::async_trait;
-use domain::entities::item::Item;
+use domain::entities::item::{Item, ItemAction, ItemEvent};
 use domain::ports::DomainError;
 use domain::ports::Result as DomainResult;
 use domain::ports::item::ItemRepository;
+use futures_util::stream::{BoxStream, StreamExt};
 use serde_json;
+use surrealdb_types::Action;
 use surrealdb_types::RecordId;
 use surrealdb_types::SurrealValue;
 use surrealdb_types::Value;
@@ -97,5 +99,35 @@ impl ItemRepository for SurrealItemRepo {
             .map_err(|e| DomainError::Repository(e.to_string()))?;
 
         Ok(())
+    }
+
+    async fn subscribe(&self) -> DomainResult<BoxStream<'static, DomainResult<ItemEvent>>> {
+        let stream = self
+            .client
+            .db
+            .select("item")
+            .live()
+            .await
+            .map_err(|e| DomainError::Repository(e.to_string()))?;
+
+        let domain_stream = stream.filter_map(|notification| async {
+            let n = match notification {
+                Ok(n) => n,
+                Err(e) => return Some(Err(DomainError::Repository(e.to_string()))),
+            };
+            let action = match n.action {
+                Action::Create => ItemAction::Create,
+                Action::Update => ItemAction::Update,
+                Action::Delete => ItemAction::Delete,
+                _ => return None, // Ignore Killed etc.
+            };
+            let item: Item = match Self::to_domain(n.data) {
+                Ok(i) => i,
+                Err(e) => return Some(Err(e)),
+            };
+            Some(Ok(ItemEvent { action, item }))
+        });
+
+        Ok(Box::pin(domain_stream))
     }
 }

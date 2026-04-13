@@ -27,6 +27,7 @@
             podman-compose # container orchestration
             curl # needed for db/scripts/init-db.sh
             xh # needed for db/test/fixtures.sh
+            protobuf # protoc
           ];
 
           shellHook = ''

@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package template.v1;
+
+import "google/protobuf/struct.proto";
+
+service DocumentService {
+  rpc Generate(GenerateDocumentRequest) returns (GenerateDocumentResponse);
+  rpc GetStatus(GetDocumentStatusRequest) returns (GetDocumentStatusResponse);
+}
+
+message GenerateDocumentRequest {
+  string template_id = 1;
+  google.protobuf.Struct data = 2;
+  string format = 3;
+}
+
+message GenerateDocumentResponse {
+  string job_id = 1;
+  string status = 2;
+}
+
+message GetDocumentStatusRequest {
+  string job_id = 1;
+}
+
+message GetDocumentStatusResponse {
+  string job_id = 1;
+  string status = 2;
+  optional string download_url = 3;
+  optional string error = 4;
+}

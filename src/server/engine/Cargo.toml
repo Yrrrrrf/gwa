@@ -1,6 +1,12 @@
 [workspace]
 resolver = "2"
-members = ["core/domain", "core/store", "services/api", "services/wasm"]
+members = [
+    "core/domain",
+    "core/store",
+    "application",
+    "services/gateway",
+    "services/wasm",
+]
 
 # Optimize development compile times
 [profile.dev]
@@ -19,12 +25,15 @@ lto = "thin"  # Enables Link Time Optimization (ThinLTO) for better performance 
 
 [workspace.dependencies]
 # Runtime
-tokio = { version = "1.50.0", features = ["full"] }
+tokio = { version = "1.51.1", features = ["full"] }
 async-trait = { version = "0.1.89" }
 # Web
-axum = { version = "0.8.8" }
+axum = { version = "=0.7.9", features = ["macros"] }
+axum-core = { version = "0.5.6" }
+axum-macros = { version = "0.5.0" }
 tower = { version = "0.5.3" }
 tower-http = { version = "0.6.8", features = ["cors", "trace"] }
+futures-util = { version = "0.3.32" }
 # DB
 surrealdb = { version = "3.0.5" }
 surrealdb-types = { version = "3.0.5" }
@@ -46,7 +55,16 @@ chrono = { version = "0.4.44", features = ["serde"] }
 secrecy = { version = "0.10.3", features = ["serde"] }
 trait-variant = { version = "0.1.2" }
 # WASM
-wasm-bindgen = { version = "0.2.117" }
+wasm-bindgen = { version = "0.2.118" }
 serde-wasm-bindgen = { version = "0.6.5" }
 # Axion
 axion = { version = "0.0.4" }
+# gRPC
+tonic = { version = "0.14.5", default-features = false, features = [
+    "channel",
+    "codegen",
+] }
+prost = { version = "0.14.3" }
+prost-types = { version = "0.14.3" }
+tonic-prost-build = { version = "0.14.5" }
+tonic-prost = { version = "0.14.5" }

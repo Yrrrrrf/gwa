@@ -34,8 +34,26 @@ typecheck:
 
 [doc('Full server quality gate')]
 [group('CI')]
-quality: fmt lint typecheck
+quality: fmt lint typecheck proto-lint proto-breaking
     @echo "✓ Server quality checks passed"
+
+[doc('Lint protobuf definitions')]
+[group('CI')]
+proto-lint:
+    cd proto && buf lint
+    @echo "✓ Proto lint passed"
+
+[doc('Check for breaking changes in protobuf')]
+[group('CI')]
+proto-breaking:
+    cd proto && buf breaking --against '.git#branch=main'
+    @echo "✓ No breaking proto changes found"
+
+[doc('Generate code from protobuf')]
+[group('Build')]
+proto:
+    cd proto && buf generate
+    @echo "✓ Proto generation successful"
 
 # Deploy
 # Deploy

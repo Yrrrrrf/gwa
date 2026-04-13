@@ -1,0 +1,63 @@
+use std::sync::Arc;
+use surrealdb::engine::any::connect;
+use surrealdb::opt::auth::Root;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+use crate::adapters::graphql::build_schema;
+use crate::adapters::grpc::documents::DocumentClient;
+use crate::adapters::grpc::notifier::NotifierClient;
+use crate::adapters::http::app_state::AppState;
+use crate::infra::config::AppConfig;
+use store::client::SurrealClient;
+use store::repos::auth::SurrealAuthRepo;
+use store::repos::item::SurrealItemRepo;
+
+pub fn init_tracing() {
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            std::env::var("RUST_LOG").unwrap_or_else(|_| "info,api=debug,store=debug".into()),
+        ))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+}
+
+pub async fn init_app_state(config: &AppConfig) -> AppState {
+    let db = connect(&config.db_url)
+        .await
+        .expect("Failed to connect to SurrealDB");
+
+    db.signin(Root {
+        username: config.db_user.clone(),
+        password: config.db_pass.clone(),
+    })
+    .await
+    .expect("Failed to sign in to SurrealDB");
+
+    db.use_ns(&config.db_ns)
+        .use_db(&config.db_db)
+        .await
+        .expect("Failed to use namespace/db");
+
+    let surreal_client = SurrealClient::new(Arc::new(db));
+
+    let auth_repo = Arc::new(SurrealAuthRepo::new(surreal_client.clone()));
+    let item_repo = Arc::new(SurrealItemRepo::new(surreal_client));
+    let schema = build_schema();
+
+    // Connect to Go gRPC services
+    let notifier_client = NotifierClient::connect(config.rpc_url.clone())
+        .await
+        .expect("Failed to connect to NotifierService");
+    let document_client = DocumentClient::connect(config.rpc_url.clone())
+        .await
+        .expect("Failed to connect to DocumentService");
+
+    AppState {
+        auth_repo,
+        item_repo,
+        jwt_secret: config.jwt_secret.clone(),
+        schema,
+        notifier_client,
+        document_client,
+    }
+}

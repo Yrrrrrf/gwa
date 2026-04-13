@@ -10,3 +10,16 @@ pub struct Item {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ItemAction {
+    Create,
+    Update,
+    Delete,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ItemEvent {
+    pub action: ItemAction,
+    pub item: Item,
+}

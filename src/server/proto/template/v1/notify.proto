@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package template.v1;
+
+import "google/protobuf/struct.proto";
+
+service NotifierService {
+  rpc Dispatch(NotificationRequest) returns (NotificationResponse);
+  rpc BatchDispatch(BatchNotificationRequest) returns (BatchNotificationResponse);
+}
+
+message NotificationRequest {
+  string order_id = 1;
+  string channel = 2;
+  string recipient = 3;
+  optional string template_key = 4;
+  optional string locale = 5;
+  optional string subject = 6;
+  optional string body = 7;
+  google.protobuf.Struct variables = 8;
+}
+
+message NotificationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message BatchNotificationRequest {
+  repeated NotificationRequest requests = 1;
+}
+
+message BatchNotificationResponse {
+  int32 processed_count = 1;
+  int32 failure_count = 2;
+  repeated string errors = 3;
+}
