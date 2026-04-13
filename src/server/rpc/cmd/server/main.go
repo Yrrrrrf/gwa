@@ -5,7 +5,6 @@ import (
 	"argus-rpc/internal/platform/logger"
 	"argus-rpc/internal/platform/providers"
 	"argus-rpc/internal/service/notifier"
-	"argus-rpc/internal/service/printer"
 	argusHttp "argus-rpc/internal/transport/http"
 	"context"
 	"flag"
@@ -14,7 +13,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -22,7 +20,6 @@ import (
 	"github.com/labstack/echo/v5"
 
 	hermes "github.com/yrrrrrf/hermes/src"
-	scribe "github.com/yrrrrrf/scribe/src"
 )
 
 // DebugProvider implements Hermes interfaces for development
@@ -88,29 +85,14 @@ func main() {
 	slogLogger := slog.New(handler)
 	slog.SetDefault(slogLogger)
 
-	// 4. Setup Infrastructure (Scribe & Hermes)
-	cwd, _ := os.Getwd()
-
-	// Scribe (Typst Engine)
-	scribeEngine := scribe.New(scribe.Config{
-		WorkDir:     cwd,
-		TemplateDir: filepath.Join(cwd, "templates"),
-		Debug:       cfg.Debug,
-	})
-
-	if err := scribeEngine.CheckHealth(); err != nil {
-		slog.Warn("Scribe check failed (Typst might be missing)", "error", err)
-	}
-
-	// Hermes (Notification Engine)
+	// 4. Setup Infrastructure (Hermes)
 	hermesEngine := setupHermes(cfg)
 
 	// 5. Setup Services
-	printerService := printer.New(scribeEngine, cfg.APIUrl, cfg.SupabaseKey)
 	notifierService := notifier.New(hermesEngine, cfg.APIUrl, cfg.SupabaseKey)
 
 	// 6. Setup Router
-	e := argusHttp.NewRouter(printerService, notifierService)
+	e := argusHttp.NewRouter(notifierService)
 	e.Logger = slogLogger
 
 	// 7. Start Preparation
@@ -126,7 +108,7 @@ func main() {
 	}
 
 	// --- 8. DYNAMIC BANNER ---
-	printBanner(host, finalPort, "v0.2.0") // Bumped version for Prod readiness
+	printBanner(host, finalPort, "v0.3.0")
 
 	// 9. Start
 	go func() {
@@ -143,12 +125,6 @@ func main() {
 	// Create a timeout for graceful shutdown (e.g., 5 seconds to finish emails)
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
-	// todo: Refactor the main servef to handle everything shutdown related
-	// // 1. Stop HTTP Server first (stop accepting new requests)
-	// if err := e.Shutdown(shutdownCtx); err != nil {
-	// 	slog.Error("HTTP shutdown error", "error", err)
-	// }
 
 	// 2. Drain Notifier Queue (finish pending emails)
 	slog.Info("Draining notification queue...")
@@ -243,7 +219,7 @@ func printBanner(host, port, version string) {
 	)
 
 	fmt.Println()
-	fmt.Printf("%s %s\n", colorBrand.Render("ARGUS RPC"), colorVersion.Render(version))
+	fmt.Printf("%s %s\n", colorBrand.Render("TEMPLATE RPC"), colorVersion.Render(version))
 	fmt.Println()
 
 	localHost := "localhost"
@@ -251,8 +227,6 @@ func printBanner(host, port, version string) {
 		localHost = host
 	}
 	fmt.Printf("%s  Local:   %s\n", colorArrow.Render("➜"), colorLink.Render(fmt.Sprintf("http://%s:%s", localHost, port)))
-
-	fmt.Printf("%s  Swagger: %s\n", colorArrow.Render("➜"), colorLink.Render(fmt.Sprintf("http://%s:%s/swagger/index.html", localHost, port)))
 
 	if host == "0.0.0.0" {
 		ip := getOutboundIP()

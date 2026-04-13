@@ -16,8 +16,8 @@ lint:
 [doc('Type-check Client workspace')]
 [group('CI')]
 typecheck:
-    -bunx svelte-check --tsconfig ./apps/explorer/tsconfig.json
-    -bunx svelte-check --tsconfig ./apps/vision/tsconfig.json
+    -deno run -A npm:svelte-check --tsconfig ./apps/explorer/tsconfig.json
+    -deno run -A npm:svelte-check --tsconfig ./apps/vision/tsconfig.json
     # todo: Add a svelte-check for the sdk/ui
     # deno check .
     @echo "✓ Client type-checked"

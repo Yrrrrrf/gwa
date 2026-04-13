@@ -1,3 +1,3 @@
 export const showcaseState = $state({
-	activeTab: 0,
+  activeTab: 0,
 });

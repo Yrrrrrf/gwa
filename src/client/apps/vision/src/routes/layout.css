@@ -6,5 +6,5 @@
 @plugin "@tailwindcss/typography";
 
 @plugin "daisyui" {
-	themes: all;
+  themes: all;
 }

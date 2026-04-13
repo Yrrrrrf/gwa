@@ -7,8 +7,7 @@ use crate::adapters::http::app_state::AppState;
 use crate::infra::config::AppConfig;
 use store::client::SurrealClient;
 use store::repos::auth::SurrealAuthRepo;
-use store::repos::business::SurrealBusinessRepo;
-use store::repos::review::SurrealReviewRepo;
+use store::repos::item::SurrealItemRepo;
 
 pub fn init_tracing() {
     tracing_subscriber::registry()
@@ -39,13 +38,11 @@ pub async fn init_app_state(config: &AppConfig) -> AppState {
     let surreal_client = SurrealClient::new(Arc::new(db));
 
     let auth_repo = Arc::new(SurrealAuthRepo::new(surreal_client.clone()));
-    let business_repo = Arc::new(SurrealBusinessRepo::new(surreal_client.clone()));
-    let review_repo = Arc::new(SurrealReviewRepo::new(surreal_client));
+    let item_repo = Arc::new(SurrealItemRepo::new(surreal_client));
 
     AppState {
         auth_repo,
-        business_repo,
-        review_repo,
+        item_repo,
         jwt_secret: config.jwt_secret.clone(),
     }
 }

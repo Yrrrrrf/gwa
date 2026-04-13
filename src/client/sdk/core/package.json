@@ -1,14 +1,14 @@
 {
-	"name": "@sdk/core",
-	"version": "0.0.1",
-	"private": true,
-	"type": "module",
-	"main": "./src/mod.ts",
-	"types": "./src/mod.ts",
-	"dependencies": {
-		"zod": "*"
-	},
-	"scripts": {
-		"test": "bun test"
-	}
+  "name": "@sdk/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/mod.ts",
+  "types": "./src/mod.ts",
+  "dependencies": {
+    "zod": "*"
+  },
+  "scripts": {
+    "test": "bun test"
+  }
 }

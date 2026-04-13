@@ -36,13 +36,13 @@
     <div
       class="order-2 md:order-none flex items-center gap-2 sm:gap-4 ml-auto z-10 relative"
     >
-      <!-- DESKTOP VIEW (hidden on mobile) -->
+      <!-- DESKTOP VIEW -->
       <div class="hidden md:flex items-center gap-4">
         {#if !auth.role}
           <a
             href="/login"
             class="text-[11px] sm:text-sm font-bold opacity-80 hover:opacity-100 transition-opacity"
-            >Ingresar</a
+            >Login</a
           >
 
           <div class="dropdown dropdown-end">
@@ -51,7 +51,7 @@
               role="button"
               class="btn btn-primary btn-sm shadow-lg shadow-primary/20"
             >
-              Regístrate
+              Sign Up
             </div>
             <ul
               tabindex="-1"
@@ -59,28 +59,28 @@
             >
               <li>
                 <a
-                  href="/register?type=tourist"
+                  href="/register?type=user"
                   class="font-bold flex items-center gap-3 p-3 hover:text-primary"
                 >
-                  <span class="text-xl">🌍</span>
+                  <span class="text-xl">👤</span>
                   <div class="flex flex-col">
-                    <span>Como Usuario</span>
+                    <span>As User</span>
                     <span class="text-[10px] font-normal opacity-70"
-                      >Encuentra comida y spots</span
+                      >Explore items and content</span
                     >
                   </div>
                 </a>
               </li>
               <li>
                 <a
-                  href="/register?type=merchant"
+                  href="/register?type=manager"
                   class="font-bold flex items-center gap-3 p-3 hover:text-secondary"
                 >
-                  <span class="text-xl">🏪</span>
+                  <span class="text-xl">🛠️</span>
                   <div class="flex flex-col">
-                    <span>Como Comerciante</span>
+                    <span>As Manager</span>
                     <span class="text-[10px] font-normal opacity-70"
-                      >Promociona tu negocio</span
+                      >Manage your items</span
                     >
                   </div>
                 </a>
@@ -92,33 +92,27 @@
           <div
             class="flex items-center gap-5 mr-2 lg:mr-4 opacity-80 font-bold text-[11px] uppercase tracking-widest"
           >
-            {#if auth.role === "tourist"}
-              <a href="/discover" class="hover:text-primary transition-colors"
-                >Explorar</a
+            {#if auth.role === "user"}
+              <a href="/items" class="hover:text-primary transition-colors"
+                >Items</a
               >
-              <a href="/saved" class="hover:text-primary transition-colors"
-                >Guardados</a
-              >
-            {:else if auth.role === "business"}
+            {:else if auth.role === "manager"}
               <a href="/dashboard" class="hover:text-primary transition-colors"
-                >Tablero</a
-              >
-              <a href="/menu" class="hover:text-primary transition-colors"
-                >Menú</a
+                >Dashboard</a
               >
             {:else if auth.role === "admin"}
               <a href="/admin" class="hover:text-primary transition-colors"
-                >Centro de Control</a
+                >Control Center</a
               >
             {/if}
             <a href="/profile" class="hover:text-primary transition-colors"
-              >Perfil</a
+              >Profile</a
             >
           </div>
 
           <span
             class="text-[10px] font-bold opacity-50 inline-block border-l border-white/10 pl-2 lg:pl-4 ml-2"
-            >Modo: {auth.role}</span
+            >Mode: {auth.role}</span
           >
           <button
             onclick={() => {
@@ -127,12 +121,12 @@
             }}
             class="text-[10px] sm:text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl bg-base-content/5 border border-base-content/10 hover:bg-error/10 hover:text-error transition-all duration-300 ml-2"
           >
-            {m.nav_logout()}
+            Logout
           </button>
         {/if}
       </div>
 
-      <!-- MOBILE NAV (Hamburger Menu) -->
+      <!-- MOBILE NAV -->
       <div class="dropdown dropdown-end md:hidden">
         <div
           tabindex="-1"
@@ -163,22 +157,12 @@
               <a
                 href="/login"
                 class="font-bold flex justify-center py-3 bg-base-content/5 rounded-xl hover:bg-primary hover:text-primary-content transition-colors"
-                >Ingresar</a
-              >
-            </li>
-            <li
-              class="mt-2 text-[10px] font-bold opacity-50 uppercase tracking-widest text-center px-4"
-            >
-              Crear Cuenta
-            </li>
-            <li>
-              <a href="/register?type=tourist" class="font-medium p-3"
-                >Usuario (Explorador)</a
+                >Login</a
               >
             </li>
             <li>
-              <a href="/register?type=merchant" class="font-medium p-3"
-                >Negocio (Comerciante)</a
+              <a href="/register?type=user" class="font-medium p-3"
+                >Sign Up</a
               >
             </li>
           {:else}
@@ -189,20 +173,12 @@
                   goto("/");
                 }}
                 class="font-bold flex justify-center py-3 bg-error/10 text-error rounded-xl hover:bg-error hover:text-error-content transition-colors"
-                >Cerrar Sesión</button
+                >Logout</button
               >
             </li>
           {/if}
-
-          <div class="divider my-2 opacity-50"></div>
-
-          <li class="flex flex-col gap-3 p-1">
-            <span
-              class="text-[10px] font-bold opacity-50 uppercase tracking-widest w-full text-center"
-              >Configuración</span
-            >
-          </li>
         </ul>
       </div>
     </div>
+  </div>
 </header>

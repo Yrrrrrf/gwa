@@ -1,6 +1,4 @@
 <script lang="ts">
-  import * as m from "../../../src/i18n/paraglide/messages.js";
-
   interface Props {
     status: string;
     class?: string;
@@ -12,19 +10,17 @@
     active: "badge-success",
     inactive: "badge-ghost",
     pending: "badge-warning",
-    active_food: "badge-success",
-    hidden_food: "badge-ghost",
+    error: "badge-error",
   };
 
-  const labelMap: Record<string, () => string> = {
-    active: () => m.badge_open(),
-    inactive: () => m.badge_closed(),
-    pending: () => m.biz_status(),
-    active_food: () => m.merchant_available(),
-    hidden_food: () => m.badge_closed(),
+  const labelMap: Record<string, string> = {
+    active: "Active",
+    inactive: "Inactive",
+    pending: "Pending",
+    error: "Error",
   };
 
-  const label = $derived(labelMap[status]?.() ?? status);
+  const label = $derived(labelMap[status] ?? status);
 </script>
 
 <div

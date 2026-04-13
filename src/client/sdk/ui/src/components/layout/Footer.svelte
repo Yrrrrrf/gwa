@@ -14,32 +14,31 @@
         </span>
       </div>
       <p class="text-xs font-medium leading-relaxed max-w-xs italic">
-        {m.discover_subtitle()}
+        A generic starter template for multi-platform applications.
       </p>
     </div>
 
     <div class="flex flex-col gap-4">
       <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-        {m.nav_menu()}
+        Menu
       </h4>
       <ul class="flex flex-col gap-2 text-xs font-bold uppercase tracking-widest">
         <li class="hover:text-primary transition-colors cursor-pointer">
-          <a href="/discover">{m.nav_discover()}</a>
+          <a href="/items">Items</a>
         </li>
         <li class="hover:text-primary transition-colors cursor-pointer">
-          <a href="/saved">{m.nav_saved()}</a>
+          <a href="/dashboard">Dashboard</a>
         </li>
       </ul>
     </div>
 
     <div class="flex flex-col gap-4">
       <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-secondary">
-        {m.nav_profile()}
+        Connect
       </h4>
       <div class="flex items-center gap-4">
         <ICONS.phone size={16} class="text-secondary hover:scale-110 cursor-pointer transition-transform" />
         <ICONS.email size={16} class="text-secondary hover:scale-110 cursor-pointer transition-transform" />
-        <ICONS.map_pin size={16} class="text-secondary hover:scale-110 cursor-pointer transition-transform" />
       </div>
       <p class="text-[9px] font-black uppercase tracking-widest mt-2">
         © 2026 {m.app_name()} - All rights reserved
