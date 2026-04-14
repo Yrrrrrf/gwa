@@ -1,4 +1,4 @@
-use api::infra::{
+use gateway::infra::{
     app::create_app,
     config::AppConfig,
     setup::{init_app_state, init_tracing},
