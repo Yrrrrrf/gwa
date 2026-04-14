@@ -34,13 +34,7 @@ async fn graphql_handler(
     let claims = headers
         .get(header::AUTHORIZATION)
         .and_then(|h| h.to_str().ok())
-        .and_then(|h: &str| {
-            if h.starts_with("Bearer ") {
-                Some(h.split_at(7).1)
-            } else {
-                None
-            }
-        })
+        .and_then(|h: &str| h.strip_prefix("Bearer "))
         .and_then(|token: &str| {
             decode::<Claims>(
                 token,

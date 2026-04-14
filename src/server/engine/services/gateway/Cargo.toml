@@ -11,12 +11,12 @@ application = { path = "../../application" }
 # HTTP
 axum = { workspace = true, features = ["macros"] }
 axum-core = { workspace = true }
-async-graphql = { version = "7.2.1", features = [
+async-graphql = { version = "8.0.0-rc.4", features = [
     "chrono",
     "uuid",
     "dataloader",
 ] }
-async-graphql-axum = "7.2.1"
+async-graphql-axum = "8.0.0-rc.4"
 futures-util = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true }
