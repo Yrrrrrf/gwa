@@ -33,5 +33,5 @@ pub fn validate_email(email: &str) -> bool {
 
 #[wasm_bindgen]
 pub fn validate_rating(rating: i32) -> bool {
-    rating >= 1 && rating <= 5
+    (1..=5).contains(&rating)
 }

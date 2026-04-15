@@ -3,6 +3,12 @@
 
 pub struct ArgonHasher;
 
+impl Default for ArgonHasher {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArgonHasher {
     pub fn new() -> Self {
         Self
