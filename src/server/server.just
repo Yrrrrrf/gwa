@@ -14,7 +14,8 @@ lint:
     # todo: Add lint types for the lint command!
     # ^ lint lenient
     # * no warnings for clippy
-    cd engine && cargo clippy --all-targets --all-features -- -A warnings
+    # cd engine && cargo clippy --all-targets --all-features -- -A warnings
+    cd engine && cargo clippy
 
     # ^ lint normal
     # * normal
