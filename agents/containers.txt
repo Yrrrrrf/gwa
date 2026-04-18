@@ -1,0 +1,1335 @@
+SUMMARY
+============================================================
+Directory: home/yrrrrrf/docs/lab/tek/gwa/containers
+Files analyzed: 18
+
+Estimated tokens: 13.8k
+
+TREE
+============================================================
+Directory structure:
+└── containers/
+    └── pods/
+        └── surrealdb/
+            ├── db.Dockerfile
+            ├── init/
+            │   ├── 01-schema/
+            │   │   ├── 01-tables.surql
+            │   │   └── 02-fields.surql
+            │   ├── 02-indexes/
+            │   │   └── 01-indexes.surql
+            │   ├── 03-functions/
+            │   │   └── 01-functions.surql
+            │   ├── 04-events/
+            │   │   └── 01-events.surql
+            │   └── 05-seed/
+            │       ├── 01-locale-strings.surql
+            │       ├── 02-categories.surql
+            │       ├── 03-cities.surql
+            │       ├── 04-users.surql
+            │       ├── 05-businesses.surql
+            │       ├── 06-media.surql
+            │       ├── 07-graph-manages.surql
+            │       ├── 08-reviews.surql
+            │       ├── 09-graph-visits-favorites.surql
+            │       └── 10-activity.surql
+            └── scripts/
+                ├── entrypoint.sh
+                └── init-db.sh
+
+
+CONTENT
+============================================================
+================================================
+FILE: pods/surrealdb/db.Dockerfile
+================================================
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y curl tzdata ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Copy the precompiled surreal binary from the official image
+COPY --from=surrealdb/surrealdb:v3 /surreal /bin/surreal
+
+ENV LANG=C.UTF-8
+ENV TZ=UTC
+
+COPY scripts/ /scripts/
+COPY init/    /init/
+
+RUN chmod +x /scripts/entrypoint.sh /scripts/init-db.sh
+
+EXPOSE 8000
+
+ENTRYPOINT ["/scripts/entrypoint.sh"]
+
+
+
+================================================
+FILE: pods/surrealdb/init/01-schema/01-tables.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Table Definitions (Tourism Domain)
+-- Pipeline order: tables → fields → indexes → functions → events → seed
+-- =============================================================================
+
+DEFINE NAMESPACE app;
+USE NAMESPACE app;
+DEFINE DATABASE main;
+USE DATABASE main;
+
+-- Supporting domain: i18n, taxonomy, geo anchoring
+DEFINE TABLE locale_string SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE category SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE city SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE user SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE session SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE business SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE review SCHEMAFULL TYPE RELATION IN user OUT business PERMISSIONS FULL;
+DEFINE TABLE media SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE manages SCHEMAFULL TYPE RELATION IN user OUT business PERMISSIONS FULL;
+DEFINE TABLE visits SCHEMAFULL TYPE RELATION IN user OUT business PERMISSIONS FULL;
+DEFINE TABLE favorites SCHEMAFULL TYPE RELATION IN user OUT business PERMISSIONS FULL;
+DEFINE TABLE activity SCHEMAFULL PERMISSIONS FULL;
+
+
+
+================================================
+FILE: pods/surrealdb/init/01-schema/02-fields.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Field Definitions (Tourism Domain)
+-- This file is the schema contract. Every ASSERT and VALUE field here is
+-- a domain invariant enforced at the DB level, regardless of which client connects.
+-- =============================================================================
+
+-- ---------------------------------------------------------------------------
+-- locale_string: i18n key-value store
+-- ---------------------------------------------------------------------------
+DEFINE FIELD key        ON locale_string TYPE string;
+DEFINE FIELD locale     ON locale_string TYPE string;
+DEFINE FIELD value      ON locale_string TYPE string;
+DEFINE FIELD updated_at ON locale_string TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- category: tourism taxonomy with parent hierarchy
+-- ---------------------------------------------------------------------------
+DEFINE FIELD slug        ON category TYPE string;
+DEFINE FIELD icon        ON category TYPE option<string>;
+DEFINE FIELD name        ON category TYPE string;
+DEFINE FIELD description ON category TYPE option<string>;
+DEFINE FIELD parent      ON category TYPE option<record<category>>;
+DEFINE FIELD path        ON category VALUE
+    IF parent != NONE THEN parent.path + ' > ' + name
+    ELSE name END;
+DEFINE FIELD created_at  ON category TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- city: geo anchor for businesses
+-- ---------------------------------------------------------------------------
+DEFINE FIELD name          ON city TYPE string;
+DEFINE FIELD slug          ON city TYPE string;
+DEFINE FIELD country_code  ON city TYPE string;
+DEFINE FIELD coordinates   ON city TYPE geometry<point>;
+DEFINE FIELD is_venue_city ON city TYPE bool DEFAULT false;
+DEFINE FIELD created_at    ON city TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- user: tourists, owners, admins
+-- ---------------------------------------------------------------------------
+DEFINE FIELD username     ON user TYPE string;
+DEFINE FIELD email        ON user TYPE string ASSERT string::is_email($value);
+DEFINE FIELD password_hash ON user TYPE string;
+DEFINE FIELD role         ON user TYPE string
+    ASSERT $value IN ['tourist', 'owner', 'admin'];
+DEFINE FIELD display_name ON user TYPE option<string>;
+DEFINE FIELD avatar_url   ON user TYPE option<string>;
+DEFINE FIELD locale       ON user TYPE string DEFAULT 'en';
+DEFINE FIELD country_code ON user TYPE option<string>;
+DEFINE FIELD created_at   ON user TYPE datetime DEFAULT time::now();
+DEFINE FIELD updated_at   ON user TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- session: auth tokens linked to users
+-- ---------------------------------------------------------------------------
+DEFINE FIELD user       ON session TYPE record<user> REFERENCE ON DELETE CASCADE;
+DEFINE FIELD token      ON session TYPE string;
+DEFINE FIELD user_agent ON session TYPE option<string>;
+DEFINE FIELD ip_address ON session TYPE option<string>;
+DEFINE FIELD expires_at ON session TYPE datetime;
+DEFINE FIELD created_at ON session TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- business: the core domain entity
+-- ---------------------------------------------------------------------------
+DEFINE FIELD name             ON business TYPE string;
+DEFINE FIELD slug             ON business TYPE string;
+DEFINE FIELD description      ON business TYPE option<string>;
+DEFINE FIELD category         ON business TYPE record<category> REFERENCE ON DELETE REJECT;
+DEFINE FIELD city             ON business TYPE record<city>     REFERENCE ON DELETE REJECT;
+DEFINE FIELD coordinates      ON business TYPE geometry<point>;
+DEFINE FIELD address          ON business TYPE option<string>;
+DEFINE FIELD neighborhood     ON business TYPE option<string>;
+DEFINE FIELD price_range      ON business TYPE string
+    ASSERT $value IN ['$', '$$', '$$$'];
+DEFINE FIELD languages_spoken ON business TYPE array<string>
+    ASSERT array::all($value, |$l| $l IN ['es','en','fr','ja','de','pt','zh','it','ko','ar','ru','nl','pl']);
+DEFINE FIELD phone            ON business TYPE option<string>;
+DEFINE FIELD website          ON business TYPE option<string>;
+DEFINE FIELD opening_hours    ON business TYPE option<string>;
+DEFINE FIELD is_active        ON business TYPE bool DEFAULT true;
+DEFINE FIELD is_verified      ON business TYPE bool DEFAULT false;
+DEFINE FIELD is_ola_mexico    ON business TYPE bool DEFAULT false
+    PERMISSIONS FOR update WHERE $auth.role = 'admin';
+DEFINE FIELD internal_notes   ON business TYPE option<string>
+    PERMISSIONS FOR select WHERE $auth.role IN ['owner', 'admin'];
+
+-- Rating and Review Count: explicitly updated by events for performance and consistency
+DEFINE FIELD rating       ON business TYPE option<float> DEFAULT 0;
+DEFINE FIELD review_count ON business TYPE int            DEFAULT 0;
+
+DEFINE FIELD created_at ON business TYPE datetime DEFAULT time::now();
+DEFINE FIELD updated_at ON business TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- review: tourist → review → business (immutable relation)
+-- ---------------------------------------------------------------------------
+DEFINE FIELD rating     ON review TYPE int
+    ASSERT $value >= 1 AND $value <= 5;
+DEFINE FIELD body       ON review TYPE option<string>;
+DEFINE FIELD locale     ON review TYPE string DEFAULT 'en';
+DEFINE FIELD created_at ON review TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- media: external asset URLs linked to a business
+-- ---------------------------------------------------------------------------
+DEFINE FIELD business   ON media TYPE record<business> REFERENCE ON DELETE CASCADE;
+DEFINE FIELD url        ON media TYPE string;
+DEFINE FIELD caption_es ON media TYPE option<string>;
+DEFINE FIELD caption_en ON media TYPE option<string>;
+DEFINE FIELD sort_order ON media TYPE int DEFAULT 0;
+DEFINE FIELD created_at ON media TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- manages: owner → manages → business (graph edge)
+-- ---------------------------------------------------------------------------
+DEFINE FIELD since ON manages TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- visits: tourist → visits → business (behavioral graph fact)
+-- ---------------------------------------------------------------------------
+DEFINE FIELD source     ON visits TYPE string
+    ASSERT $value IN ['map', 'search', 'qr', 'link', 'recommendation'];
+DEFINE FIELD visited_at ON visits TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- favorites: tourist → favorites → business (graph edge)
+-- ---------------------------------------------------------------------------
+DEFINE FIELD added_at ON favorites TYPE datetime DEFAULT time::now();
+
+-- ---------------------------------------------------------------------------
+-- activity: audit log, written only by DB events
+-- ---------------------------------------------------------------------------
+DEFINE FIELD type            ON activity TYPE string;
+DEFINE FIELD target_owner    ON activity TYPE option<record<user>>;
+DEFINE FIELD target_business ON activity TYPE option<record<business>>;
+DEFINE FIELD meta            ON activity TYPE option<object>;
+DEFINE FIELD meta.*          ON activity TYPE any;
+DEFINE FIELD occurred_at     ON activity TYPE datetime DEFAULT time::now();
+
+
+
+================================================
+FILE: pods/surrealdb/init/02-indexes/01-indexes.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Index Definitions (Tourism Domain)
+-- =============================================================================
+
+-- ---------------------------------------------------------------------------
+-- Unique indexes: enforce data integrity at the DB level
+-- ---------------------------------------------------------------------------
+DEFINE INDEX user_email    ON user     FIELDS email    UNIQUE;
+DEFINE INDEX user_username ON user     FIELDS username UNIQUE;
+DEFINE INDEX session_token ON session  FIELDS token    UNIQUE;
+DEFINE INDEX business_slug ON business FIELDS slug     UNIQUE;
+DEFINE INDEX city_slug     ON city     FIELDS slug     UNIQUE;
+DEFINE INDEX category_slug ON category FIELDS slug     UNIQUE;
+DEFINE INDEX locale_idx    ON locale_string FIELDS key, locale UNIQUE;
+
+-- One review per tourist per business (enforced via composite unique on the relation edge)
+DEFINE INDEX review_per_tourist_per_business ON review FIELDS in, out UNIQUE;
+
+-- ---------------------------------------------------------------------------
+-- Full-text search: BM25 with ascii normalizer (diacritics-free Spanish/English)
+-- ascii filter strips accents so 'artesania' matches 'Artesanías'
+-- ---------------------------------------------------------------------------
+DEFINE ANALYZER ascii_bm25
+    TOKENIZERS blank, class, camel, punct
+    FILTERS ascii, lowercase, snowball(spanish), snowball(english);
+
+DEFINE INDEX business_name_ft ON business
+    FIELDS name        FULLTEXT ANALYZER ascii_bm25 BM25;
+DEFINE INDEX business_desc_ft ON business
+    FIELDS description FULLTEXT ANALYZER ascii_bm25 BM25;
+
+-- ---------------------------------------------------------------------------
+-- Analytics indexes: support fn::popular_in_city and fn::city_snapshot
+-- ---------------------------------------------------------------------------
+DEFINE INDEX visits_by_business   ON visits   FIELDS out;
+DEFINE INDEX favorites_by_business ON favorites FIELDS out;
+DEFINE INDEX activity_by_time     ON activity  FIELDS occurred_at;
+
+
+
+================================================
+FILE: pods/surrealdb/init/03-functions/01-functions.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Function Definitions (Tourism Domain)
+-- Functions are read-only helpers. Mutations belong to events or queries.
+-- Return shapes are client contracts — coordinate with Frontend before changing.
+-- =============================================================================
+
+-- ---------------------------------------------------------------------------
+-- fn::t — i18n lookup with English fallback
+-- Used everywhere a display string needs locale-aware resolution.
+-- ---------------------------------------------------------------------------
+DEFINE FUNCTION fn::t($key: string, $locale: string) {
+    LET $trans = (SELECT VALUE value FROM locale_string WHERE key = $key AND locale = $locale LIMIT 1);
+    IF array::len($trans) > 0 {
+        RETURN $trans[0];
+    } ELSE {
+        LET $fallback = (SELECT VALUE value FROM locale_string WHERE key = $key AND locale = 'en' LIMIT 1);
+        RETURN array::first($fallback) OR NONE;
+    };
+};
+
+-- ---------------------------------------------------------------------------
+-- fn::businesses_near — geo radius search
+-- Primary data source for the Explorer map view.
+-- Returns active+verified businesses within $radius_km, ordered by distance.
+-- Each record is augmented with a computed distance_km field.
+-- geo::distance returns meters; divide by 1000 for km.
+-- ---------------------------------------------------------------------------
+DEFINE FUNCTION fn::businesses_near($point: geometry<point>, $radius_km: decimal) {
+    LET $radius_m = $radius_km * 1000.0dec;
+    LET $businesses = (
+        SELECT
+            *,
+            geo::distance(coordinates, $point) / 1000.0 AS distance_km
+        FROM business
+        WHERE is_active = true
+          AND is_verified = true
+          AND geo::distance(coordinates, $point) <= $radius_m
+        ORDER BY distance_km ASC
+    );
+    RETURN $businesses;
+};
+
+-- ---------------------------------------------------------------------------
+-- fn::search_businesses — BM25 full-text search with filters
+-- $city_id and $category_id are optional filters (pass NONE to skip).
+-- Results ordered by review_count DESC as a relevance proxy.
+-- ---------------------------------------------------------------------------
+DEFINE FUNCTION fn::search_businesses(
+    $query:       string,
+    $locale:      string,
+    $city_id:     option<record<city>>,
+    $category_id: option<record<category>>
+) {
+    LET $results = (
+        SELECT * FROM business
+        WHERE is_active = true
+          AND is_verified = true
+          AND (name @@ $query OR description @@ $query)
+          AND ($city_id     = NONE OR city     = $city_id)
+          AND ($category_id = NONE OR category = $category_id)
+        ORDER BY review_count DESC
+    );
+    RETURN $results;
+};
+
+-- ---------------------------------------------------------------------------
+-- fn::tourist_recommendations — collaborative filtering via graph traversal
+-- 1. Find businesses this tourist has visited
+-- 2. Find other tourists who visited those same businesses
+-- 3. Find what else those similar tourists visited (excluding already-known)
+-- 4. Rank by overlap count and return top $limit business IDs
+-- This is the hackathon's strongest demo moment — pure graph, zero app logic.
+-- ---------------------------------------------------------------------------
+DEFINE FUNCTION fn::tourist_recommendations($user_id: record<user>, $limit: int) {
+    -- Step 1: businesses this tourist has already visited
+    LET $visited = SELECT VALUE ->visits->business FROM only $user_id;
+
+    -- Step 2: all tourists who visited any of those businesses (flattened)
+    LET $similar_raw = SELECT VALUE <-visits<-user FROM business WHERE id IN $visited;
+    LET $similar_tourists = array::flatten($similar_raw);
+
+    -- Step 3: what those tourists visited, excluding what our tourist already knows
+    LET $recommendations = (
+        SELECT out AS business, count() AS overlap
+        FROM visits
+        WHERE in IN $similar_tourists
+          AND in  != $user_id
+          AND out NOT IN $visited
+        GROUP BY out
+        ORDER BY overlap DESC
+        LIMIT $limit
+    );
+    LET $biz_ids = $recommendations.business;
+    RETURN SELECT * FROM business WHERE id IN $biz_ids;
+};
+
+-- ---------------------------------------------------------------------------
+-- fn::popular_in_city — top businesses by engagement score
+-- Score = review_count × rating. Feeds "trending" UI sections.
+-- ---------------------------------------------------------------------------
+DEFINE FUNCTION fn::popular_in_city($city_id: record<city>, $limit: int) {
+    LET $businesses = (
+        SELECT *, (review_count * (rating OR 0.0dec)) AS score
+        FROM business
+        WHERE city = $city_id
+          AND is_active   = true
+          AND is_verified = true
+        ORDER BY score DESC
+        LIMIT $limit
+    );
+    RETURN $businesses;
+};
+
+-- ---------------------------------------------------------------------------
+-- fn::city_snapshot — point-in-time telemetry for a city
+-- Used by the Vision dashboard and the fn::city_snapshot integration test.
+-- ---------------------------------------------------------------------------
+DEFINE FUNCTION fn::city_snapshot($city_id: record<city>) {
+    LET $biz       = (SELECT id FROM business WHERE city = $city_id AND is_active = true AND is_verified = true);
+    LET $biz_ids   = $biz.id;
+    LET $week_ago  = time::now() - 7d;
+
+    LET $total_reviews = (SELECT VALUE count() FROM review WHERE out IN $biz_ids)[0] OR 0;
+    LET $visits_week   = (SELECT VALUE count() FROM visits WHERE out IN $biz_ids AND visited_at >= $week_ago)[0] OR 0;
+    LET $top_cat_row   = (
+        SELECT out.category AS cat, count() AS cnt
+        FROM visits
+        WHERE out IN $biz_ids
+        GROUP BY out.category
+        ORDER BY cnt DESC
+        LIMIT 1
+    )[0];
+
+    RETURN {
+        city:              $city_id,
+        active_businesses: array::len($biz_ids),
+        total_reviews:     $total_reviews,
+        visits_this_week:  $visits_week,
+        top_category:      $top_cat_row.cat OR NONE
+    };
+};
+
+
+
+================================================
+FILE: pods/surrealdb/init/04-events/01-events.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Event Definitions (Tourism Domain)
+-- Events handle audit and notification side effects only.
+-- Domain decisions stay in the application (Rust core/domain).
+-- The activity table is the observable event log for all side effects.
+-- =============================================================================
+
+-- ---------------------------------------------------------------------------
+-- on_review_created
+-- When a tourist creates a review, notify the business owner.
+-- Includes tourist country_code and locale so the owner knows who reviewed.
+-- Also serves as the trigger point for the first-review milestone check.
+-- ---------------------------------------------------------------------------
+DEFINE EVENT on_review_created ON review WHEN $event = 'CREATE' THEN {
+    LET $biz = $after.out;
+    LET $owner = (SELECT VALUE in FROM manages WHERE out = $biz LIMIT 1)[0];
+
+    -- Recalculate and update business stats (rating/review_count)
+    -- Using GROUP ALL ensures we get a single result with the aggregates
+    LET $stats = (SELECT 
+        math::mean(rating) AS avg_rating,
+        count()            AS total
+        FROM review WHERE out = $biz GROUP ALL);
+    
+    UPDATE $biz SET 
+        rating       = $stats[0].avg_rating OR 0,
+        review_count = $stats[0].total OR 0;
+
+    -- Notify owner of new review
+    IF $owner != NONE {
+        CREATE activity SET
+            type            = 'review.received',
+            target_owner    = $owner,
+            target_business = $after.out,
+            meta = {
+                rating:           $after.rating,
+                locale:           $after.locale,
+                reviewer_country: $after.in.country_code
+            },
+            occurred_at = time::now();
+    };
+
+    -- First-review milestone: check if this is the very first review for this business
+    LET $review_count = (SELECT VALUE count() FROM review WHERE out = $after.out)[0] OR 0;
+    IF $review_count = 1 AND $owner != NONE {
+        CREATE activity SET
+            type            = 'review.first',
+            target_owner    = $owner,
+            target_business = $after.out,
+            meta = { rating: $after.rating },
+            occurred_at = time::now();
+    };
+};
+
+-- ---------------------------------------------------------------------------
+-- on_review_deleted
+-- When a review is deleted, recalculate business stats.
+-- ---------------------------------------------------------------------------
+DEFINE EVENT on_review_deleted ON review WHEN $event = 'DELETE' THEN {
+    LET $biz = $before.out;
+    LET $stats = (SELECT 
+        math::mean(rating) AS avg_rating,
+        count()            AS total
+        FROM review WHERE out = $biz GROUP ALL);
+    
+    UPDATE $biz SET 
+        rating       = $stats[0].avg_rating OR 0,
+        review_count = $stats[0].total OR 0;
+};
+
+-- ---------------------------------------------------------------------------
+-- on_business_verified
+-- When a business goes from unverified → verified, it appears on the tourist
+-- map for the first time. The owner gets a milestone notification.
+-- ---------------------------------------------------------------------------
+DEFINE EVENT on_business_verified ON business
+    WHEN $event = 'UPDATE' AND $after.is_verified = true AND ($before.is_verified = false OR $before.is_verified = NONE)
+THEN {
+    LET $owner = (SELECT VALUE in FROM manages WHERE out = $after.id LIMIT 1)[0];
+    CREATE activity SET
+        type            = 'business.verified',
+        target_owner    = $owner,
+        target_business = $after.id,
+        meta = { name: $after.name },
+        occurred_at = time::now();
+};
+
+-- ---------------------------------------------------------------------------
+-- on_visit_recorded
+-- When a tourist visits a business for the first time, give the owner a
+-- first-visit milestone. Repeat visits are silently tracked with no event.
+-- ---------------------------------------------------------------------------
+DEFINE EVENT on_visit_recorded ON visits WHEN $event = 'CREATE' THEN {
+    LET $prior = (SELECT VALUE count() FROM visits WHERE in = $after.in AND out = $after.out)[0] OR 0;
+    IF $prior <= 1 {
+        LET $owner = (SELECT VALUE in FROM manages WHERE out = $after.out LIMIT 1)[0];
+        IF $owner != NONE {
+            CREATE activity SET
+                type            = 'visit.first',
+                target_owner    = $owner,
+                target_business = $after.out,
+                meta = { source: $after.source },
+                occurred_at = time::now();
+        };
+    };
+};
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/01-locale-strings.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Locale Strings (i18n)
+-- Minimum 7 locales: es, en, fr, ja, de, pt, zh
+-- Keys: categories, cities, UI labels, Ola México badge
+-- =============================================================================
+
+-- Category names
+CREATE locale_string SET key='category_gastronomy',          locale='es', value='Gastronomía';
+CREATE locale_string SET key='category_gastronomy',          locale='en', value='Gastronomy';
+CREATE locale_string SET key='category_gastronomy',          locale='fr', value='Gastronomie';
+CREATE locale_string SET key='category_gastronomy',          locale='ja', value='グルメ';
+CREATE locale_string SET key='category_gastronomy',          locale='de', value='Gastronomie';
+CREATE locale_string SET key='category_gastronomy',          locale='pt', value='Gastronomia';
+CREATE locale_string SET key='category_gastronomy',          locale='zh', value='美食';
+
+CREATE locale_string SET key='category_lodging',             locale='es', value='Hospedaje';
+CREATE locale_string SET key='category_lodging',             locale='en', value='Lodging';
+CREATE locale_string SET key='category_lodging',             locale='fr', value='Hébergement';
+CREATE locale_string SET key='category_lodging',             locale='ja', value='宿泊';
+CREATE locale_string SET key='category_lodging',             locale='de', value='Unterkunft';
+CREATE locale_string SET key='category_lodging',             locale='pt', value='Hospedagem';
+CREATE locale_string SET key='category_lodging',             locale='zh', value='住宿';
+
+CREATE locale_string SET key='category_crafts',              locale='es', value='Artesanías';
+CREATE locale_string SET key='category_crafts',              locale='en', value='Crafts';
+CREATE locale_string SET key='category_crafts',              locale='fr', value='Artisanat';
+CREATE locale_string SET key='category_crafts',              locale='ja', value='工芸品';
+CREATE locale_string SET key='category_crafts',              locale='de', value='Kunsthandwerk';
+CREATE locale_string SET key='category_crafts',              locale='pt', value='Artesanato';
+CREATE locale_string SET key='category_crafts',              locale='zh', value='手工艺品';
+
+CREATE locale_string SET key='category_entertainment',       locale='es', value='Entretenimiento';
+CREATE locale_string SET key='category_entertainment',       locale='en', value='Entertainment';
+CREATE locale_string SET key='category_entertainment',       locale='fr', value='Divertissement';
+CREATE locale_string SET key='category_entertainment',       locale='ja', value='エンターテインメント';
+CREATE locale_string SET key='category_entertainment',       locale='de', value='Unterhaltung';
+CREATE locale_string SET key='category_entertainment',       locale='pt', value='Entretenimento';
+CREATE locale_string SET key='category_entertainment',       locale='zh', value='娱乐';
+
+CREATE locale_string SET key='category_tourist_services',   locale='es', value='Servicios Turísticos';
+CREATE locale_string SET key='category_tourist_services',   locale='en', value='Tourist Services';
+CREATE locale_string SET key='category_tourist_services',   locale='fr', value='Services Touristiques';
+CREATE locale_string SET key='category_tourist_services',   locale='ja', value='観光サービス';
+CREATE locale_string SET key='category_tourist_services',   locale='de', value='Touristenservices';
+CREATE locale_string SET key='category_tourist_services',   locale='pt', value='Serviços Turísticos';
+CREATE locale_string SET key='category_tourist_services',   locale='zh', value='旅游服务';
+
+CREATE locale_string SET key='category_bar_cantina',        locale='es', value='Bar y Cantina';
+CREATE locale_string SET key='category_bar_cantina',        locale='en', value='Bar & Cantina';
+CREATE locale_string SET key='category_bar_cantina',        locale='fr', value='Bar et Cantina';
+CREATE locale_string SET key='category_bar_cantina',        locale='ja', value='バー・カンティーナ';
+CREATE locale_string SET key='category_bar_cantina',        locale='de', value='Bar und Cantina';
+CREATE locale_string SET key='category_bar_cantina',        locale='pt', value='Bar e Cantina';
+CREATE locale_string SET key='category_bar_cantina',        locale='zh', value='酒吧';
+
+-- City names
+CREATE locale_string SET key='city_cdmx',       locale='es', value='Ciudad de México';
+CREATE locale_string SET key='city_cdmx',       locale='en', value='Mexico City';
+CREATE locale_string SET key='city_cdmx',       locale='fr', value='Mexico';
+CREATE locale_string SET key='city_cdmx',       locale='ja', value='メキシコシティ';
+CREATE locale_string SET key='city_cdmx',       locale='de', value='Mexiko-Stadt';
+CREATE locale_string SET key='city_cdmx',       locale='pt', value='Cidade do México';
+CREATE locale_string SET key='city_cdmx',       locale='zh', value='墨西哥城';
+
+CREATE locale_string SET key='city_guadalajara', locale='es', value='Guadalajara';
+CREATE locale_string SET key='city_guadalajara', locale='en', value='Guadalajara';
+CREATE locale_string SET key='city_guadalajara', locale='ja', value='グアダラハラ';
+CREATE locale_string SET key='city_guadalajara', locale='zh', value='瓜达拉哈拉';
+
+CREATE locale_string SET key='city_monterrey',   locale='es', value='Monterrey';
+CREATE locale_string SET key='city_monterrey',   locale='en', value='Monterrey';
+CREATE locale_string SET key='city_monterrey',   locale='ja', value='モンテレイ';
+CREATE locale_string SET key='city_monterrey',   locale='zh', value='蒙特雷';
+
+-- Price range labels
+CREATE locale_string SET key='price_budget',    locale='es', value='Económico';
+CREATE locale_string SET key='price_budget',    locale='en', value='Budget';
+CREATE locale_string SET key='price_budget',    locale='fr', value='Économique';
+CREATE locale_string SET key='price_budget',    locale='ja', value='リーズナブル';
+CREATE locale_string SET key='price_budget',    locale='de', value='Günstig';
+CREATE locale_string SET key='price_budget',    locale='pt', value='Econômico';
+CREATE locale_string SET key='price_budget',    locale='zh', value='经济';
+
+CREATE locale_string SET key='price_mid',       locale='es', value='Moderado';
+CREATE locale_string SET key='price_mid',       locale='en', value='Moderate';
+CREATE locale_string SET key='price_mid',       locale='fr', value='Modéré';
+CREATE locale_string SET key='price_mid',       locale='ja', value='普通';
+CREATE locale_string SET key='price_mid',       locale='de', value='Mittelklasse';
+CREATE locale_string SET key='price_mid',       locale='pt', value='Moderado';
+CREATE locale_string SET key='price_mid',       locale='zh', value='适中';
+
+CREATE locale_string SET key='price_premium',   locale='es', value='Premium';
+CREATE locale_string SET key='price_premium',   locale='en', value='Premium';
+CREATE locale_string SET key='price_premium',   locale='fr', value='Haut de gamme';
+CREATE locale_string SET key='price_premium',   locale='ja', value='プレミアム';
+CREATE locale_string SET key='price_premium',   locale='de', value='Premium';
+CREATE locale_string SET key='price_premium',   locale='pt', value='Premium';
+CREATE locale_string SET key='price_premium',   locale='zh', value='高端';
+
+-- Ola México certified badge
+CREATE locale_string SET key='ola_mexico_badge', locale='es', value='Certificado Ola México';
+CREATE locale_string SET key='ola_mexico_badge', locale='en', value='Ola México Certified';
+CREATE locale_string SET key='ola_mexico_badge', locale='fr', value='Certifié Ola México';
+CREATE locale_string SET key='ola_mexico_badge', locale='ja', value='オラ・メヒコ認定';
+CREATE locale_string SET key='ola_mexico_badge', locale='de', value='Ola México Zertifiziert';
+CREATE locale_string SET key='ola_mexico_badge', locale='pt', value='Certificado Ola México';
+CREATE locale_string SET key='ola_mexico_badge', locale='zh', value='墨西哥浪潮认证';
+
+-- UI labels
+CREATE locale_string SET key='ui_discover',     locale='es', value='Descubrir';
+CREATE locale_string SET key='ui_discover',     locale='en', value='Discover';
+CREATE locale_string SET key='ui_discover',     locale='fr', value='Découvrir';
+CREATE locale_string SET key='ui_discover',     locale='ja', value='発見する';
+CREATE locale_string SET key='ui_discover',     locale='de', value='Entdecken';
+CREATE locale_string SET key='ui_discover',     locale='pt', value='Descobrir';
+CREATE locale_string SET key='ui_discover',     locale='zh', value='探索';
+
+CREATE locale_string SET key='ui_near_me',      locale='es', value='Cerca de mí';
+CREATE locale_string SET key='ui_near_me',      locale='en', value='Near me';
+CREATE locale_string SET key='ui_near_me',      locale='fr', value='Près de moi';
+CREATE locale_string SET key='ui_near_me',      locale='ja', value='近くのスポット';
+CREATE locale_string SET key='ui_near_me',      locale='de', value='In meiner Nähe';
+CREATE locale_string SET key='ui_near_me',      locale='pt', value='Perto de mim';
+CREATE locale_string SET key='ui_near_me',      locale='zh', value='附近';
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/02-categories.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Categories (Tourism Taxonomy)
+-- Dependency: 01-locale-strings.surql (no cross-file refs needed here)
+-- =============================================================================
+
+-- Root categories
+CREATE category:gastronomy SET
+    slug = 'gastronomy',
+    icon = '🍽️',
+    name = 'Gastronomía';
+
+CREATE category:lodging SET
+    slug = 'lodging',
+    icon = '🏨',
+    name = 'Hospedaje';
+
+CREATE category:crafts SET
+    slug = 'crafts',
+    icon = '🎨',
+    name = 'Artesanías';
+
+CREATE category:entertainment SET
+    slug = 'entertainment',
+    icon = '🎭',
+    name = 'Entretenimiento';
+
+CREATE category:tourist_services SET
+    slug = 'tourist-services',
+    icon = '🗺️',
+    name = 'Servicios Turísticos';
+
+CREATE category:bar_cantina SET
+    slug = 'bar-cantina',
+    icon = '🍹',
+    name = 'Bar y Cantina';
+
+-- Sub-categories (child of gastronomy)
+CREATE category:tacos SET
+    slug   = 'tacos',
+    icon   = '🌮',
+    name   = 'Tacos',
+    parent = category:gastronomy;
+
+CREATE category:cafe SET
+    slug   = 'cafe',
+    icon   = '☕',
+    name   = 'Café',
+    parent = category:gastronomy;
+
+-- Sub-category (child of tourist_services)
+CREATE category:city_tours SET
+    slug   = 'city-tours',
+    icon   = '🚌',
+    name   = 'City Tours',
+    parent = category:tourist_services;
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/03-cities.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Cities
+-- Dependency: 02-categories.surql
+-- Venue cities: CDMX, Guadalajara, Monterrey (FIFA World Cup 2026 hosts)
+-- Context cities: New York, Toronto (tourist origin markets)
+-- Coordinates: GeoJSON format [longitude, latitude]
+-- =============================================================================
+
+-- FIFA World Cup 2026 venue cities (Mexico)
+CREATE city:cdmx SET
+    name          = 'Ciudad de México',
+    slug          = 'cdmx',
+    country_code  = 'MX',
+    coordinates   = { type: 'Point', coordinates: [-99.1332, 19.4326] },
+    is_venue_city = true;
+
+CREATE city:guadalajara SET
+    name          = 'Guadalajara',
+    slug          = 'guadalajara',
+    country_code  = 'MX',
+    coordinates   = { type: 'Point', coordinates: [-103.3496, 20.6597] },
+    is_venue_city = true;
+
+CREATE city:monterrey SET
+    name          = 'Monterrey',
+    slug          = 'monterrey',
+    country_code  = 'MX',
+    coordinates   = { type: 'Point', coordinates: [-100.3161, 25.6866] },
+    is_venue_city = true;
+
+-- Tourist origin context cities
+CREATE city:new_york SET
+    name          = 'New York',
+    slug          = 'new-york',
+    country_code  = 'US',
+    coordinates   = { type: 'Point', coordinates: [-74.0060, 40.7128] },
+    is_venue_city = false;
+
+CREATE city:toronto SET
+    name          = 'Toronto',
+    slug          = 'toronto',
+    country_code  = 'CA',
+    coordinates   = { type: 'Point', coordinates: [-79.3832, 43.6532] },
+    is_venue_city = false;
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/04-users.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Users
+-- Dependency: 03-cities.surql
+-- 1 admin, 3 owners (Mexican, locale es), 4 tourists (international)
+-- Passwords are placeholder hashes — demo only, not production values.
+-- =============================================================================
+
+-- Admin
+CREATE user:admin SET
+    username      = 'admin',
+    email         = 'admin@xibalba.mx',
+    password_hash = 'demo_hash_admin',
+    role          = 'admin',
+    display_name  = 'Xibalbá Admin',
+    locale        = 'es',
+    country_code  = 'MX';
+
+-- Business owners (Mexican, Spanish locale)
+CREATE user:owner_carlos SET
+    username      = 'owner_carlos',
+    email         = 'carlos@xibalba.mx',
+    password_hash = 'demo_hash_carlos',
+    role          = 'owner',
+    display_name  = 'Carlos Mendoza',
+    locale        = 'es',
+    country_code  = 'MX';
+
+CREATE user:owner_lucia SET
+    username      = 'owner_lucia',
+    email         = 'lucia@xibalba.mx',
+    password_hash = 'demo_hash_lucia',
+    role          = 'owner',
+    display_name  = 'Lucía Ramírez',
+    locale        = 'es',
+    country_code  = 'MX';
+
+CREATE user:owner_roberto SET
+    username      = 'owner_roberto',
+    email         = 'roberto@xibalba.mx',
+    password_hash = 'demo_hash_roberto',
+    role          = 'owner',
+    display_name  = 'Roberto Vázquez',
+    locale        = 'es',
+    country_code  = 'MX';
+
+-- Tourists (international — World Cup visitor personas)
+CREATE user:tourist_akiko SET
+    username      = 'tourist_akiko',
+    email         = 'akiko@demo.xibalba.mx',
+    password_hash = 'demo_hash_akiko',
+    role          = 'tourist',
+    display_name  = 'Akiko Tanaka',
+    locale        = 'ja',
+    country_code  = 'JP';
+
+CREATE user:tourist_james SET
+    username      = 'tourist_james',
+    email         = 'james@demo.xibalba.mx',
+    password_hash = 'demo_hash_james',
+    role          = 'tourist',
+    display_name  = 'James Mitchell',
+    locale        = 'en',
+    country_code  = 'US';
+
+CREATE user:tourist_camille SET
+    username      = 'tourist_camille',
+    email         = 'camille@demo.xibalba.mx',
+    password_hash = 'demo_hash_camille',
+    role          = 'tourist',
+    display_name  = 'Camille Dupont',
+    locale        = 'fr',
+    country_code  = 'FR';
+
+CREATE user:tourist_rafael SET
+    username      = 'tourist_rafael',
+    email         = 'rafael@demo.xibalba.mx',
+    password_hash = 'demo_hash_rafael',
+    role          = 'tourist',
+    display_name  = 'Rafael Oliveira',
+    locale        = 'pt',
+    country_code  = 'BR';
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/05-businesses.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Businesses (7 in CDMX)
+-- Dependency: 04-users.surql, 03-cities.surql, 02-categories.surql
+-- All are Ola México certified and verified — they appear on the tourist map.
+-- Real CDMX neighborhood coordinates (GeoJSON: [longitude, latitude])
+-- =============================================================================
+
+-- 1. Taquería El Memo — Centro Histórico, budget gastronomy
+CREATE business:tacos_el_memo SET
+    name             = 'Taquería El Memo (Tacos)',
+    slug             = 'tacos-el-memo',
+    description      = 'Tacos de canasta y carnitas desde 1987 en el corazón del Centro Histórico. Los mejores tacos del centro.',
+    category         = category:gastronomy,
+    city             = city:cdmx,
+    coordinates      = { type: 'Point', coordinates: [-99.1340, 19.4330] },
+    address          = 'Calle Uruguay 78, Centro Histórico',
+    neighborhood     = 'Centro Histórico',
+    price_range      = '$',
+    languages_spoken = ['es'],
+    phone            = '+52 55 5512 3456',
+    opening_hours    = 'Lun–Sáb 7:00–16:00',
+    is_active        = true,
+    is_verified      = true,
+    is_ola_mexico    = true;
+
+-- 2. Hostal Mundo Libre — Roma Norte, mid-range lodging
+CREATE business:hostal_mundo_libre SET
+    name             = 'Hostal Mundo Libre',
+    slug             = 'hostal-mundo-libre',
+    description      = 'Boutique hostel in the heart of Roma Norte. Rooftop terrace with city views.',
+    category         = category:lodging,
+    city             = city:cdmx,
+    coordinates      = { type: 'Point', coordinates: [-99.1620, 19.4200] },
+    address          = 'Orizaba 145, Roma Norte',
+    neighborhood     = 'Roma Norte',
+    price_range      = '$$',
+    languages_spoken = ['es', 'en', 'fr'],
+    phone            = '+52 55 5584 9900',
+    website          = 'https://munsolibre.demo',
+    opening_hours    = '24 horas',
+    is_active        = true,
+    is_verified      = true,
+    is_ola_mexico    = true;
+
+-- 3. Artesanías Xochimilco — Coyoacán, mid-range crafts
+CREATE business:artesanias_xochimilco SET
+    name             = 'Artesanías Xochimilco',
+    slug             = 'artesanias-xochimilco',
+    description      = 'Artesanías mexicanas auténticas: talavera, textiles oaxaqueños y barro negro.',
+    category         = category:crafts,
+    city             = city:cdmx,
+    coordinates      = { type: 'Point', coordinates: [-99.1625, 19.3500] },
+    address          = 'Francisco Sosa 12, Coyoacán',
+    neighborhood     = 'Coyoacán',
+    price_range      = '$$',
+    languages_spoken = ['es', 'en'],
+    phone            = '+52 55 5658 7812',
+    opening_hours    = 'Mar–Dom 10:00–19:00',
+    is_active        = true,
+    is_verified      = true,
+    is_ola_mexico    = true;
+
+-- 4. Mezcalería La Condesa — Condesa, premium bar
+CREATE business:mezcaleria_la_condesa SET
+    name             = 'Mezcalería La Condesa',
+    slug             = 'mezcaleria-la-condesa',
+    description      = 'Over 200 artisan mezcals from Oaxaca, Guerrero and Durango. Live jazz on Fridays.',
+    category         = category:bar_cantina,
+    city             = city:cdmx,
+    coordinates      = { type: 'Point', coordinates: [-99.1729, 19.4133] },
+    address          = 'Tamaulipas 66, Condesa',
+    neighborhood     = 'Condesa',
+    price_range      = '$$$',
+    languages_spoken = ['es', 'en'],
+    phone            = '+52 55 5286 4455',
+    website          = 'https://lacondesa-mezcal.demo',
+    opening_hours    = 'Mié–Dom 17:00–02:00',
+    is_active        = true,
+    is_verified      = true,
+    is_ola_mexico    = true;
+
+-- 5. Tours CDMX — Zócalo, mid-range tourist services
+CREATE business:tours_cdmx SET
+    name             = 'Tours CDMX',
+    slug             = 'tours-cdmx',
+    description      = 'Guided tours of Teotihuacán, Xochimilco, and historic downtown CDMX. QR vouchers accepted.',
+    category         = category:tourist_services,
+    city             = city:cdmx,
+    coordinates      = { type: 'Point', coordinates: [-99.1332, 19.4326] },
+    address          = 'Plaza de la Constitución 1, Centro',
+    neighborhood     = 'Zócalo',
+    price_range      = '$$',
+    languages_spoken = ['es', 'en', 'fr', 'de'],
+    phone            = '+52 55 5522 7788',
+    website          = 'https://tourscdmx.demo',
+    opening_hours    = 'Todos los días 8:00–18:00',
+    is_active        = true,
+    is_verified      = true,
+    is_ola_mexico    = true;
+
+-- 6. Café de Olla — Coyoacán, budget gastronomy
+CREATE business:cafe_de_olla SET
+    name             = 'Café de Olla',
+    slug             = 'cafe-de-olla',
+    description      = 'Café de olla tradicional, pan dulce y tlayudas. Jardín interior frente al parque.',
+    category         = category:gastronomy,
+    city             = city:cdmx,
+    coordinates      = { type: 'Point', coordinates: [-99.1618, 19.3488] },
+    address          = 'Jardín del Centenario 9, Coyoacán',
+    neighborhood     = 'Coyoacán',
+    price_range      = '$',
+    languages_spoken = ['es'],
+    phone            = '+52 55 5658 3344',
+    opening_hours    = 'Lun–Dom 8:00–21:00',
+    is_active        = true,
+    is_verified      = true,
+    is_ola_mexico    = true;
+
+-- 7. Cantina La Perla — Centro Histórico, mid-range bar
+CREATE business:cantina_la_perla SET
+    name             = 'Cantina La Perla',
+    slug             = 'cantina-la-perla',
+    description      = 'Cantina tradicional desde 1942. Botanas clásicas, pulque y música de mariachi.',
+    category         = category:bar_cantina,
+    city             = city:cdmx,
+    coordinates      = { type: 'Point', coordinates: [-99.1335, 19.4310] },
+    address          = 'Uruguay 51, Centro Histórico',
+    neighborhood     = 'Centro Histórico',
+    price_range      = '$$',
+    languages_spoken = ['es'],
+    phone            = '+52 55 5512 6677',
+    opening_hours    = 'Lun–Sáb 12:00–22:00',
+    is_active        = true,
+    is_verified      = true,
+    is_ola_mexico    = true;
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/06-media.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Media (Photos)
+-- Dependency: 05-businesses.surql
+-- 2–3 photos per business pointing to placeholder Cloudinary-style URLs.
+-- =============================================================================
+
+-- Taquería El Memo
+CREATE media SET business=business:tacos_el_memo,           url='https://res.cloudinary.com/xibalba/image/upload/demo/tacos-el-memo-01.jpg',          caption_es='Vista exterior del local',             caption_en='Exterior view',              sort_order=0;
+CREATE media SET business=business:tacos_el_memo,           url='https://res.cloudinary.com/xibalba/image/upload/demo/tacos-el-memo-02.jpg',          caption_es='Tacos de canasta frescos',             caption_en='Fresh basket tacos',         sort_order=1;
+CREATE media SET business=business:tacos_el_memo,           url='https://res.cloudinary.com/xibalba/image/upload/demo/tacos-el-memo-03.jpg',          caption_es='Don Memo en la cocina',                caption_en='Don Memo in the kitchen',    sort_order=2;
+
+-- Hostal Mundo Libre
+CREATE media SET business=business:hostal_mundo_libre,      url='https://res.cloudinary.com/xibalba/image/upload/demo/hostal-mundo-libre-01.jpg',     caption_es='Terraza con vista a Roma Norte',       caption_en='Rooftop terrace view',       sort_order=0;
+CREATE media SET business=business:hostal_mundo_libre,      url='https://res.cloudinary.com/xibalba/image/upload/demo/hostal-mundo-libre-02.jpg',     caption_es='Habitación compartida luminosa',       caption_en='Bright shared dorm',         sort_order=1;
+CREATE media SET business=business:hostal_mundo_libre,      url='https://res.cloudinary.com/xibalba/image/upload/demo/hostal-mundo-libre-03.jpg',     caption_es='Área común con murales',               caption_en='Common area with murals',    sort_order=2;
+
+-- Artesanías Xochimilco
+CREATE media SET business=business:artesanias_xochimilco,   url='https://res.cloudinary.com/xibalba/image/upload/demo/artesanias-xochimilco-01.jpg',  caption_es='Talavera de colores',                  caption_en='Colorful talavera ceramics', sort_order=0;
+CREATE media SET business=business:artesanias_xochimilco,   url='https://res.cloudinary.com/xibalba/image/upload/demo/artesanias-xochimilco-02.jpg',  caption_es='Textiles oaxaqueños bordados',          caption_en='Embroidered Oaxacan textiles', sort_order=1;
+
+-- Mezcalería La Condesa
+CREATE media SET business=business:mezcaleria_la_condesa,   url='https://res.cloudinary.com/xibalba/image/upload/demo/mezcaleria-condesa-01.jpg',     caption_es='Barra con 200 mezcales',               caption_en='Bar with 200 mezcals',       sort_order=0;
+CREATE media SET business=business:mezcaleria_la_condesa,   url='https://res.cloudinary.com/xibalba/image/upload/demo/mezcaleria-condesa-02.jpg',     caption_es='Jazz en vivo los viernes',             caption_en='Live jazz on Fridays',       sort_order=1;
+CREATE media SET business=business:mezcaleria_la_condesa,   url='https://res.cloudinary.com/xibalba/image/upload/demo/mezcaleria-condesa-03.jpg',     caption_es='Degustación de mezcal artesanal',      caption_en='Artisan mezcal tasting',     sort_order=2;
+
+-- Tours CDMX
+CREATE media SET business=business:tours_cdmx,              url='https://res.cloudinary.com/xibalba/image/upload/demo/tours-cdmx-01.jpg',            caption_es='Tour a Teotihuacán al amanecer',       caption_en='Sunrise tour at Teotihuacan', sort_order=0;
+CREATE media SET business=business:tours_cdmx,              url='https://res.cloudinary.com/xibalba/image/upload/demo/tours-cdmx-02.jpg',            caption_es='Trajineras en Xochimilco',             caption_en='Xochimilco trajineras',      sort_order=1;
+
+-- Café de Olla
+CREATE media SET business=business:cafe_de_olla,            url='https://res.cloudinary.com/xibalba/image/upload/demo/cafe-de-olla-01.jpg',          caption_es='Café de olla en jarrito de barro',     caption_en='Traditional clay pot coffee', sort_order=0;
+CREATE media SET business=business:cafe_de_olla,            url='https://res.cloudinary.com/xibalba/image/upload/demo/cafe-de-olla-02.jpg',          caption_es='Jardín interior con buganvilias',      caption_en='Interior garden with bougainvillea', sort_order=1;
+
+-- Cantina La Perla
+CREATE media SET business=business:cantina_la_perla,        url='https://res.cloudinary.com/xibalba/image/upload/demo/cantina-la-perla-01.jpg',      caption_es='Interior clásico de cantina mexicana', caption_en='Classic Mexican cantina interior', sort_order=0;
+CREATE media SET business=business:cantina_la_perla,        url='https://res.cloudinary.com/xibalba/image/upload/demo/cantina-la-perla-02.jpg',      caption_es='Botanas tradicionales',                caption_en='Traditional bar snacks',     sort_order=1;
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/07-graph-manages.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Graph — Manages
+-- Dependency: 04-users.surql, 05-businesses.surql
+-- Wiring owners to the businesses they operate.
+-- =============================================================================
+
+RELATE user:owner_carlos->manages->business:tacos_el_memo;
+RELATE user:owner_carlos->manages->business:hostal_mundo_libre;
+RELATE user:owner_carlos->manages->business:tours_cdmx;
+
+RELATE user:owner_lucia->manages->business:artesanias_xochimilco;
+RELATE user:owner_lucia->manages->business:cafe_de_olla;
+
+RELATE user:owner_roberto->manages->business:mezcaleria_la_condesa;
+RELATE user:owner_roberto->manages->business:cantina_la_perla;
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/08-reviews.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Graph — Reviews
+-- Dependency: 04-users.surql, 05-businesses.surql
+-- Tourism persona reviews. Triggers events and updates computed ratings.
+-- =============================================================================
+
+RELATE user:tourist_akiko->review->business:artesanias_xochimilco SET
+    rating = 5,
+    body   = '素晴らしい職人技！',
+    locale = 'ja';
+
+RELATE user:tourist_james->review->business:tacos_el_memo SET
+    rating = 5,
+    body   = 'Best tacos in downtown CDMX. Authentic and cheap.',
+    locale = 'en';
+
+RELATE user:tourist_james->review->business:mezcaleria_la_condesa SET
+    rating = 4,
+    body   = 'Great mezcal selection, but a bit pricey for my taste.',
+    locale = 'en';
+
+RELATE user:tourist_camille->review->business:hostal_mundo_libre SET
+    rating = 5,
+    body   = "J'adore la terrasse sur le toit. Très recommandé !",
+    locale = 'fr';
+
+RELATE user:tourist_rafael->review->business:cafe_de_olla SET
+    rating = 4,
+    body   = 'Café muito bom e ambiente tranquilo.',
+    locale = 'pt';
+
+RELATE user:tourist_james->review->business:tours_cdmx SET
+    rating = 5,
+    body   = 'Awesome tour, well organized.',
+    locale = 'en';
+
+RELATE user:tourist_camille->review->business:mezcaleria_la_condesa SET
+    rating = 5,
+    body   = 'Le meilleur mezcal de la ville !',
+    locale = 'fr';
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/09-graph-visits-favorites.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Graph — Visits & Favorites
+-- Dependency: 04-users.surql, 05-businesses.surql
+-- Behavioral data for recommendations and analytics.
+-- =============================================================================
+
+-- Visits
+RELATE user:tourist_akiko->visits->business:artesanias_xochimilco SET
+    source = 'qr',
+    visited_at = time::now() - 2d;
+
+RELATE user:tourist_akiko->visits->business:tours_cdmx SET
+    source = 'map',
+    visited_at = time::now() - 1d;
+
+RELATE user:tourist_james->visits->business:tacos_el_memo SET
+    source = 'search',
+    visited_at = time::now() - 3d;
+
+RELATE user:tourist_james->visits->business:artesanias_xochimilco SET
+    source = 'search',
+    visited_at = time::now() - 4d;
+
+RELATE user:tourist_james->visits->business:mezcaleria_la_condesa SET
+    source = 'recommendation',
+    visited_at = time::now() - 5h;
+
+RELATE user:tourist_camille->visits->business:hostal_mundo_libre SET
+    source = 'link',
+    visited_at = time::now() - 12h;
+
+-- Favorites
+RELATE user:tourist_james->favorites->business:tacos_el_memo SET
+    added_at = time::now() - 2d;
+
+RELATE user:tourist_james->favorites->business:artesanias_xochimilco SET
+    added_at = time::now() - 1d;
+
+RELATE user:tourist_akiko->favorites->business:artesanias_xochimilco SET
+    added_at = time::now() - 5h;
+
+RELATE user:tourist_akiko->favorites->business:tours_cdmx SET
+    added_at = time::now() - 2h;
+
+
+
+================================================
+FILE: pods/surrealdb/init/05-seed/10-activity.surql
+================================================
+-- =============================================================================
+-- Xibalbá — Seed: Activity Log
+-- Dependency: 04-users.surql, 05-businesses.surql
+-- Historical activities to populate dashboards on demo day.
+-- =============================================================================
+
+CREATE activity SET
+    type            = 'business_verified',
+    target_owner    = user:owner_carlos,
+    target_business = business:tacos_el_memo,
+    meta            = { message: 'Your business is now live on Xibalbá!' },
+    occurred_at     = time::now() - 10d;
+
+CREATE activity SET
+    type            = 'first_review',
+    target_owner    = user:owner_lucia,
+    target_business = business:artesanias_xochimilco,
+    meta            = { rating: 5, tourist: 'Akiko Tanaka' },
+    occurred_at     = time::now() - 2d;
+
+CREATE activity SET
+    type            = 'milestone_reached',
+    target_owner    = user:owner_roberto,
+    target_business = business:mezcaleria_la_condesa,
+    meta            = { milestone: '10 favorites', reward: 'Ola México Badge' },
+    occurred_at     = time::now() - 1d;
+
+CREATE activity SET
+    type            = 'system_announcement',
+    target_owner    = user:admin,
+    meta            = { title: 'Welcome to Xibalbá!', version: 'v1.0.0-hackathon' },
+    occurred_at     = time::now() - 15d;
+
+
+
+================================================
+FILE: pods/surrealdb/scripts/entrypoint.sh
+================================================
+#!/bin/sh
+set -e
+
+echo "Starting SurrealDB..."
+surreal start \
+    --log "${SURREAL_LOG:-info}" \
+    --user "${SURREAL_USER:-root}" \
+    --pass "${SURREAL_PASS}" \
+    --bind "0.0.0.0:${SURREAL_PORT:-8000}" \
+    "${SURREAL_PATH:-memory}" &
+PID=$!
+
+if [ "${SEED_ON_START:-true}" = "true" ]; then
+    echo "Waiting for SurrealDB to accept connections..."
+    sleep 3
+    for i in 1 2 3 4 5; do
+        if surreal sql \
+            --endpoint "http://127.0.0.1:${SURREAL_PORT:-8000}" \
+            -u "${SURREAL_USER:-root}" \
+            -p "${SURREAL_PASS}" \
+            --ns "${SURREAL_NS:-app}" \
+            --db "${SURREAL_DB:-main}" \
+            -q 'RETURN true;' > /dev/null 2>&1; then
+            break
+        fi
+        sleep 2
+    done
+
+    echo "Running init-db.sh..."
+    /scripts/init-db.sh
+    echo "Initialization complete."
+fi
+
+wait $PID
+
+
+
+================================================
+FILE: pods/surrealdb/scripts/init-db.sh
+================================================
+#!/bin/sh
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+GRAY='\033[0;90m'
+NC='\033[0m'
+BOLD='\033[1m'
+CHECK='✓'
+CROSS='✗'
+ARROW='→'
+BULLET='•'
+
+URL="${SURREAL_URL:-http://localhost:8000/sql}"
+SURREAL_USER="${SURREAL_USER:-root}"
+SURREAL_PASS="${SURREAL_PASS:-root}"
+NS="${SURREAL_NS:-app}"
+DB="${SURREAL_DB:-main}"
+
+# ---------------------------------------------------------------------------
+run_surql() {
+    # REMOVED -f so we can actually see the error body
+    curl -s -X POST "$URL" \
+        -H "Accept: application/json" \
+        -H "surreal-ns: $NS" \
+        -H "surreal-db: $DB" \
+        -u "$SURREAL_USER:$SURREAL_PASS" \
+        --data-binary "@$1"
+}
+
+execute_surql_file() {
+    local file="$1"
+    local filename=$(basename "$file")
+    local dirname=$(basename "$(dirname "$file")")
+    printf "\t${GRAY}${BULLET} %s/%s${NC} " "$dirname" "$filename"
+
+    # CAPTURE the output instead of discarding it
+    RESPONSE=$(run_surql "$file")
+
+    # SurrealDB returns errors in the JSON body even if HTTP is 200
+    # So we check if the response contains "ERR"
+    if echo "$RESPONSE" | grep -q '"status":"ERR"'; then
+        printf "${RED}${CROSS}${NC}\n"
+        printf "${RED}    %s${NC}\n" "$RESPONSE" # <--- THIS PRINTS THE RAW ERROR
+        return 1
+    else
+        printf "${GREEN}${CHECK}${NC}\n"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+main() {
+    printf "${BOLD}Xibalbá — SurrealDB Initialization${NC}\n\n"
+
+    # Provision NS and DB WITHOUT headers first
+    printf "${BLUE}${ARROW} Provisioning Namespace/DB${NC}\n"
+    RESPONSE=$(curl -s -X POST "$URL" \
+        -H "Accept: application/json" \
+        -u "$SURREAL_USER:$SURREAL_PASS" \
+        -d "DEFINE NAMESPACE IF NOT EXISTS $NS; DEFINE DATABASE IF NOT EXISTS $DB ON NAMESPACE $NS;")
+    
+    if echo "$RESPONSE" | grep -q '"status":"ERR"'; then
+        printf "\t${RED}${CROSS} Provisioning failed${NC}\n"
+        printf "${RED}    %s${NC}\n" "$RESPONSE"
+        exit 1
+    fi
+    printf "\t${GREEN}${CHECK} Namespace: %s, Database: %s${NC}\n\n" "$NS" "$DB"
+
+    local base="/init"
+
+    for dir in $(find "$base" -mindepth 1 -maxdepth 1 -type d | sort); do
+        printf "${BLUE}${ARROW} %s${NC}\n" "$(basename "$dir")"
+        for f in $(find "$dir" -name "*.surql" | sort); do
+            # The logic stays the same: if it returns 1, the script exits
+            execute_surql_file "$f" || exit 1
+        done
+        printf "\n"
+    done
+
+    printf "${GREEN}${CHECK} Initialization complete — %s/%s${NC}\n\n" "$NS" "$DB"
+}
+
+main
+

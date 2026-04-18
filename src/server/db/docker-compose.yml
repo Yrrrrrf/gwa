@@ -1,0 +1,27 @@
+services:
+  surrealdb:
+    build:
+      # context: ./db/
+      dockerfile: db.Dockerfile
+    ports:
+      - "${SURREAL_PORT:-8000}:8000"
+    volumes:
+      - surreal_data:/data
+    environment:
+      - SURREAL_USER=${SURREAL_USER:-root}
+      - SURREAL_PASS=${SURREAL_PASS}
+      - SURREAL_NS=${SURREAL_NS:-app}
+      - SURREAL_DB=${SURREAL_DB:-main}
+      - SURREAL_PATH=${SURREAL_PATH:-memory}
+      - SURREAL_LOG=${SURREAL_LOG:-info}
+      - SEED_ON_START=${SEED_ON_START:-true}
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  surreal_data:

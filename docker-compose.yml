@@ -60,26 +60,23 @@ services:
 
   db:
     build:
-      context: ./server/db/
+      context: ./src/server/db/
       dockerfile: db.Dockerfile
     container_name: gwa-db
     environment:
-      <<: *common-env # Include all common variables
-      # PostgreSQL-specific variables
-      POSTGRES_DB: ${DB_NAME:-gwa}
-      POSTGRES_USER: ${DB_OWNER_ADMIN:-gwa_owner}
-      POSTGRES_PASSWORD: ${DB_OWNER_PWORD:-password}
+      SURREAL_USER: ${SURREAL_USER:-root}
+      SURREAL_PASS: ${SURREAL_PASS:-root}
+      SURREAL_NS: app
+      SURREAL_DB: main
+      SURREAL_PORT: 8000
+      SEED_ON_START: "true"
       TZ: UTC
-    # * Removed direct port exposure - now accessible via internal network only
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "8000:8000"
     networks:
       - gwa-network
     healthcheck:
-      test: [
-        "CMD-SHELL",
-        "pg_isready -U ${DB_OWNER_ADMIN:-gwa_owner} -d ${DB_NAME:-gwa}",
-      ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 5

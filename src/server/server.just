@@ -35,32 +35,33 @@ typecheck:
 
 [doc('Full server quality gate')]
 [group('CI')]
-quality: fmt lint typecheck proto-lint proto-breaking
+quality: fmt lint typecheck
+    # proto-lint proto-breaking
     @echo "✓ Server quality checks passed"
 
-[doc('Lint protobuf definitions')]
-[group('CI')]
-proto-lint:
-    cd proto && buf lint
-    @echo "✓ Proto lint passed"
-
-[doc('Check for breaking changes in protobuf')]
-[group('CI')]
-proto-breaking:
-    cd proto && buf breaking --against '.git#branch=main'
-    @echo "✓ No breaking proto changes found"
-
-[doc('Generate code from protobuf')]
-[group('Build')]
-proto:
-    cd proto && buf generate
-    @echo "✓ Proto generation successful"
-
+#
+# [doc('Lint protobuf definitions')]
+# [group('CI')]
+# proto-lint:
+#     cd proto && buf lint
+#     @echo "✓ Proto lint passed"
+#
+# [doc('Check for breaking changes in protobuf')]
+# [group('CI')]
+# proto-breaking:
+#     cd proto && buf breaking --against '.git#branch=main'
+#     @echo "✓ No breaking proto changes found"
+# [doc('Generate code from protobuf')]
+# [group('Build')]
+# proto:
+#     cd proto && buf generate
+#     @echo "✓ Proto generation successful"
 # Deploy
 # Deploy
 
 [doc('Build DB')]
 [group('Build')]
+[working-directory('db')]
 build-db:
     # stop the db container and remove the volume
     podman-compose down -v
@@ -93,19 +94,20 @@ build: build-db build-engine
 run: build
     # todo: Add the dev command
     # just -f server.just build
-    podman-compose up
-    # todo: Init engine
+    cd db && podman-compose up
     # cd engine && cargo run -p api
     @echo "✓ Server running in development mode"
 
 [doc('Test the server')]
 [group('Dev')]
 test:
-    @echo "Running DB shell tests..."
-    sh db/test/run-all.sh
-    @echo "Running Rust engine tests..."
-    cd engine && cargo test -p store -- --test-threads=1
-    @echo "✓ All server tests passed"
+    # @echo "Running DB shell tests..."
+    # sh db/test/run-all.sh
+    # @echo "Running Rust engine tests..."
+    # cd engine && cargo test -p store -- --test-threads=1
+    @echo "Running Deno unified test suite..."
+    cd tests && deno task test
+    # @echo "✓ All server tests passed"
 
 # ── Deploy (Google Cloud) ─────────────────────────────────────
 

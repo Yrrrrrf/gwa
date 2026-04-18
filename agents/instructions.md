@@ -18,8 +18,10 @@
 
 ### 3. Generic Item Domain
 - This template uses a generic `Item` entity as a placeholder.
-- Fields: `id`, `title`, `description`, `status`, `created_at`, `updated_at`.
-- When adding new features, use `Item` as the reference implementation.
+- Fields: `id`, `title`, `description`, `status`, `tags`, `coordinates`, `rating`, `comment_count`, `created_at`, `updated_at`.
+- Relations: `comment` (user → item), `likes` (user → item).
+- Features: full-text search, popularity ranking, proximity searches, and graph-based recommendations.
+- When adding new features, use `Item` and `Comment` as the reference implementation.
 
 ## 🛠️ Tech Stack Specifics
 

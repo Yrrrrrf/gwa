@@ -17,9 +17,10 @@ pub struct AdminGuard;
 impl Guard for AdminGuard {
     async fn check(&self, ctx: &Context<'_>) -> Result<()> {
         if let Some(claims) = ctx.data_opt::<Claims>()
-            && claims.role == "admin" {
-                return Ok(());
-            }
+            && claims.role == "admin"
+        {
+            return Ok(());
+        }
         Err("Admin role required".into())
     }
 }
