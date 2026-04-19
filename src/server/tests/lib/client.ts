@@ -41,7 +41,8 @@ export function createSurrealClient(config: ClientConfig) {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+        const text = await response.text();
+        throw new Error(`HTTP Error: ${response.status} ${response.statusText} - ${text}`);
       }
 
       const json = await response.json();
@@ -69,12 +70,16 @@ export function createApiClient(config: ClientConfig) {
         body: JSON.stringify({ query: gql, variables }),
       });
 
+      const text = await response.text();
       if (!response.ok) {
-        const text = await response.text();
         throw new Error(`HTTP Error: ${response.status} ${response.statusText} - ${text}`);
       }
 
-      return await response.json();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Invalid JSON: ${text}`);
+      }
     },
 
     async mutate(gql: string, variables: Record<string, any> = {}) {
@@ -90,17 +95,34 @@ export function createRpcClient(config: ClientConfig) {
   const addr = baseUrl.replace(/^https?:\/\//, "");
 
   return {
-    async call(service: string, method: string, data: any) {
-      const command = new Deno.Command("grpcurl", {
-        args: [
-          "-plaintext",
-          "-d", JSON.stringify(data),
-          addr,
-          `${service}/${method}`
-        ],
-      });
+    async call(service: string, method: string, data: any, headers?: Record<string, string>) {
+      // Try local grpcurl first, then fallback to nix shell
+      const args = [
+        "-plaintext",
+        "-d", JSON.stringify(data),
+      ];
 
-      const { code, stdout, stderr } = await command.output();
+      if (headers) {
+        for (const [key, value] of Object.entries(headers)) {
+          args.push("-H", `${key}: ${value}`);
+        }
+      }
+
+      args.push(addr, `${service}/${method}`);
+
+      let command = new Deno.Command("grpcurl", { args });
+      let process;
+      try {
+        process = await command.output();
+      } catch (_e) {
+        // Fallback to nix shell if grpcurl not in path
+        command = new Deno.Command("nix", {
+          args: ["shell", "nixpkgs#grpcurl", "--command", "grpcurl", ...args]
+        });
+        process = await command.output();
+      }
+
+      const { code, stdout, stderr } = process;
       const output = new TextDecoder().decode(stdout);
       const error = new TextDecoder().decode(stderr);
 

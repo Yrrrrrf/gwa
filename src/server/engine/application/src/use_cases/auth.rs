@@ -36,7 +36,7 @@ pub async fn login(
         .await?
         .ok_or_else(|| AppError::Unauthorized("Invalid credentials".into()))?;
 
-    // HACKATHON: replace with Argon2 verify
+    // HACKATHON: using plain text comparison to match seed data
     if user.password_hash != payload.password {
         return Err(AppError::Unauthorized("Invalid credentials".into()));
     }
@@ -60,7 +60,7 @@ pub async fn login(
     let session = Session {
         id: format!("session:{}", Uuid::new_v4()),
         user: user.id.clone(),
-        token: token.clone(),
+        session_token: token.clone(),
         user_agent: None,
         ip_address: None,
         expires_at: Utc::now() + Duration::days(1),

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "lowercase")]
 pub enum Role {
     User,
     Owner,
@@ -28,7 +28,7 @@ pub struct User {
 pub struct Session {
     pub id: String,
     pub user: String, // record<user>
-    pub token: String,
+    pub session_token: String,
     pub user_agent: Option<String>,
     pub ip_address: Option<String>,
     pub expires_at: DateTime<Utc>,

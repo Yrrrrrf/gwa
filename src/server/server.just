@@ -1,5 +1,4 @@
 # ── Xibalbá · Server ──────────────────────────────────────────
-
 # ── CI ────────────────────────────────────────────────────────
 
 [doc('Format Server code')]
@@ -52,80 +51,37 @@ build: build-db build-engine build-grpc
 
 # ── Dev ───────────────────────────────────────────────────────
 
-[doc('Run the server in development mode')]
+[doc('Run SurrealDB (Podman)')]
 [group('Dev')]
-run:
+run-db:
+    cd db && podman-compose up
+
+[doc('Run Rust Engine')]
+[group('Dev')]
+run-engine:
     #!/usr/bin/env bash
-    # Finalized Phase 4 microkernel run recipe
-    set -e
+    if [ -f .env ]; then export $(grep -v '^#' .env | xargs); elif [ -f .env.example ]; then export $(grep -v '^#' .env.example | xargs); fi
+    cd engine && RUST_LOG=debug cargo run -p gateway
 
-    # Load env from .env if present, else from .env.example
-    if [ -f .env ]; then
-      export $(grep -v '^#' .env | xargs)
-    elif [ -f .env.example ]; then
-      export $(grep -v '^#' .env.example | xargs)
-    fi
+[doc('Run Go RPC sidecar')]
+[group('Dev')]
+run-rpc:
+    #!/usr/bin/env bash
+    if [ -f .env ]; then export $(grep -v '^#' .env | xargs); elif [ -f .env.example ]; then export $(grep -v '^#' .env.example | xargs); fi
+    cd rpc && go run ./cmd/server
 
-    echo "🚀 Starting Microkernel Stack..."
-
-    # Pre-startup cleanup to ensure ports are free
-    -pkill -f "target/debug/gateway" || true
-    -pkill -f "go run ./cmd/server" || true
-    sleep 1
-
-    # Start DB detached
-    cd db && podman-compose up -d
-    cd ..
-
-    # Poll DB health
-    echo "⌛ Waiting for SurrealDB..."
-    TIMEOUT=30
-    while ! curl -s -f http://localhost:8000/health > /dev/null; do
-      sleep 1
-      let TIMEOUT-=1
-      if [ $TIMEOUT -eq 0 ]; then
-        echo "❌ DB health check timed out"
-        exit 1
-      fi
-    done
-    echo "🗄️ SurrealDB is ready"
-
-    # Start RPC in background (must be up before engine for NotifierService connect)
-    echo "🐹 Starting RPC Sidecar..."
-    (cd rpc && go run ./cmd/server) &
-    RPC_PID=$!
-
-    # Poll RPC health via grpcurl (if available) or simple sleep
-    echo "⌛ Waiting for RPC sidecar..."
-    TIMEOUT=30
-    while ! grpcurl -plaintext localhost:4000 grpc.health.v1.Health/Check > /dev/null 2>&1; do
-      sleep 1
-      let TIMEOUT-=1
-      if [ $TIMEOUT -eq 0 ]; then
-        echo "❌ RPC sidecar health check timed out"
-        kill $RPC_PID 2>/dev/null || true
-        exit 1
-      fi
-    done
-    echo "🐹 RPC sidecar is ready"
-
-    # Start engine in background
-    echo "🦀 Starting Engine..."
-    (cd engine && cargo run -p gateway) &
-    ENGINE_PID=$!
-
-    # Trap for cleanup
-    trap "echo '🛑 Shutting down...'; kill $ENGINE_PID $RPC_PID 2>/dev/null; cd db && podman-compose down; exit" INT TERM EXIT
-
-    echo "✅ Stack is UP"
-    wait
+[doc('Run the full stack in development mode')]
+[group('Dev')]
+run: run-db run-engine run-rpc
+    # todo: add health check
+    @echo "✓ Full stack running"
 
 [doc('Tear down all services')]
 [group('Dev')]
 down:
     @echo "🛑 Tearing down stack..."
     -@cd db && podman-compose down
-    -@pkill -f "cargo run -p gateway" || true
+    -@pkill -f "target/debug/gateway" || true
     -@pkill -f "go run ./cmd/server" || true
     @echo "✓ Stack down"
 

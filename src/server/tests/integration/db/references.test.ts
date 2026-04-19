@@ -8,7 +8,7 @@ Deno.test("🗄️ DB Referential Integrity", async (t) => {
     await t.step("G1: ON DELETE CASCADE (User -> Session)", async () => {
       // 1. Create a user
       const userId = `user:ref_${Math.random().toString(36).slice(2, 7)}`;
-      await surreal.sql(`CREATE ${userId} SET email='ref@test.com', username='ref', role='user';`);
+      await surreal.sql(`CREATE ${userId} SET email='ref@test.com', username='ref', role='user', password_hash='x';`);
       
       // 2. Create a session for that user
       const sessionId = `session:ref_${Math.random().toString(36).slice(2, 7)}`;

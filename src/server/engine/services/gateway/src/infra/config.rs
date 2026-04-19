@@ -14,19 +14,20 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn from_env() -> Self {
+        let surreal_port = env::var("SURREAL_PORT").unwrap_or_else(|_| "8000".to_string());
+        let db_url = format!("ws://localhost:{}", surreal_port);
+
         Self {
-            db_url: env::var("SURREAL_DB_URL")
-                .unwrap_or_else(|_| "ws://localhost:8000".to_string()),
+            db_url,
             db_user: env::var("SURREAL_USER").unwrap_or_else(|_| "root".to_string()),
-            db_pass: env::var("SURREAL_PASS")
-                .unwrap_or_else(|_| "super_secret_dev_pass_override_me".to_string()),
-            db_ns: env::var("SURREAL_NS").unwrap_or_else(|_| "app".to_string()),
+            db_pass: env::var("SURREAL_PASS").unwrap_or_else(|_| "root".to_string()),
+            db_ns: env::var("SURREAL_NS").unwrap_or_else(|_| "template".to_string()),
             db_db: env::var("SURREAL_DB").unwrap_or_else(|_| "main".to_string()),
-            server_port: env::var("PORT")
+            server_port: env::var("SERVER_PORT")
                 .unwrap_or_else(|_| "3000".to_string())
                 .parse()
                 .unwrap_or(3000),
-            jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| "default_secret".to_string()),
+            jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| "super-secret-template-key-change-me-in-production".to_string()),
             rpc_url: env::var("RPC_URL").unwrap_or_else(|_| "http://localhost:4000".to_string()),
         }
     }

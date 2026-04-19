@@ -43,10 +43,10 @@ DEFINE FIELD updated_at    ON user TYPE datetime DEFAULT time::now() VALUE time:
 -- ---------------------------------------------------------------------------
 -- session: auth sessions
 -- ---------------------------------------------------------------------------
-DEFINE FIELD user       ON session TYPE record<user> REFERENCE ON DELETE CASCADE;
-DEFINE FIELD token      ON session TYPE string;
-DEFINE FIELD expires_at ON session TYPE datetime;
-DEFINE FIELD created_at ON session TYPE datetime DEFAULT time::now();
+DEFINE FIELD user          ON session TYPE record<user> REFERENCE ON DELETE CASCADE;
+DEFINE FIELD session_token ON session TYPE string;
+DEFINE FIELD expires_at    ON session TYPE datetime;
+DEFINE FIELD created_at    ON session TYPE datetime DEFAULT time::now();
 
 -- ---------------------------------------------------------------------------
 -- item: core entity
