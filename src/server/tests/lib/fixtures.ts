@@ -21,8 +21,36 @@ export function withCleanup() {
   return { register, run };
 }
 
+let cachedToken: string | null = null;
+
 export async function getToken(apiClient: any) {
-  // TODO: Implement actual login mutation
-  // For now, return a placeholder or use an environment variable
-  return Deno.env.get("TEST_JWT_TOKEN") || "mock-token";
+  if (cachedToken) return cachedToken;
+
+  const loginGql = `
+    mutation Login($input: LoginInput!) {
+      login(input: $input) {
+        token
+      }
+    }
+  `;
+
+  // Use alice from seed data
+  const variables = {
+    input: {
+      email: "alice@demo.com",
+      password: "password", // This is the default in seed data or .env
+    }
+  };
+
+  try {
+    const res = await apiClient.mutate(loginGql, variables);
+    if (res.errors) {
+        throw new Error(`Login failed: ${JSON.stringify(res.errors)}`);
+    }
+    cachedToken = res.data.login.token;
+    return cachedToken!;
+  } catch (err: any) {
+    console.warn(`Could not get JWT token: ${err.message}. Using mock-token.`);
+    return "mock-token";
+  }
 }

@@ -6,9 +6,10 @@
     "test:rpc": "deno test -A --parallel integration/rpc/"
   },
   "imports": {
+    "@bufbuild/protobuf": "npm:@bufbuild/protobuf@^2.11.0",
     "@std/assert": "jsr:@std/assert",
     "@std/dotenv": "jsr:@std/dotenv",
-    "@connectrpc/connect": "npm:@connectrpc/connect",
-    "@connectrpc/connect-web": "npm:@connectrpc/connect-web"
+    "@connectrpc/connect": "npm:@connectrpc/connect@^2.1.1",
+    "@connectrpc/connect-web": "npm:@connectrpc/connect-web@^2.1.1"
   }
 }

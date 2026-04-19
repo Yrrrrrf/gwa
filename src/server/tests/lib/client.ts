@@ -70,7 +70,8 @@ export function createApiClient(config: ClientConfig) {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+        const text = await response.text();
+        throw new Error(`HTTP Error: ${response.status} ${response.statusText} - ${text}`);
       }
 
       return await response.json();
@@ -82,12 +83,27 @@ export function createApiClient(config: ClientConfig) {
   };
 }
 
-// Stub for RPC client
+// Untyped RPC client using Connect-compatible JSON over HTTP
 export function createRpcClient(config: ClientConfig) {
+  const { baseUrl } = config;
+
   return {
-    async call(method: string, data: any) {
-      console.warn("RPC Client not yet implemented");
-      return { status: "STUB" };
+    async call(service: string, method: string, data: any) {
+      const url = `${baseUrl}/${service}/${method}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`RPC Error: ${response.status} ${response.statusText} - ${text}`);
+      }
+
+      return await response.json();
     }
   };
 }
