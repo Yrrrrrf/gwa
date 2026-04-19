@@ -1,8 +1,0 @@
-version: v2
-plugins:
-  - remote: buf.build/protocolbuffers/es:v1.10.0
-    out: generated
-    opt: target=ts
-  - remote: buf.build/connectrpc/es:v1.4.0
-    out: generated
-    opt: target=ts

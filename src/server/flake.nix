@@ -27,12 +27,16 @@
             podman-compose # container orchestration
             curl # needed for db/scripts/init-db.sh
             xh # needed for db/test/fixtures.sh
+            jq # for fitness checks
             protobuf # protoc
             buf # for proto generation
             grpcurl # for rpc health checks
             deno # for tests
             go # for rpc service
-            rustup # for rust engine
+            cargo # for rust engine
+            rustc # for rust engine
+            rustfmt # for rust formatting
+            clippy # for rust linting
           ];
 
           shellHook = ''

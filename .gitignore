@@ -23,4 +23,6 @@ target
 # one * means any characters except /
 # two ** means any characters including /
 temp
-translations
+translations!**/.env.example
+
+!**/.env.example

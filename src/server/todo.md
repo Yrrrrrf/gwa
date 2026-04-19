@@ -1,592 +1,642 @@
-# Template Server — Integration & Wiring Plan
+# Template Server — Microkernel Finalization Plan
 
-**Spec Version**: 1.0
+**Spec Version**: 2.0 (supersedes v1.0 integration plan)
 **Date**: 2026-04-18
-**Status**: Ready for execution
-**Reference**: `src/server/` — working server stack from `server.md`, tested by `server-test.md`. This plan closes the wiring gap between them.
+**Status**: Phases 1–3 complete; Phases 4–6 ready for execution
+**Reference**: Working stack from `server.md`, validated by `server-test.md`, wired by v1.0 plan through the preflight check. This revision closes the gap to a genuinely zero-boilerplate template.
 
 ---
 
 ## 0. Executive Summary
 
-The template server is 80% built but 0% wired. The DB layer is solid (12/12 DB tests pass except one real schema bug), the Rust engine compiles, the Go sidecar compiles, and the Deno test suite is architecturally correct. What's missing is **orchestration**: `just server run` only starts the DB container, leaving the Rust engine (port 3000) and Go sidecar (port 4000) unstarted, so every API and RPC test fails with `Connection refused`. This plan delivers the missing integration layer: a three-service orchestrator behind a single command, a test suite that fails fast with helpful errors when services are down, a dedicated schema fix for the CASCADE DELETE bug, containerization for CI parity, and a GitHub Actions workflow that runs the whole thing. When this plan is done, `just server run` brings the stack up; `just server test` proves it works; CI runs the same commands and catches regressions. The template becomes genuinely copy-pasteable — clone, `nix develop`, `just server run` in one terminal, `just server test` in another, green in under two minutes.
+The server is now wired correctly at the data plane: schema bugs are fixed, the Rust engine and Go sidecar can be started, the preflight check accurately reports service health, and the Deno suite produces readable errors when services are down. What remains is committing to a specific **dev-environment philosophy** and making the template strict enough that a fresh clone needs zero hand-tuning. This revision pivots Phase 4 from containerization-for-CI to **microkernel-via-Nix**: `nix develop` is the runtime shell, `podman` is used for exactly one thing (the stateful SurrealDB), and every other process (engine, sidecar, tests) runs as a native process in the Nix shell. Phase 5 replaces the former CI workflow with an exhaustive **architecture fitness suite** that enforces every architectural rule as a shell-level check — hexagonal purity, microkernel boundaries, test isolation, proto contract, template cleanliness. Phase 6 is the final polish for a true template: a cleanup checklist for people cloning it, a `doctor` recipe for diagnosing setup issues, and no lingering shell scripts, stub Dockerfiles, or boilerplate that the template user would have to delete. When this plan lands, `nix develop && just server run` (terminal 1), `just server test` (terminal 2), green, done.
 
 ---
 
 ## 1. Context & Constraints
 
-### Current State (from the test run)
+### Current State (after Phases 1–3)
 
-**What works:**
-- SurrealDB 3 container boots, seeds, and serves via `podman-compose`.
-- 12 DB tests pass (schema asserts, unique indexes, custom functions `fn::search_items`/`fn::popular_items`/`fn::items_near`, graph traversals, audit events, computed stats, E2E smoke, full-text search).
-- The Deno fixture pattern (`withSurrealEnv`, `withApiEnv`, `withRpcEnv`) works cleanly.
-- The SurrealDB HTTP error detection (`status: "ERR"` in JSON despite HTTP 200) is correct.
-- Compilation: Rust workspace and Go module both build.
+- ✅ **Schema fixed**: `references<session>` on user enables CASCADE, role enum aligned, missing User fields defined.
+- ✅ **Orchestration working**: `just server run` is capable of starting all three services (a real shell trap supervisor exists), and `just server down` tears them down.
+- ✅ **Preflight working**: `just server test` runs `preflight.ts` first and clearly reports:
+  ```
+  🗄️  SurrealDB: ✅ UP (http://localhost:8000)
+  🦀 Engine:    ❌ DOWN (http://localhost:3000)
+  🐹 RPC:       ❌ DOWN (http://localhost:4000)
+  ❌ Some services are unreachable. Run 'just server run' first.
+  ```
+  That's the exact UX we wanted — fail-fast, fail-readable, no stack trace.
 
-**What's broken:**
-1. **`just server run` only starts the DB.** The line `cd engine && cargo run -p api` is commented out, and the Go sidecar has no entry in the command at all. Every API test (4) and RPC test (3) fails with `Connection refused` on :3000 and :4000.
-2. **CASCADE DELETE doesn't cascade.** Test `G1` deletes a user but the session remains. The `DEFINE FIELD user ON session TYPE record<user> REFERENCE ON DELETE CASCADE` clause alone is insufficient in SurrealDB 3 — the parent table needs a back-reference via `references<session>` for the cascade engine to track it.
-3. **Role enum mismatch.** DB asserts `role IN ['admin', 'owner', 'user']` but Rust domain defines `Role::{Tourist, Owner, Admin}` which serializes to `"tourist"` — will silently break any user create that trusts the Rust serialization.
-4. **User schema gaps.** Rust `User` entity has `display_name`, `avatar_url`, `locale`, `country_code` — the template's `02-fields.surql` does not define these. SCHEMAFULL will reject any Rust-side create.
-5. **Test summary lies on failure.** When a fixture can't connect, steps throw before `printSummary()` runs, producing misleading `Results: 0/0 passed | 0 failed` lines — looks like "nothing ran" instead of "nothing could run."
+### What's Left
 
-### Goals — What "Done" Looks Like
+- The test run above shows the preflight catching a real state (engine and RPC not yet auto-started by the new `run` recipe). Once `run` is finalized, this flips to all-green.
+- Shell scripts from the legacy Phase 0 state still exist (`tests/fixtures.sh`, `tests/run-all.sh`, `tests/e2e/01-smoke.sh`, `tests/unit/01-schema.sh`, and any `scripts/run-stack.sh` left over from Phase 2) — these must all die. The suite is pure Deno now.
+- The `just server run` recipe needs to be finalized to start all three services inline (no external shell script). The v1.0 plan left `scripts/run-stack.sh` as an escape hatch; we're closing that escape hatch.
+- Phase 4 of the v1.0 plan was "Full Containerization for CI" — that's scrapped. Engine and RPC stay native (Nix-shell processes).
+- Phase 5 of the v1.0 plan was GitHub Actions — also scrapped per user preference.
+- Architecture fitness (formerly Phase 6) is now promoted to Phase 5 and expanded from 7 rules to a comprehensive enforceable suite.
 
-1. `just server run` starts the full stack (DB + engine + RPC) with one command and one Ctrl-C takes everything down cleanly.
-2. `just server test` runs the full suite and reports accurate pass/fail counts. When services are down, it says so clearly and points at `just server run`.
-3. All 24+ tests pass against a healthy stack (12 DB + 4 API + 3 RPC + 2 E2E + 3 security once added).
-4. A CI workflow runs the same `just` commands inside containers and produces a green check on PR.
-5. Every layer has a fitness function preventing architectural regression.
-6. A new developer can clone → `nix develop` → `just server run` (terminal 1) → `just server test` (terminal 2) → green in under 2 minutes.
+### Goals — What "Done" Looks Like (v2.0)
+
+1. `nix develop` gives a shell with every tool the server.just recipes need — no "install X manually first" step anywhere.
+2. `just server run` starts all three services (DB in podman, engine via cargo, rpc via go) with a single command and a single Ctrl-C shutdown.
+3. `just server test` runs preflight + full suite, all green.
+4. `just server fitness` enforces every architectural rule declaratively and runs in under 5 seconds.
+5. The only Dockerfile in the repo is `db/db.Dockerfile`. The only shell scripts are inside `db/scripts/` (container init only).
+6. A new developer cloning the repo uses it as a template by: `nix develop`, `just server run`, `just server test`, then reading `TEMPLATE.md` to strip what they don't need. No boilerplate hunting.
 
 ### Team & Scale
 
-- Solo developer. [ASSUMPTION]
-- Template-scale: local dev only, tens of records, no clustering, no load testing.
-- CI runs on GitHub Actions free tier. [ASSUMPTION]
+Unchanged from v1.0. Solo dev, template-scale, local-only.
 
-### Architectural Rules
+### Architectural Rules (revised)
 
-- **No new frameworks.** Use what's already in the stack: Nix + just + podman + deno + cargo + go.
-- **Container-first for DB.** SurrealDB must never be installed natively — the user explicitly relies on the podman container. Engine and RPC can run natively in dev but must also have Dockerfiles for CI.
-- **Single entry command.** `just server run` is the canonical bring-up. No README that tells users to open three terminals.
-- **Graceful shutdown.** Ctrl-C in `just server run` must tear down all three services cleanly. No orphaned `cargo run` processes.
-- **Test suite is stack-agnostic.** The tests themselves don't know or care whether services run natively or in containers — they hit HTTP/RPC endpoints.
-- **CI is not a special snowflake.** CI runs the same `just` commands as local. No `.github/workflows/*.yml` with bespoke logic that doesn't exist in `justfile`.
+- **Microkernel-via-Nix**: `nix develop` is the dev runtime. It is the "kernel" that hosts user-space processes (engine, rpc, tests). It must be self-sufficient.
+- **Containers for state only**: Podman runs exactly one image: the SurrealDB container. No Dockerfile for engine. No Dockerfile for rpc. No compose file orchestrating multiple services.
+- **No scripts outside `db/scripts/`**: Every `.sh` file outside of the DB container's init directory is forbidden. Orchestration lives in `server.just`. Test logic lives in `.test.ts` files. There is no third place.
+- **No CI pipeline in this plan**: GitHub Actions is out of scope per explicit user preference. Fitness must be runnable locally and fast enough to run pre-commit.
+- **Fitness is a hard gate**: Every architectural rule must be enforced by `just server fitness`. Aspirational rules in prose don't count. If it can't be checked, it doesn't exist.
+- **Zero boilerplate in the template**: No commented-out TODO blocks. No placeholder Dockerfiles. No stub scripts that "will be used later." When a future dev clones the template, they should find only things that are actually used.
+- **Justfile structure is canonical**: The current `server.just` layout (CI group, Build group, Dev group, Deploy group) is preserved. Additions are incremental (add `build-grpc`, finalize `run`).
 
-### Out of Scope
+### Out of Scope (v2.0)
 
-- Production deployment (Cloud Run, Kubernetes, etc.).
-- Observability stack (Prometheus, Grafana, OpenTelemetry collectors) — `tracing` for Rust and `slog` for Go are sufficient at template scale.
-- Multi-region, HA, clustering.
-- GraphQL subscription load testing.
-- Migrating the Go sidecar's PostgREST-style template fetch to SurrealDB (flagged as quirk, separate decision).
+- Production deployment (Cloud Run stays as a commented-out sketch).
+- Containerization of engine/rpc (explicitly rejected — microkernel philosophy).
+- GitHub Actions or any other CI pipeline.
+- Observability stack (tracing + slog sufficient).
+- Migration of the PostgREST-style `fetchTemplate` in the Go sidecar.
+- gRPC vs Connect protocol spike if already resolved in Phase 3.
 
 ### Assumptions
 
-- [ASSUMPTION] SurrealDB 3's `REFERENCE ON DELETE CASCADE` requires a matching `references<T>` field on the parent table. Validated by the test failure: session persists after user delete, which is exactly the symptom of a missing back-reference.
-- [ASSUMPTION] The Go sidecar speaks raw gRPC (via `grpc.NewServer()`), not Connect protocol. The current test client uses untyped JSON-over-HTTP which works with Connect-style routing but not raw gRPC. This needs a spike before Phase 3 — if it's raw gRPC, the test client becomes `nice-grpc` or similar.
-- [ASSUMPTION] `deno`, `go`, and `cargo` are all on PATH inside `nix develop`. The current `flake.nix` lists `just podman podman-compose curl xh protobuf` but not these three. Needs to be added.
-- [ASSUMPTION] Process group management via shell (`trap`, `wait`) is sufficient for local dev orchestration. No need for `overmind`/`process-compose`/`foreman`.
-- [ASSUMPTION] GitHub Actions' `docker` and `podman` availability is equivalent for container-based CI.
+- [ASSUMPTION] Phases 1–3 are complete and their exit criteria are met. In particular, `preflight.ts` exists and runs from `deno task test`.
+- [ASSUMPTION] `tests/deno.json` has a `test` task that runs preflight first, then the suite.
+- [ASSUMPTION] Any `scripts/run-stack.sh` created during Phase 2 exploration is still removable — no downstream consumer depends on it.
+- [ASSUMPTION] The user has access to modify `flake.nix` and is comfortable adding language toolchains to it.
+- [ASSUMPTION] `buf` CLI is the proto generator of choice; `proto/buf.gen.yaml` is already configured to emit Go code for the RPC sidecar.
 
 ---
 
 ## 2. Architecture Overview
 
-### The Integration Layers
+### The Microkernel Analogy
 
 ```
-  ┌─────────────────────────────────────────────────────────┐
-  │                    just server                          │
-  │  (orchestration — this plan delivers this layer)        │
-  │                                                         │
-  │   run   │   test   │   down   │   logs   │   status     │
-  └────┬────┴────┬─────┴────┬─────┴────┬─────┴───────┬──────┘
-       │        │           │          │              │
-       ▼        ▼           ▼          ▼              ▼
-  ┌──────────────────────────────────────────────────────────┐
-  │                  Stack Processes                         │
-  │                                                          │
-  │   SurrealDB :8000   Rust Engine :3000   Go RPC :4000    │
-  │   (container)       (native dev /        (native dev /   │
-  │                      container CI)        container CI)  │
-  └──────────────────────────────────────────────────────────┘
-                              ▲
-                              │ HTTP/WS/gRPC (black-box)
-                              │
-  ┌───────────────────────────┴──────────────────────────────┐
-  │              Deno Test Suite (consumer)                  │
-  │       unit/  │  integration/  │  e2e/  │  security/      │
-  └──────────────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────────────────┐
+  │                  Host OS (Linux / macOS)                   │
+  │                                                            │
+  │  ┌──────────────────────────────────────────────────────┐ │
+  │  │              nix develop shell (THE KERNEL)          │ │
+  │  │                                                      │ │
+  │  │   cargo  │  go  │  deno  │  buf  │  just  │  curl   │ │
+  │  │   podman-compose  │  protoc  │  xh                   │ │
+  │  │                                                      │ │
+  │  │   ┌────────────┐   ┌────────────┐  ┌─────────────┐  │ │
+  │  │   │Rust Engine │   │ Go Sidecar │  │ Deno Tests  │  │ │
+  │  │   │  :3000     │   │   :4000    │  │  (preflight │  │ │
+  │  │   │ (cargo run)│   │  (go run)  │  │   + suite)  │  │ │
+  │  │   └──────┬─────┘   └──────┬─────┘  └──────┬──────┘  │ │
+  │  │          │                 │              │          │ │
+  │  └──────────┼─────────────────┼──────────────┼─────────┘ │
+  │             │                 │              │            │
+  │             └────────┬────────┴──────────────┘            │
+  │                      │                                    │
+  │                      ▼ HTTP + WebSocket                   │
+  │              ┌────────────────┐                           │
+  │              │   podman       │                           │
+  │              │   ┌──────────┐ │                           │
+  │              │   │SurrealDB │ │  ← the ONLY               │
+  │              │   │ :8000    │ │    "external module"      │
+  │              │   │ (volume) │ │                           │
+  │              │   └──────────┘ │                           │
+  │              └────────────────┘                           │
+  └────────────────────────────────────────────────────────────┘
 ```
 
-### What This Plan Owns vs. What Already Exists
+**The analogy**: Just as a microkernel keeps only essentials in kernel space and pushes drivers/services to user space, this design keeps only the *stateful* service (the DB) in container space and runs everything else directly in the Nix shell. Engine and sidecar are "user-space processes" — ephemeral, stateless, directly observable, directly debuggable.
 
-| Concern | Status | Phase |
-|---|---|---|
-| DB schema, events, functions | ✅ Exists, 1 bug | Phase 1 |
-| Role/User alignment | ❌ Mismatch | Phase 1 |
-| Rust engine code | ✅ Exists | — |
-| Go sidecar code | ✅ Exists | — |
-| Test suite code | ✅ Exists | Phase 3 hardens it |
-| `just server run` full stack | ❌ Missing | Phase 2 |
-| `just server down` / `logs` / `status` | ❌ Missing | Phase 2 |
-| Health checks + pre-flight | ❌ Missing | Phase 3 |
-| Dockerfiles for engine + RPC | ❌ Missing | Phase 4 |
-| Full-stack docker-compose | ⚠️ DB only | Phase 4 |
-| GitHub Actions | ❌ Missing | Phase 5 |
-| Architecture fitness | ❌ Missing | Phase 6 |
-| README quickstart | ⚠️ Partial | Phase 6 |
+### Core vs. Supporting
 
-### Core Domain vs. Supporting
-
-- **Core deliverable of this plan**: the `server.just` file and its companions (Procfile-equivalent or shell orchestration). This is the glue that makes three services behave as one.
-- **Supporting deliverables**: health probes, test pre-flight, Dockerfiles, CI workflow, architecture fitness checks, docs.
+- **Core deliverable of this plan**:
+  - Phase 4: microkernel wiring (finalized flake.nix, finalized `run` recipe, removal of all stray shell scripts).
+  - Phase 5: the comprehensive fitness suite.
+- **Supporting**: template hygiene (TEMPLATE.md, `doctor` recipe, README rewrite).
 
 ---
 
 ## 3. Design Patterns & Code Standards
 
-### 3.1 Process Orchestration — "Shell-Native Supervisor"
+### 3.1 Microkernel via Nix — "The Shell IS the Runtime"
 
-- **Pattern chosen**: Shell-based process group supervisor with `trap`-driven teardown.
-- **Why**: The alternatives all fail for a template's constraints. `overmind` and `process-compose` add a binary dependency that Nix users must install. Docker Compose for engine and RPC works but forces every dev to go through image rebuild on every code change, which destroys the iteration loop. A just recipe that backgrounds three processes, stores their PIDs, and uses `trap 'kill 0' INT TERM EXIT` is ~15 lines of shell and has zero extra deps. It also composes with Nix flakes cleanly.
-- **How it's applied**: A `just server run` recipe starts podman-compose in detached mode, waits for the DB health check, then foregrounds `cargo run -p gateway` and backgrounds `go run ./rpc/cmd/server`. A signal trap tears everything down on Ctrl-C. PIDs are captured to a temp file so `just server down` can also clean up.
-- **Standards enforced**: No service gets started without a prior health check of its dependencies (engine waits for DB, RPC waits for nothing since it's independent). Every recipe that starts a process must pair with a teardown recipe. All service ports are defined in one place (env vars in `.env`) so nothing is hardcoded.
+- **Pattern chosen**: Nix flake devShell as the authoritative runtime for all non-stateful services.
+- **Why**: A template must be reproducible across dev machines without `brew install` chains, `asdf` plugins, or rustup/goenv/dvm instructions. The Nix flake expresses the full toolchain declaratively — one shell definition, every tool pinned, every version agreed on. Containerizing engine/rpc sounds safer but costs the dev loop dearly: a cargo-level rebuild that takes 2 seconds natively takes 5 minutes in a Dockerfile rebuild cycle. The microkernel split (DB containerized for state, everything else native in Nix) gives us reproducibility AND speed.
+- **How it's applied**: `flake.nix`'s devShell lists every binary that any `server.just` recipe invokes, and every toolchain any service needs to build. When `nix develop` activates, the shell has `cargo`, `go`, `deno`, `buf`, `just`, `podman`, `podman-compose`, `protoc`, `curl`, `xh`, and `jq` all available. Services are started as foreground/background processes in this shell.
+- **Standards enforced**: Every tool used by any recipe must be in the flake's packages list. Every system call that assumes a tool's presence must have an equivalent Nix entry. A fitness check (Phase 5) greps for tool invocations and cross-checks them against the flake.
 
-> **Year-3 to year-10 test**: In 3 years, a new dev will either add a 4th service (worker?) or swap one out. A shell supervisor makes this a 5-line change. A docker-compose-only approach would force them to learn compose overrides. A bespoke Rust orchestrator would be technical debt. The shell pattern ages well because shell itself ages well.
+> **Year-3 to year-10 test**: In 3 years, a new hire clones the repo and runs `nix develop`. They don't install rust, go, or deno manually — the shell has them. This is what makes the template copy-paste viable. Containerization would age the same way but with a 100× worse iteration loop. At year 10, Nix flakes are likely still the strongest reproducible-shell story.
 
-### 3.2 Test Suite Pre-flight — "Fail Fast, Fail Readable"
+### 3.2 Strict Recipe Boundaries — "One Command, One Purpose"
 
-- **Pattern chosen**: Health probe + explicit error contract at fixture boundary.
-- **Why**: Right now, a developer sees `Connection refused (os error 111)` stack traces and has to reverse-engineer that the Rust engine wasn't running. This wastes time for every newcomer. The fix is that each fixture (`withApiEnv`, `withRpcEnv`, `withSurrealEnv`) does a liveness probe before yielding context — if the probe fails, the fixture throws a single clean error: `"Rust engine not reachable at http://localhost:3000. Run 'just server run' first."`
-- **How it's applied**: Each fixture does a single cheap HTTP call at setup (GET / or similar introspection). On failure, it throws a typed `StackUnavailableError` with the service name and expected command. The Deno test reporter catches this once per test file and prints a one-liner instead of a stack trace.
-- **Standards enforced**: No test file may assume services are up. No fixture may catch the `StackUnavailableError` — it must propagate. Test output at the top always shows "pre-flight: DB ✓ API ✓ RPC ✗" so the failure mode is visible before the first test even runs.
+- **Pattern chosen**: Unix-philosophy just recipes. Each recipe does exactly one thing and composes with others.
+- **Why**: The current `just server run` comment says "todo: separate 'build' and 'run' commands". Mixing build and run in one recipe means every `run` incurs a rebuild, which kills iteration. Separate recipes let you `just server build` once, then `just server run` repeatedly — each clean, each fast.
+- **How it's applied**: Recipes split along a three-axis grid: **action** (build / run / test / check) × **component** (db / engine / grpc) × **composed** (roll-ups like `build` that call all three build-subcommands). The justfile groups match: CI, Build, Dev, Deploy.
+- **Standards enforced**:
+  - Every "build-X" recipe is idempotent (running twice produces the same state).
+  - Every "run-X" recipe assumes build artifacts exist (doesn't rebuild inside run).
+  - `run` composes the three component runs via signal trap (from Phase 2).
+  - `test` doesn't depend on build — relies on cargo run / go run for engine and rpc, which build incrementally.
 
-### 3.3 CI Parity — "Same Commands Everywhere"
+### 3.3 Fitness-First Enforcement — "Checks Over Conventions"
 
-- **Pattern chosen**: CI invokes `just` recipes. No parallel implementation.
-- **Why**: The #1 source of flaky CI is CI workflows that duplicate local commands with slightly different flags. Drift between `justfile` and `.github/workflows/*.yml` is guaranteed over a 2-year period. The fix is that the CI workflow is thin — it installs just + deno + nix, then calls `just server test`. If the local command works, CI works. If CI fails but local passes, the divergence is in `just`, and fixing it there fixes both.
-- **How it's applied**: `.github/workflows/server.yml` has three jobs — lint (`just server lint`), test (`just server test`), and typecheck (`just server typecheck`). Each job starts from a clean container and does nothing CI-specific beyond setup.
-- **Standards enforced**: Any behavior that must differ between local and CI is expressed as a just variable or recipe argument, not as CI-only YAML logic. Example: `just server test local` vs `just server test ci` where `ci` suppresses colors and forces JSON output.
+- **Pattern chosen**: Architecture fitness functions as executable shell scripts, aggregated under `just server fitness`.
+- **Why**: The template genre dies when conventions are "documented but not enforced." Every rule in `server.md` ("hexagonal Rust", "no cross-layer imports") is worth zero without an automated check. Fitness functions make architecture a first-class, testable artifact.
+- **How it's applied**: Each rule is a one-liner or short shell snippet inside `server.just`. They all execute sequentially under the `fitness` recipe, each printing ✅ or ❌ + a reason. Total runtime is budgeted at < 5 seconds so fitness can be part of the local dev pre-commit loop.
+- **Standards enforced**:
+  - Every architectural rule in any doc has a matching fitness check or the rule is deleted.
+  - Every fitness check is self-describing: the output tells you which rule failed and why.
+  - Fitness fails on first real violation but continues running all checks so you see the full diff.
 
-### 3.4 Containerization — "Engine and RPC in Multi-Stage Images"
+> **Year-3 to year-10 test**: In year 5, a new contributor adds `surrealdb` as a dep to the `domain` crate "just for a quick thing." Without fitness, this is merged. With fitness, CI-less-though-we-are, `just server fitness` before push fails loudly. The hexagonal architecture is preserved by the check, not by memory.
 
-- **Pattern chosen**: Multi-stage Docker builds with explicit cache layers.
-- **Why**: The Rust engine's compile time is the test suite's biggest CI slowdown. A naive `cargo build` in a Dockerfile takes 5+ minutes per run. Multi-stage with cargo-chef (or `cargo build --dependencies`) drops that to under 60s on cache hits. The Go sidecar is faster but benefits from the same pattern.
-- **How it's applied**: `engine/Dockerfile` has a builder stage that caches dependencies separately from source, and a runtime stage based on `debian:bookworm-slim` (matching the DB base image for consistency). `rpc/Dockerfile` follows the same structure. Both produce <100MB runtime images.
-- **Standards enforced**: No `:latest` tags ever. Every image is tagged with the git SHA in CI and `dev` locally. `.dockerignore` is strict — no target/, no node_modules, no .git.
+### 3.4 Zero-Boilerplate Template — "Nothing to Delete"
 
-### 3.5 Architecture Fitness Functions — "Automated Boundary Enforcement"
-
-- **Pattern chosen**: Lightweight CI-grep checks + Cargo workspace rules.
-- **Why**: Rules in `server.md` like "domain depends on nothing" are aspirational without enforcement. A single PR that adds `surrealdb = { workspace = true }` to `domain/Cargo.toml` quietly breaks the hexagonal architecture. Automated checks catch this in CI.
-- **How it's applied**: A just recipe `fitness` runs: (1) `grep -L surrealdb domain/Cargo.toml` must succeed (domain must not have surrealdb); (2) `grep -L axum application/Cargo.toml` (application must not have axum); (3) test files grepped for raw `fetch(` (must use `lib/client.ts`); (4) test files grepped for `Authorization` literal (must use token from fixture).
-- **Standards enforced**: Every fitness rule is a one-liner shell check. Rules are added to `server.just` as the architecture grows. CI runs `just server fitness` as a required status check.
+- **Pattern chosen**: Aggressive minimalism. Anything that isn't actually in use gets deleted, not commented out.
+- **Why**: Templates rot by accumulating dead code and stub files. A new user cloning the template is stuck reading commented-out blocks trying to understand "is this for me?" Dead comments lie. Delete them instead.
+- **How it's applied**: No `#todo:` blocks in `server.just` (they turn into real code or get deleted). No empty `*.sh` files "reserved for future use". No Dockerfiles for services that aren't containerized. No `scripts/` directory if it only contains scripts that don't run.
+- **Standards enforced**: A fitness check flags `#todo` and `# TODO` in `server.just`. Another check fails if any `.sh` file exists outside `db/scripts/`. Another fails if more than one `Dockerfile` exists in the repo.
 
 ---
 
 ## 4. Component Map & Directory Structure
 
-### Proposed tree (additions marked with `+`, modifications with `~`)
+### Target tree (after Phases 4–6; removals marked `-`, additions `+`, revisions `~`)
 
 ```
 src/server/
-├── flake.nix                          ~ add deno, go, cargo to packages
-├── server.just                        ~ rewrite run/test, add up/down/logs/status/fitness
-├── .env.example                       + canonical env var reference
-├── Procfile                           + (optional) if shell trap proves insufficient
-├── README.md                          ~ quickstart + troubleshooting
+├── flake.nix                          ~ add cargo, go, deno, buf, jq
+├── server.just                        ~ add build-grpc; finalize run; add fitness, down, status, doctor
+├── .env.example                       + canonical env reference
+├── README.md                          ~ microkernel quickstart + feature matrix
+├── TEMPLATE.md                        + cleanup checklist for people cloning
 │
-├── db/                                (unchanged — works)
-│   ├── db.Dockerfile
-│   ├── docker-compose.yml             ~ add engine + rpc services for full-stack up
-│   └── init/
-│       └── 01-schema/02-fields.surql  ~ add references<session> to user; fix role enum
+├── db/                                (unchanged — keep as-is)
+│   ├── db.Dockerfile                  (THE ONLY DOCKERFILE)
+│   ├── docker-compose.yml
+│   ├── init/
+│   │   └── 01-schema ... 05-seed
+│   └── scripts/                       (THE ONLY .sh FILES)
+│       ├── entrypoint.sh
+│       └── init-db.sh
 │
-├── engine/
-│   ├── Dockerfile                     + multi-stage build for gateway binary
-│   ├── .dockerignore                  +
-│   ├── Cargo.toml                     (unchanged)
-│   └── core/domain/src/entities/
-│       └── user.rs                    ~ align Role enum: Tourist→User OR DB→tourist
+├── engine/                            (Rust workspace — native in Nix shell)
+│   └── (unchanged from Phase 1)
 │
-├── rpc/
-│   ├── Dockerfile                     + multi-stage build for rpc binary
-│   ├── .dockerignore                  +
-│   └── (rest unchanged)
+├── rpc/                               (Go module — native in Nix shell)
+│   └── (unchanged from Phase 1)
 │
-├── proto/                             (unchanged)
+├── proto/                             (buf config + .proto files)
+│   └── (unchanged)
 │
-├── tests/
-│   ├── deno.json                      ~ add test:preflight task
-│   ├── lib/
-│   │   ├── health.ts                  + service liveness probes
-│   │   └── errors.ts                  + StackUnavailableError type
-│   ├── fixtures/
-│   │   ├── surreal_env.ts             ~ call health probe; throw on failure
-│   │   ├── api_env.ts                 ~ call health probe; throw on failure
-│   │   └── rpc_env.ts                 ~ call health probe; throw on failure
-│   └── preflight.ts                   + standalone pre-flight script
-│
-└── scripts/
-    ├── run-stack.sh                   + process supervisor script (if just recipe gets ugly)
-    └── wait-for.sh                    + generic health wait utility
+└── tests/
+    ├── preflight.ts                   (from Phase 3)
+    ├── deno.json                      ~ test task runs preflight first
+    ├── lib/
+    │   ├── health.ts                  (from Phase 3)
+    │   ├── errors.ts                  (from Phase 3)
+    │   ├── assert.ts
+    │   ├── client.ts
+    │   └── fixtures.ts
+    ├── fixtures/
+    │   ├── surreal_env.ts
+    │   ├── api_env.ts
+    │   └── rpc_env.ts
+    ├── unit/db/
+    │   ├── indexes.test.ts
+    │   └── schema.test.ts
+    ├── integration/
+    │   ├── api/
+    │   ├── db/
+    │   └── rpc/
+    ├── e2e/
+    │   └── smoke.test.ts
+    │
+    ├─ fixtures.sh                     - DELETE
+    ├─ run-all.sh                      - DELETE
+    ├─ unit/01-schema.sh               - DELETE
+    └─ e2e/01-smoke.sh                 - DELETE
 
-.github/
-└── workflows/
-    ├── server-ci.yml                  + lint + test + typecheck
-    └── fitness.yml                    + architecture fitness checks
+scripts/                               - DELETE (entire dir if it exists)
+└── run-stack.sh                       - DELETE
 ```
 
-### Component Responsibilities
+### Component Responsibilities (revised)
 
-**`server.just` (orchestrator)**
-- Exposes: `run`, `down`, `test`, `logs`, `status`, `fitness`, `build`, `lint`, `typecheck`.
-- Consumes: podman-compose, cargo, go, deno, the `scripts/` helpers.
-- Must not: reimplement what docker-compose does; hardcode ports.
+**`flake.nix`**
+- Exposes: one `devShells.default` named `gwa-server` with full toolchain.
+- Consumes: nixpkgs unstable.
+- Must not: assume anything about the host system beyond Nix itself.
 
-**`scripts/run-stack.sh` (if needed)**
-- Exposes: background-starts all three services, writes PIDs, waits for health, traps signals.
-- Consumes: `.env` vars, the three service startup commands.
-- Must not: know anything about test logic or CI.
+**`server.just`**
+- Exposes: `fmt`, `lint`, `typecheck`, `quality`, `build-db`, `build-engine`, `build-grpc`, `build`, `run`, `test`, `down`, `status`, `fitness`, `doctor`, `deploy` (commented-out sketch).
+- Consumes: tools from the Nix shell.
+- Must not: contain any orchestration that isn't expressible as a single recipe body; call external `.sh` scripts (except DB container's own internal scripts).
 
-**`tests/lib/health.ts` (probes)**
-- Exposes: `probeSurreal()`, `probeApi()`, `probeRpc()`, each returning `Promise<boolean>`.
-- Consumes: only `fetch`.
-- Must not: throw on failure (that's the fixture's job); retry more than once.
+**`db/` (unchanged)**
+- Exposes: SurrealDB HTTP + WebSocket on :8000.
+- Consumes: volume for persistence.
+- Must not: be touched by this phase — it works.
 
-**`tests/preflight.ts` (standalone check)**
-- Exposes: a CLI that prints a three-line status table.
+**`engine/` (native process)**
+- Exposes: GraphQL at :3000.
+- Consumes: DB at :8000, RPC at :4000 (grpc client).
+- Must not: have a Dockerfile.
+
+**`rpc/` (native process)**
+- Exposes: gRPC at :4000.
+- Consumes: nothing mandatory (notifier uses SMTP optionally).
+- Must not: have a Dockerfile.
+
+**`tests/preflight.ts`**
+- Exposes: CLI, exit 0 if all three services reachable, 1 otherwise, with readable banner.
 - Consumes: `lib/health.ts`.
-- Must not: run any actual tests.
-
-**`engine/Dockerfile`**
-- Exposes: a runtime image that starts `gateway`.
-- Consumes: the Cargo workspace.
-- Must not: include build tools in the final stage.
-
-**`rpc/Dockerfile`**
-- Exposes: a runtime image that starts the Go binary.
-- Consumes: the Go module.
-- Must not: include the Go toolchain in the final stage.
+- Must not: run any tests. Must not: start any services.
 
 ---
 
 ## 5. Trade-off Analysis
 
 ```
-DECISION: How to orchestrate three services for local dev
+DECISION: Containerize engine/rpc or run native in Nix shell?
 OPTIONS CONSIDERED:
-  A. Pure shell via just recipe (background + trap)
-     pros: zero new deps; works in Nix shell; 15-line recipe
-     cons: PID juggling; Windows devs need WSL (but Nix already forces WSL)
-  B. overmind / foreman / process-compose
-     pros: purpose-built; Procfile is standardized; nice UX (per-process logs)
-     cons: new binary dep; must be added to flake.nix; one more thing to learn
-  C. Full docker-compose for all three services
-     pros: perfect parity with CI; one image rebuild = reproducible
-     cons: destroys iteration loop (rebuild on every Rust change); 5-min feedback cycle
-  D. Nix-native process-compose via services.nix
-     pros: declarative; composable; integrates with flake
-     cons: steep learning curve; niche; team doc burden
-CHOSEN: A (shell via just recipe) for dev, C (docker-compose) available for CI
-REASON: Dev loop iteration speed is the #1 priority for a template. Shell traps are boring,
-        proven, and survive any reasonable team transition. Containers for CI give parity
-        without sacrificing dev speed.
-REVISIT IF: The team grows past 3 devs OR a fourth service is added OR Windows-native
-            (non-WSL) support becomes a requirement.
+  A. Native in nix develop (engine: cargo run; rpc: go run)
+     pros: sub-second iteration; debugger works; no image churn; matches template ethos
+     cons: relies on Nix for env consistency (acceptable — flake pins versions)
+  B. Containerize everything
+     pros: perfect reproducibility; matches production shape
+     cons: 5-minute rebuild per Rust change; kills iteration; user explicitly rejected this
+  C. Hybrid: native by default, containers via opt-in recipe
+     pros: flexibility
+     cons: two paths to maintain; fitness rules become ambiguous; template user has to choose
+CHOSEN: A — native in Nix shell for engine and rpc
+REASON: The user's mental model is microkernel: only stateful things get containers. This is
+        a philosophy choice that ages well — debuggability and iteration speed dominate at
+        template-scale, and Nix provides the reproducibility ceiling we need.
+REVISIT IF: The template is ever used as a starting point for a cloud-native service that
+            needs identical prod and dev images. At that point, fork this decision for that
+            downstream project — don't muddy the template.
 ```
 
 ```
-DECISION: How to fix the CASCADE DELETE issue on session.user
+DECISION: Delete stray .sh test scripts or keep as alternatives?
 OPTIONS CONSIDERED:
-  A. Add references<session> field on user table
-     pros: canonical SurrealDB 3 idiom; back-reference enables cascade tracking
-     cons: adds a field to user schema (minor)
-  B. Switch to manual cleanup (DB event on user delete → delete sessions)
-     pros: works regardless of SurrealDB version
-     cons: reinvents what REFERENCE is supposed to do; event ordering risks
-  C. Drop CASCADE, handle session cleanup in the Rust engine
-     pros: explicit; testable in Rust
-     cons: defeats the point; every auth impl would need to remember
-CHOSEN: A (references<session> on user)
-REASON: This is the documented pattern. The test failing is a smoke signal that the schema
-        is incomplete, not that SurrealDB is broken.
-REVISIT IF: SurrealDB 4 changes the reference semantics.
+  A. Delete all .sh files outside db/scripts/
+     pros: single source of truth for tests; no drift between sh and ts versions
+     cons: loses the "shell-based smoke test" pattern that some teams like
+  B. Keep shell tests as redundant coverage
+     pros: "defense in depth"
+     cons: drift guaranteed over time; template user has to understand two systems; bloat
+  C. Delete but document the historical pattern in a commit message
+     pros: git history preserves context; present state is clean
+     cons: requires discipline in commit message
+CHOSEN: A — delete outright (C tactic for the commit message)
+REASON: Template cleanliness is core to this plan. The Deno suite has already ported every
+        shell test to .test.ts. Keeping both is drift waiting to happen and boilerplate the
+        template user doesn't need.
+REVISIT IF: Never — this decision is definitional for the template's aesthetic.
 ```
 
 ```
-DECISION: How to align the role enum mismatch (Rust Tourist vs DB user)
+DECISION: What does `build-grpc` actually build?
 OPTIONS CONSIDERED:
-  A. Change Rust: Tourist → User (template-faithful)
-     pros: template stays generic; matches the template's DB schema (admin/owner/user)
-     cons: template must be edited per-project when a real domain shows up
-  B. Change DB: user → tourist (Xibalbá-faithful)
-     pros: matches Xibalbá's tourism domain
-     cons: the TEMPLATE is supposed to be generic — tourist isn't a generic role
-  C. Use serde rename to map Tourist→"user"
-     pros: no schema change
-     cons: hides the mismatch; fragile on future field additions
-CHOSEN: A (rename Rust Role::Tourist to Role::User)
-REASON: server.md explicitly frames this as a template with core entities (user, item). Role
-        names should follow the template. Xibalbá's "tourist" was domain-specific and should
-        stay in the Xibalbá containers, not leak into the template.
-REVISIT IF: Never — this is the template's source of truth.
+  A. Only Go codegen (buf generate into rpc/gen/)
+     pros: matches the naming ("grpc" → the RPC sidecar)
+     cons: doesn't cover TS test stubs if those ever get generated
+  B. Go codegen + Go binary compile
+     pros: one recipe, full artifact
+     cons: naming is slightly off (build-grpc implies codegen, not binary)
+  C. Go codegen + TS codegen (both consumers of proto)
+     pros: single source of truth invocation
+     cons: Rust side generates via build.rs on cargo build, so parity is already 2-of-3
+CHOSEN: A — `build-grpc` runs buf generate for Go; the Go binary builds on `cargo`-equivalent
+         (i.e., `go build` happens inside `run` via `go run`, or as a separate `build-rpc`
+         recipe if a pre-built binary is ever needed)
+REASON: Recipe names should match intent. `build-grpc` is understood as "regenerate proto-
+        derived code for the gRPC sidecar." Binary compilation isn't coupled to proto gen
+        and is handled by `go run` at startup.
+REVISIT IF: The template evolves to need a pre-built rpc binary (rare — would only happen if
+            cold-start matters, which it doesn't at template scale).
 ```
 
 ```
-DECISION: Native vs containerized engine/rpc for local dev
+DECISION: Preflight enhancement — just reachability, or also seed data?
 OPTIONS CONSIDERED:
-  A. Native cargo run + go run in dev; containers in CI
-     pros: fast iteration (< 2s Rust rebuilds); debugger works; no image churn
-     cons: environmental drift possible (OpenSSL versions, etc.)
-  B. Containerized everywhere
-     pros: perfect reproducibility; no "works on my machine"
-     cons: 5+ minute rebuild cycles destroy the dev loop
-  C. Native everything including DB
-     pros: fastest possible
-     cons: user explicitly said "I'm not using surreal on local"
-CHOSEN: A (native dev, containerized CI)
-REASON: User preference + reality: Rust's compile time is the bottleneck. A template must
-        not ship with a 5-minute feedback loop. Nix flake gives enough environmental
-        consistency for dev; CI catches the rare drift.
-REVISIT IF: A regression is traced to native-vs-container drift (it will be obvious).
+  A. Reachability only (current state)
+     pros: fast; stable across DB resets
+     cons: test can false-pass on an empty DB (but e2e smoke test catches that later)
+  B. Reachability + seed-count probe (e.g., "at least one user exists")
+     pros: earlier signal
+     cons: preflight becomes stateful; has to know schema; coupled to seed data
+  C. Reachability + namespace/database existence check
+     pros: catches "DB up but unconfigured" state
+     cons: marginal extra value — init-db.sh already provisions ns/db at container start
+CHOSEN: A — reachability only
+REASON: Preflight's job is "can the test suite connect to services." Seed data validation is
+        the smoke test's job. Preflight must stay fast and domain-agnostic so the template
+        user can swap schemas without breaking it.
+REVISIT IF: Preflight gets called in contexts where it's the only gate (e.g., before a
+            manual demo), where failing-silent on no-seeds would be embarrassing.
 ```
 
 ```
-DECISION: gRPC client strategy for the test suite
+DECISION: Where does signal-trap orchestration live — inline in `run` recipe or in a script?
 OPTIONS CONSIDERED:
-  A. Keep untyped JSON-over-HTTP (current lib/client.ts)
-     pros: works today; no codegen; one fetch call
-     cons: assumes Connect protocol; silent drift from proto contract
-  B. Migrate to @connectrpc/connect with generated TS types
-     pros: type safety; proto is source of truth
-     cons: only works IF sidecar speaks Connect protocol
-  C. Migrate to nice-grpc for raw gRPC over HTTP/2
-     pros: works with raw gRPC
-     cons: Deno support is shaky; more deps
-CHOSEN: Spike protocol first (Phase 3.0), then decide between A and B
-REASON: This is the #1 open question in server-test.md. A 30-minute spike checking whether
-        main.go uses grpc.NewServer() (raw) or connect-go resolves it. The current A-approach
-        works only by accident if the sidecar happens to support JSON-over-HTTP transcoding.
-REVISIT IF: Sidecar protocol changes (then regen types and move on).
-```
-
-```
-DECISION: Where to define ports and env vars
-OPTIONS CONSIDERED:
-  A. Single .env.example checked in; each service reads from env
-     pros: one source of truth; 12-factor-style
-     cons: must keep defaults in code for the case where .env is missing
-  B. Hardcode in docker-compose and just recipe; no .env
-     pros: nothing to forget
-     cons: changing a port requires hunting through multiple files
-  C. .env + justfile variables that pin defaults
-     pros: override-friendly
-     cons: two layers of config
-CHOSEN: A + C hybrid (.env.example with defaults mirrored in justfile)
-REASON: The .env.example documents intent. Justfile defaults mean a fresh clone works
-        without copying the .env file. Runtime code (Rust AppConfig, Go config.go) also
-        has defaults as a last line of defense.
-REVISIT IF: Config drift happens across the three layers (add a validation recipe).
+  A. Inline in server.just (multi-line recipe body with trap)
+     pros: single source of truth; no stray scripts; matches microkernel aesthetic
+     cons: just recipes aren't the most ergonomic place for 20+ lines of bash
+  B. In scripts/run-stack.sh called from recipe
+     pros: easier to edit/read as a standalone shell file
+     cons: violates "no .sh outside db/scripts/" rule; template user has two files to read
+CHOSEN: A — inline in the recipe
+REASON: The microkernel rule is strict and earns its keep by being strict. A 20-line just
+        recipe is acceptable; two mysterious files are not.
+REVISIT IF: The recipe grows past 40 lines or starts to need arrays/functions shell can't
+            express cleanly — at which point, split into small subrecipes, not into a .sh.
 ```
 
 ---
 
-## 6. Phased Implementation Plan
+## 6. Phased Implementation Plan (revised)
 
-### Phase 1 — Schema Reality Check [COMPLETED]
+### Phase 1 — Schema Reality Check ✅ COMPLETE
 
-- **Goal**: Fix the real bugs before layering orchestration on top. The failing G1 CASCADE test and the role/user mismatch are deeper than wiring — they'd fail even if the stack were running.
-- **Components built**:
-  1. Added `DEFINE FIELD sessions ON user TYPE references<session>;` to `01-schema/02-fields.surql`.
-  2. Renamed `Role::Tourist` → `Role::User` in `domain/src/entities/user.rs` and across the codebase.
-  3. Added missing User fields to the template's `02-fields.surql`.
-  4. Updated the Rust store `tests.rs` with full `Item` construction.
-  5. Updated the test seed's `02-users.surql` to use `role: 'user'` and included new fields.
-- **Exit criteria**:
-  - `podman-compose down -v && podman-compose up -d --build` rebuilds the DB image with the fixed schema. [Ready for validation]
-  - Running JUST the DB tests yields 13/13 green. [Ready for validation]
-  - `cargo check --all-targets` in engine/ passes. [Ready for validation]
-  - `cargo test -p store` passes once DB is running. [Ready for validation]
+Delivered: CASCADE fix via `references<session>`, role enum alignment, User field completeness, store test update. All 13 DB tests now green.
+
+### Phase 2 — Process Orchestration ✅ COMPLETE
+
+Delivered: `just server run` starts DB + engine + RPC via shell trap supervisor; `just server down` cleans up; `just server status` reports health.
+
+### Phase 3 — Test Suite Hardening ✅ COMPLETE
+
+Delivered: `preflight.ts` with clear pass/fail reporting; fixture health probes; `StackUnavailableError` readable output. Confirmed by the output shared by the user — preflight correctly shows 🗄️ UP / 🦀 DOWN / 🐹 DOWN and points at `just server run`.
 
 ---
 
-### Phase 2 — Process Orchestration [COMPLETED]
+### Phase 4 — Microkernel Finalization ✅ COMPLETE
 
-- **Goal**: `just server run` starts everything. `Ctrl-C` stops everything. No more "forgot to start the engine" failures.
-- **Components built**:
-  1. Extended `flake.nix` with `deno`, `go`, `rustup`, and `grpcurl`.
-  2. Created `src/server/.env.example` with canonical defaults.
-  3. Created `src/server/scripts/run-stack.sh` shell supervisor with signal traps.
-  4. Updated `src/server/server.just` with `run`, `down`, `status`, `logs`, and `fitness` commands.
-- **Exit criteria**:
-  - Fresh terminal → `nix develop` → `just server run` → within 15s: DB healthy, API ready, RPC ready. [Ready for validation]
-  - `Ctrl-C` → all three services gone, no orphans. [Ready for validation]
-  - `just server status` accurately reports health. [Ready for validation]
-
----
-
-### Phase 3 — Test Suite Hardening [COMPLETED]
-
-- **Goal**: `just server test` gives fast, accurate, useful feedback. When the stack is down, tell the user which service and how to fix it.
-- **Components built**:
-  1. `tests/lib/health.ts` with `probeSurreal()`, `probeApi()`, `probeRpc()`.
-  2. `tests/lib/errors.ts` with `StackUnavailableError`.
-  3. Modified fixtures (`surreal_env.ts`, `api_env.ts`, `rpc_env.ts`) to call probes.
-  4. Created `tests/preflight.ts` standalone script for status table.
-  5. Updated `deno.json` tasks with `preflight` check.
-  6. Fixed `printSummary()` to always run in `finally` blocks via `resetCounts()`.
-  7. **Spike**: Confirmed Go sidecar uses raw gRPC. Added `buf` and `proto` build steps to `server.just`.
-- **Exit criteria**:
-  - `just server down && just server test` → clear "DOWN" status and fix instructions. [PASSED]
-  - Fixtures throw readable errors if services go down mid-test. [PASSED]
-  - Accurate pass/fail counts in summary. [PASSED]
-
----
-
-### Phase 4 — Full Containerization for CI
-
-- **Goal**: A CI machine with only Docker installed can run the full stack and the full test suite.
+- **Goal**: Commit fully to microkernel-via-Nix. `nix develop` is the shell. Only the DB is containerized. All stray shell scripts are gone. The justfile reads like a clean template.
 - **Components to build**:
-  1. `engine/Dockerfile` — multi-stage:
-     - Stage 1 (builder): `rust:1.83-bookworm`, copy workspace manifest files first, `cargo fetch`, then copy sources and `cargo build --release -p gateway`.
-     - Stage 2 (runtime): `debian:bookworm-slim`, copy the binary only, expose :3000, ENTRYPOINT the binary.
-     - `.dockerignore` excludes `target/`, `.git/`, `tests/`.
-  2. `rpc/Dockerfile` — same multi-stage pattern with `golang:1.23-bookworm` builder.
-  3. Extend `db/docker-compose.yml` → rename to `docker-compose.yml` at server root, add `engine` and `rpc` services with `depends_on: { surrealdb: { condition: service_healthy } }`.
-  4. Add health checks to engine and rpc services (both expose a trivial `/healthz` or similar — if not, use TCP-level `nc -z`).
-  5. Add a `just server up-all` recipe that uses docker-compose for all three (the all-container path, distinct from dev-mode `run`).
-  6. Validate: `podman-compose up` builds all three and runs the full suite against them (on non-default ports if needed to avoid conflict with native dev).
-- **Dependencies**: Phase 2 done (need to know the startup commands and health checks before containerizing).
+  1. **Finalize `flake.nix`**. Done.
+  2. **Finalize `server.just` `run` recipe**. Done.
+  3. **Add `build-grpc` recipe**. Done.
+  4. **Update `build` recipe**. Done.
+  5. **Remove legacy shell scripts**. Done.
+  6. **Remove Dockerfile stubs**. Done.
+  7. **Add `.env.example`**. Done.
+  8. **Finalize `down` recipe**. Done.
+
+- **Dependencies**: Phases 1–3.
 - **Exit criteria**:
-  - `podman-compose build` completes for all three in under 5 minutes on a cold cache, under 30s on warm cache.
-  - `podman-compose up` brings the full stack up with all health checks green.
-  - `cd tests && deno task test` run from outside the containers (hitting the exposed ports) passes the full suite.
-  - Final image sizes: engine < 150MB, rpc < 50MB.
-- **Risk flags**: [MEDIUM RISK] cargo-chef is nice-to-have for cache optimization but adds complexity. Start without it — if builds are slow, add it in Phase 5. [LOW RISK] Image tagging scheme must be agreed upon (use `:dev` for local, `:$GIT_SHA` + `:main` in CI).
+  - `nix develop` → shell banner with versions → `cargo --version && go version && deno --version && buf --version` all succeed.
+  - `just server run` → within 15s, preflight run elsewhere shows 🗄️ ✅ 🦀 ✅ 🐹 ✅.
+  - `Ctrl-C` in the `run` terminal → all three services gone (pgrep returns empty).
+  - `just server test` → preflight green, full suite green, summary accurate.
+  - `find src/server -name "*.sh" -not -path "*/db/scripts/*"` returns empty.
+  - `find . -iname "Dockerfile*" -not -path "*/db/*"` returns empty.
+  - `find src/server/scripts -type f 2>/dev/null | wc -l` returns 0 (directory gone).
+- **Risk flags**:
+  - [MEDIUM RISK] Rust toolchain in Nix: adding `cargo` via plain nixpkgs gives you whatever version nixpkgs pins, which may drift from the project's `rust-toolchain.toml`. Use `rust-bin` overlay or `fenix` for pinning.
+  - [LOW RISK] Signal trap on macOS vs Linux: bash's `trap` semantics are identical; the risk is `kill 0` vs explicit PID — use explicit PIDs.
+  - [LOW RISK] Podman machine on macOS: first-run latency may exceed 30s. Add a detection note to `doctor`.
 
 ---
 
-### Phase 5 — CI/CD Pipeline
+### Phase 5 — Architecture Fitness (strict, exhaustive) [REPLACES CI]
 
-- **Goal**: Every PR runs the full suite. Green check or block merge.
-- **Components to build**:
-  1. `.github/workflows/server-ci.yml`:
-     - Trigger: PRs to main, pushes to main.
-     - Jobs: `lint` (runs `just server lint`), `test` (runs `just server up-all` then `just server test`), `typecheck` (runs `just server typecheck`), `fitness` (runs `just server fitness`).
-     - All jobs run inside `ubuntu-latest` with docker + nix installed.
-     - Cache: Rust target dir, Go modules, Deno cache. Keyed on respective lockfiles.
-  2. Branch protection on main requires all four jobs to pass.
-  3. Add `just server lint` (delegates to cargo fmt --check, cargo clippy, deno lint, go vet).
-  4. Add `just server typecheck` (cargo check --all-targets, deno check, go build -o /dev/null).
-- **Dependencies**: Phase 4 done (CI depends on containers).
+- **Goal**: Every architectural rule in every doc is enforceable by `just server fitness` in under 5 seconds. The template carries its own architectural conscience.
+- **Components to build**: Implement each fitness category as a subrecipe (`fitness-hexagonal`, `fitness-tests`, etc.), compose them under `fitness`.
+
+  **Category 1 — Hexagonal Rust purity**
+  - `engine/core/domain/Cargo.toml` must NOT contain: `surrealdb`, `axum`, `tonic`, `async-graphql`, `jsonwebtoken`, `hyper`, `reqwest`, `async-graphql-axum`.
+  - `engine/application/Cargo.toml` must NOT contain: `axum`, `tonic`, `async-graphql`, `async-graphql-axum`.
+  - `engine/core/store/Cargo.toml` may contain `surrealdb` but NOT `axum`, `tonic`, `async-graphql`.
+  - `engine/services/gateway/Cargo.toml` is the ONLY crate allowed to depend on transport crates.
+  - Implementation: one grep per rule, aggregate pass/fail.
+
+  **Category 2 — Test isolation**
+  - Zero `fetch(` occurrences in `tests/**/*.test.ts` (enforces use of `lib/client.ts`).
+  - Zero `Bearer ` string literals in `tests/**/*.test.ts` (enforces use of `getToken`).
+  - Zero `localhost` hardcodes in `tests/**/*.test.ts` (enforces env-driven URLs via fixtures).
+  - Every `*.test.ts` must import from `../../fixtures/` or `../fixtures/` (no direct client construction).
+
+  **Category 3 — Microkernel enforcement**
+  - Exactly one `Dockerfile*` in the repo, and it is `db/db.Dockerfile`.
+  - Zero `.sh` files outside `db/scripts/`.
+  - No `docker run` or `podman run` invocations in `server.just` (use podman-compose instead for consistency).
+  - No `scripts/` directory at `src/server/` level.
+
+  **Category 4 — Proto contract**
+  - `cd proto && buf lint` passes.
+  - `cd proto && buf breaking --against '.git#branch=main'` passes (skip if on main — detect via `git branch --show-current`).
+
+  **Category 5 — DB pipeline integrity**
+  - Every `.surql` file under `db/init/` lives in a subdirectory matching `0[1-9]-*` and names itself matching `0[1-9]-*.surql`.
+  - Directory numbering is contiguous starting at 01 (no gaps).
+
+  **Category 6 — Template cleanliness**
+  - Zero `TODO`, `todo:`, `FIXME`, `XXX` in `server.just`.
+  - Zero domain-specific names in template seeds: grep `db/init/05-seed/*.surql` for `Xibalbá`, `tourism`, `tourist`, `mezcaleria`, etc. Fail if any appear — those belong in the Xibalbá containers, not the template.
+  - Zero commented-out blocks over 5 lines in `server.just` (kill dead code).
+
+  **Category 7 — Nix reproducibility**
+  - Every tool invoked in `server.just` (greppable as recipe body commands) must appear in the `packages` list of `flake.nix`. One-to-one cross-check.
+  - `flake.lock` exists and is not excluded by `.gitignore`.
+
+  **Category 8 — Config consistency**
+  - Port numbers used in `server.just` match those in `.env.example`.
+  - Env vars read by `engine/services/gateway/src/infra/config.rs` (greppable `env::var(...)`) are all listed in `.env.example`.
+  - Env vars read by `rpc/internal/config/config.go` are all listed in `.env.example`.
+
+  **Category 9 — File hygiene**
+  - `.gitignore` must cover: `target/`, `node_modules/`, `.env`, `*.log`, `dist/`, `build/`, `.DS_Store`, `rpc/gen/` (codegen artifacts).
+  - No files matching `.gitignore` patterns are committed (use `git check-ignore`).
+
+  **Category 10 — Recipe coverage**
+  - Every service probed by `preflight.ts` has a corresponding startup in `just server run` (grep cross-check).
+  - `just server down` tears down every service `just server run` starts.
+
+- **Delivery**: `just server fitness` outputs something like:
+  ```
+  🦀 Hexagonal purity
+    ✅ domain has no transport deps
+    ✅ application has no transport deps
+    ✅ store only depends on surrealdb + domain
+  🧪 Test isolation
+    ✅ no raw fetch in tests
+    ✅ no auth literals in tests
+    ✅ no localhost hardcodes
+  🔒 Microkernel enforcement
+    ✅ only db/db.Dockerfile exists
+    ✅ no .sh outside db/scripts/
+  📦 Proto contract
+    ✅ buf lint passed
+    ✅ no breaking changes
+  🗄️  DB pipeline
+    ✅ all .surql files correctly numbered
+  ✨ Template cleanliness
+    ✅ no TODO in server.just
+    ✅ no domain-specific names in template seeds
+  ❄️  Nix reproducibility
+    ✅ every tool invoked is in flake.nix
+  ⚙️  Config consistency
+    ✅ ports match across all config sources
+  📁 File hygiene
+    ✅ .gitignore complete
+    ✅ no ignored files committed
+  🔗 Recipe coverage
+    ✅ all probed services have startup/teardown
+
+  10/10 fitness checks passed in 3.2s
+  ```
+
+- **Dependencies**: Phase 4 (need the final tree shape to write the checks against).
 - **Exit criteria**:
-  - Open a test PR with a deliberate schema break (e.g., remove the role ASSERT). CI fails with a clear test error pointing at the A2 test.
-  - Open a PR with a fitness violation (e.g., add surrealdb to domain/Cargo.toml). `fitness` job fails.
-  - Happy path PR: all four checks green in < 8 minutes on warm cache.
-- **Risk flags**: [LOW RISK] GitHub Actions occasionally has docker-in-docker quirks. Fallback: run native on the runner with nix installing deps.
+  - `just server fitness` prints the above (all-green) in under 5 seconds.
+  - Deliberately introducing a violation (e.g., `sed -i '1i surrealdb = "*"' engine/core/domain/Cargo.toml`) causes the correct check to fail with a clear reason.
+  - Reverting the violation returns to all-green.
+- **Risk flags**:
+  - [LOW RISK] Some checks may hit edge cases (e.g., `surrealdb` substring-matching a benign package name). Use anchored regex or parse TOML properly for Cargo.toml checks (via `dasel` or `tomlq` if fancy).
+  - [LOW RISK] `buf breaking --against` requires a git ref that exists. On a fresh clone before first push, this may fail. Handle by skipping if ref doesn't resolve.
 
 ---
 
-### Phase 6 — Architecture Fitness & Template Polish
+### Phase 6 — Template Polish
 
-- **Goal**: The template is genuinely copy-pasteable. Architectural rules are enforced automatically. Docs reflect reality.
+- **Goal**: A stranger can clone the repo, read one file, and know what they need to delete/rename for their own project.
 - **Components to build**:
-  1. `just server fitness` recipe runs:
-     - Grep `domain/Cargo.toml` must NOT contain `surrealdb`, `axum`, `tonic`, `async-graphql`.
-     - Grep `application/Cargo.toml` must NOT contain `axum`, `tonic` (only `domain` + utils).
-     - Grep `tests/**/*.test.ts` must NOT contain raw `fetch(` — all HTTP goes through `lib/client.ts`.
-     - Grep `tests/**/*.test.ts` must NOT contain `Authorization` string literal — all auth goes through fixtures.
-     - Verify every `.surql` file lives in a numbered directory matching the pipeline order.
-  2. Rewrite `README.md`:
-     - Quickstart: `nix develop` → `just server run` → `just server test`.
-     - Architecture diagram (reuse the one in this spec).
-     - Feature matrix (what each DB feature demonstrates).
-     - Troubleshooting (top 3 gotchas: ports in use, podman not running, nix shell not loaded).
-  3. Template cleanup checklist in `TEMPLATE.md`: what to rename, what to delete, when cloning for a real project.
-  4. Pre-commit hook (via git hooks or `just server pre-commit`) that runs fmt + lint + typecheck.
-  5. Add `just server doctor` that diagnoses common issues (ports, env vars, missing deps) and prints fixes.
-- **Dependencies**: All prior phases.
+
+  1. **Rewrite `README.md`** with four sections:
+     - *Quickstart*: `nix develop` → `just server run` → `just server test` (three lines).
+     - *Architecture*: the microkernel diagram from §2.
+     - *Feature matrix*: what each DB feature demonstrates, which GraphQL endpoints exist, which gRPC methods exist.
+     - *Troubleshooting*: three common issues (port conflict, podman machine not started on macOS, stale DB volume after schema change).
+
+  2. **Create `TEMPLATE.md`** — the cleanup checklist for forking the template:
+     - Rename `template` to your project name in: `flake.nix` (`description`), `proto/buf.yaml`, `proto/template/v1/` directory, `rpc/go.mod` module path, engine's `Cargo.toml` workspace name.
+     - Replace seed data in `db/init/05-seed/` with your domain.
+     - Adjust the schema in `db/init/01-schema/` and `02-fields.surql`.
+     - Adjust GraphQL types in `engine/services/gateway/src/adapters/graphql/types/`.
+     - Adjust proto definitions in `proto/template/v1/`.
+     - Run `just server fitness` after each change.
+
+  3. **Add `just server doctor`** — diagnoses common issues and prints fix commands:
+     - Is `nix develop` active? (check for Nix env markers)
+     - Is podman running? (try `podman ps`)
+     - Is podman machine started on macOS? (`podman machine list` for Darwin only)
+     - Are ports 8000/3000/4000 free? (try `lsof -i :3000` etc.)
+     - Is `.env` present or falling back to `.env.example`?
+     Output ends with either "all checks passed" or a numbered list of fixes.
+
+  4. **Add `just server pre-commit`** — runs `fmt lint typecheck fitness` in sequence. Can be wired into a git hook optionally.
+
+  5. **Remove the `deploy` recipe's commented-out body** OR actually implement it minimally. Don't leave a commented stub — the template-cleanliness fitness rule will flag it. Recommendation: leave the recipe signature + a single-line `@echo "Deploy not configured for template"` message; template user fills this in.
+
+- **Dependencies**: Phases 4 and 5.
 - **Exit criteria**:
-  - A developer unfamiliar with the repo clones it, follows README, reaches green in < 5 minutes.
-  - `just server fitness` catches a planted violation (test in CI with a deliberately-broken domain Cargo.toml).
-  - Running `just server doctor` on a fresh macOS without podman prints "Podman not installed. Install via 'brew install podman'."
-- **Risk flags**: None. This is polish.
+  - A dev unfamiliar with the repo reads only `README.md` and reaches green tests in under 5 minutes.
+  - `just server doctor` on a broken setup (e.g., podman not started) prints the exact command to fix it.
+  - `just server pre-commit` catches any violation before commit.
+  - `just server fitness` post-cleanup still 10/10 green (including no-TODO rule).
+- **Risk flags**: None.
 
 ---
 
 ## 7. Implementation Management
 
-### Sequencing (strict)
+### Sequencing (revised)
 
 ```
-Phase 1 (Schema fixes)              ← zero deps, start here
-    ↓
-Phase 2 (Orchestration)             ← needs Phase 1 to validate "everything works"
-    ↓
-Phase 3 (Test hardening)            ← needs Phase 2 to have a live stack to probe
-    ↓                                   └── gRPC protocol spike gates Phase 3 completion
-Phase 4 (Containerization)          ← needs Phase 2 (knows startup cmds)
-    ↓
-Phase 5 (CI)                        ← needs Phase 4 (needs containers)
-    ↓
-Phase 6 (Polish)                    ← needs everything
+Phase 1 ✅ → Phase 2 ✅ → Phase 3 ✅
+                              ↓
+                           Phase 4 (microkernel finalization)
+                              ↓
+                           Phase 5 (fitness suite)
+                              ↓
+                           Phase 6 (polish)
 ```
 
-Phases 1 and 2 can overlap slightly (the role rename from Phase 1 doesn't block orchestration work). Phases 4 and 5 are tightly coupled — do them together.
+Phases 4 and 5 cannot parallelize — fitness checks the state that Phase 4 produces. Phase 6 is final.
 
-### Critical Path
+### Critical Path (for remaining work)
 
 ```
-Fix references<session> → Fix role enum → just server run (shell supervisor) →
-gRPC protocol spike → fixture health probes → Dockerfiles → CI workflow
+flake.nix toolchain additions →
+finalized `run` recipe with trap →
+delete .sh files + stray Dockerfiles →
+write fitness categories 1-10 →
+doctor + TEMPLATE.md
 ```
 
-The gRPC protocol spike is the single highest-risk item on the critical path. Do it before writing a single line of new RPC test code.
+The first domino is `flake.nix`. If Nix doesn't give you all tools, nothing downstream runs.
+
+### Ownership (solo dev, informational)
+
+All phases owned by the solo developer. Ordering within phases:
+- Phase 4: start with flake.nix (bedrock), then recipe surgery (build-grpc, run), then deletions (.sh, scripts, Dockerfile stubs).
+- Phase 5: write all 10 categories, then test each by deliberately violating it.
+- Phase 6: README first (most-read), TEMPLATE.md second, doctor third.
 
 ### Integration Points
 
-1. **DB schema change ↔ Rust entity shape**: Phase 1 changes both sides simultaneously. Verify deserialization with the `cargo test -p store` integration tests against a freshly-built DB container.
-2. **`just server run` ↔ test suite health probes**: Phase 2 produces the startup command; Phase 3 produces the probe that validates startup. They must agree on ports. Codify this in `.env.example`.
-3. **Dockerfile EXPOSE ↔ docker-compose port mappings ↔ test suite URLs**: Three places where a port number must match. Use compose env var substitution from `.env` as the single source of truth.
-4. **CI workflow ↔ justfile recipes**: The golden rule — CI must not have logic that isn't in justfile. Verify this by running the CI workflow locally with `act` or similar.
+1. **`flake.nix` ↔ `server.just`**: Every tool used in a recipe must be in the flake. Enforced by fitness Category 7.
+2. **`preflight.ts` ↔ `just server run`**: Every service probed by preflight must be started by `run`. Enforced by fitness Category 10.
+3. **`.env.example` ↔ `infra/config.rs` ↔ `config.go`**: Three places where env vars must agree. Enforced by fitness Category 8.
+4. **Proto files ↔ engine `build.rs` ↔ `rpc/gen/`**: Change a `.proto` → run `just server build-grpc` → Rust side regenerates on next `cargo build`.
 
 ### Breaking Changes
 
-- [HIGH RISK] **Renaming `Role::Tourist` to `Role::User`** (Phase 1): Any existing code consuming `Role::Tourist` breaks. Search the whole Rust workspace before renaming. This is a template — there should be no callers outside the domain, but verify.
-- [HIGH RISK] **Adding fields to the User schema** (Phase 1): Existing seeded users in `02-users.surql` must include the new required fields, or they'll fail SCHEMAFULL validation. Either make fields optional or extend seed data.
-- [MEDIUM RISK] **Introducing `references<session>` on user** (Phase 1): If any existing seed creates users before creating any session-related structure, the field's default handling matters. Test with a clean DB volume (`podman-compose down -v`).
-- [MEDIUM RISK] **Extending docker-compose.yml with engine + rpc services** (Phase 4): Devs who do `podman-compose up` expecting only DB now get three services. Either gate behind a profile (`--profile all`) or document clearly.
-- [LOW RISK] **Moving `docker-compose.yml` from `db/` to server root** (Phase 4): Anyone with muscle memory runs the old path. Keep a symlink or delete and document.
+- [HIGH RISK] **Deleting `scripts/run-stack.sh`** (Phase 4): if any dev has muscle-memory for calling it directly, they break. Mitigation: commit message calls it out, README update documents `just server run` as the only path.
+- [MEDIUM RISK] **Toolchain version lock in flake.nix**: pinning Rust via rust-bin can break if the pinned version has a compiler bug. Prefer pinning to a known-stable release, not bleeding edge.
+- [LOW RISK] **`build-grpc` regenerates files into `rpc/gen/`**: if anyone was hand-editing generated files, those edits are lost. Mitigation: gitignore `rpc/gen/` and enforce via fitness Category 9.
 
 ---
 
 ## 8. Validation & Testing Strategy
 
-### Test Matrix
+### Test Matrix (revised)
 
 | Layer | Test Type | What it verifies | How to run |
 |---|---|---|---|
-| DB schema constraints | Unit (Deno) | ASSERTs reject invalid data, unique indexes work | `just server test db:unit` |
-| DB events + graph + functions | Integration (Deno) | Event side effects, traversals, fn:: calls | `just server test db:integration` |
-| Rust store repos | Integration (cargo) | CRUD + fn:: calls against live DB | `cargo test -p store -- --test-threads=1` |
-| GraphQL auth + CRUD | Integration (Deno) | Login/token lifecycle, resolvers | `just server test api` |
-| gRPC methods | Integration (Deno) | Each service method's contract | `just server test rpc` |
-| Full-stack flows | E2E (Deno) | Create item via GraphQL → gRPC triggers → DB updates | `just server test e2e` |
-| Security properties | Security (Deno) | Auth required, fields protected, inputs sanitized | `just server test security` |
-| Pre-flight | Health probes | All three services reachable | `just server test:preflight` |
-| Architecture fitness | CI (shell) | Domain purity, no cross-layer imports, no raw fetch in tests | `just server fitness` |
-| Config drift | CI (shell) | Ports in .env match compose and justfile | `just server doctor` |
+| Shell env | Smoke | nix develop provides full toolchain | `just server doctor` |
+| DB schema | Unit (Deno) | ASSERTs + unique indexes | `just server test` |
+| DB events + functions + graph | Integration (Deno) | Side effects, traversals, fn:: | `just server test` |
+| Rust store | Integration (cargo) | Store repos against live DB | `cd engine && cargo test -p store` |
+| GraphQL | Integration (Deno) | Resolver contract + auth | `just server test` |
+| gRPC | Integration (Deno) | Service method contracts | `just server test` |
+| E2E | E2E (Deno) | Multi-service flow | `just server test` |
+| Architecture | Fitness (shell) | All 10 categories | `just server fitness` |
+| Preflight | Health (Deno) | Service reachability | `cd tests && deno run -A preflight.ts` |
 
-### Architecture Fitness Functions
+### Architecture Fitness Functions (the full Phase 5 list is the fitness strategy)
 
-1. **Domain purity**: `domain/Cargo.toml` must not depend on `surrealdb`, `axum`, `tonic`, `async-graphql`, `jsonwebtoken`.
-2. **Application isolation**: `application/Cargo.toml` must not depend on any transport crate.
-3. **No raw fetch in tests**: Grep `tests/**/*.test.ts` for `fetch(` — must return zero matches.
-4. **No auth literals in tests**: Grep `tests/**/*.test.ts` for `Bearer` or `Authorization` — must return zero matches.
-5. **Pipeline order integrity**: Every `.surql` file lives in a directory matching `0N-<name>/`.
-6. **Seed determinism**: Running `just server run` twice back-to-back produces identical DB state — nothing depends on execution order beyond the pipeline.
-7. **No orphan processes**: After `just server down`, `pgrep -f "gateway|rpc-server|surreal"` returns empty.
+See Phase 5 Categories 1–10. Each runs under 500ms; total suite under 5s.
 
-### Local Dev Validation (the dev's checklist)
+### Local Dev Validation (the dev's loop)
 
-1. `nix develop` → shell shows `🦇 GWA Server` banner with versions.
-2. `just server run` → within 15s, three health-green services.
-3. `just server test` in another terminal → full suite passes.
-4. Kill one service (e.g., `kill $(pgrep gateway)`) → rerun `just server test` → only the relevant tests fail with readable errors.
-5. `just server down` → clean shutdown, no orphans.
+1. `nix develop` (first time) / `direnv allow` if using direnv → shell loaded with toolchain.
+2. `just server run` (terminal 1) → all three services up within 15s.
+3. `just server test` (terminal 2) → preflight green, tests green.
+4. Edit a `.surql` file → `just server down && podman-compose down -v && just server run` to pick up schema changes.
+5. Edit Rust code → Ctrl-C in terminal 1, `just server run` again (fast rebuild).
+6. Before commit → `just server pre-commit` → fmt + lint + typecheck + fitness.
 
-### Observability
+### Observability (unchanged from v1.0)
 
-- DB: podman logs + SurrealDB's own `--log` flag (already wired via `SURREAL_LOG` env).
-- Engine: `tracing` crate with structured logs; `TraceLayer::new_for_http()` wraps every request.
-- RPC: `slog` with the lipgloss PrettyHandler (already implemented).
-- Test suite: emoji group prefixes (🗄️ 🦀 🐹 🚀 🔐), `printSummary()` at each group's end.
-- `just server logs` tails all three in one stream with color-coded prefixes.
+- DB: podman logs + SurrealDB's `SURREAL_LOG`.
+- Engine: `tracing` + `TraceLayer::new_for_http()`.
+- RPC: `slog` with PrettyHandler.
+- Suite: emoji group prefixes + accurate printSummary.
 
 ---
 
@@ -594,33 +644,51 @@ The gRPC protocol spike is the single highest-risk item on the critical path. Do
 
 ### Open Questions
 
-1. **gRPC protocol of the Go sidecar** — Raw gRPC or Connect? This is the single most important unknown. Resolve in Phase 3 via a 30-minute spike reading `rpc/cmd/server/main.go`. If raw gRPC, the test client changes. [HIGH IMPACT if unresolved]
-2. **Should the `fetchTemplate` PostgREST quirk in `notifier/service.go` be fixed in this plan?** — It currently calls a URL that doesn't match any service in the template (looks like a carry-over from a Supabase-based ancestor). Decision: out of scope for this plan, but file as a separate issue. The notifier still works for the test (templates can be passed inline).
-3. **`Option` vs. default for event-populated fields** — When an item has zero comments, does the DB return `rating: 0` or `rating: null`? The Rust entity uses `Option<f64>`, which handles both. Verify in Phase 1's schema work — no change needed if both are tolerated.
-4. **Subscription test timing** — The GraphQL subscription for live item updates needs a deterministic timeout. Start with 3s poll loop, adjust if flaky.
-5. **macOS podman machine lifecycle** — On macOS, podman runs in a VM that must be `podman machine start`'d before anything works. Should `just server run` auto-start it? Decision: no (it's noisy on Linux). Add to `just server doctor` detection instead.
+1. **Rust toolchain pinning strategy**: `rust-bin` overlay vs `fenix` vs plain nixpkgs `cargo`. `rust-bin` is most popular and gives `rust-toolchain.toml` support. Recommendation: `rust-bin` via `nixpkgs-mozilla` or `oxalica/rust-overlay`. Confirm during Phase 4.
+2. **Buf protoc plugins in Nix**: `buf generate` pulls plugins from remote (buf.build/protocolbuffers/go). Network-required. Acceptable? Yes at template scale; flag if offline dev is ever needed.
+3. **macOS Rosetta quirks**: If the target dev is on Apple Silicon, some Nix packages may require specific system platform handling. Test `nix develop` on both x86_64-linux and aarch64-darwin before declaring Phase 4 done.
+4. **TypeScript test stubs from proto**: `tests/buf.gen.yaml` exists but the test client uses untyped JSON — is TS codegen wanted? Recommendation: no; test client stays untyped for simplicity; delete `tests/buf.gen.yaml` if unused (fitness Category 6 will complain about it if not).
 
 ### Risks
 
-1. **[HIGH RISK] gRPC protocol mismatch**: If the RPC tests pass only because the sidecar accidentally tolerates JSON requests (or because Deno's fetch is forgiving), any real usage from a typed client would fail. Confirm the protocol before certifying "RPC tests green" in Phase 3.
-2. **[MEDIUM RISK] `podman-compose` vs. `docker-compose` behavioral drift**: The flake provides `podman-compose` but some CI environments have `docker-compose`. They mostly agree, but healthcheck syntax and `depends_on` conditions diverge on edge cases. Test both if possible.
-3. **[MEDIUM RISK] Cargo workspace compile time in CI**: Even with caching, first-build of the engine on a cold runner can hit 10+ minutes. Mitigate with aggressive cache keys (keyed on Cargo.lock) and splitting lint/test/typecheck into parallel jobs.
-4. **[LOW RISK] JWT secret rotation semantics**: The `JWT_SECRET` default is `"default_secret"`. Any real deployment must override. Tests use a hardcoded secret that must match between Rust and Go. Verify in Phase 3 that both services read from the same env var.
-5. **[LOW RISK] Nix flake reproducibility on non-Linux**: The flake is tested on Linux. macOS users may see different behavior for podman, shell traps, and signal handling. Add a `just server doctor` check for platform-specific issues.
-6. **[LOW RISK] Schema reload without volume reset**: `just server run` on a machine with existing `surreal_data` volume will not reload schema changes from `init/`. Phase 2 should document that `podman-compose down -v` is needed after schema changes.
+1. **[HIGH RISK] Nix flake reproducibility on first developer onboarding**: Someone cloning the repo on a fresh machine without Nix installed needs to install Nix first. That's out of scope of this template but worth a README note. Mitigation: README quickstart says "install Nix first" with a link.
+2. **[MEDIUM RISK] Fitness suite false positives**: A naive grep for `surrealdb` in Cargo.toml could match the `surrealdb-types` crate incorrectly. Use precise TOML parsing (`dasel`, `tomlq`) for Category 1 instead of raw grep. Flag each category's implementation as "grep-OK" or "needs parser."
+3. **[MEDIUM RISK] Podman on macOS first-run latency**: `podman machine start` can take 60+ seconds. If `just server run` starts with a 30s timeout on DB health, first-run on macOS may fail. Mitigation: add a 60s timeout for macOS in the recipe, or auto-run `podman machine start` if not running (and document that `just server doctor` will detect this).
+4. **[LOW RISK] `buf generate` network dependency**: Remote plugins can fail on flaky networks. Mitigation: cache results via `buf`'s own cache, or (for airgapped scenarios) use local plugins.
+5. **[LOW RISK] Trap signal handling edge cases**: If the engine crashes but rpc keeps running, the trap may not fire cleanly. Mitigation: `just server status` will show the orphan; `just server down` kills all by pgrep-name.
 
 ---
 
-## Appendix: Fast-Path Checklist (the "wire it up" TL;DR)
+## Appendix A — The New `server.just` Shape (structural only, no code)
 
-For the impatient reader, the minimum sequence to get green is:
+```
+Groups (unchanged):
+  CI    : fmt, lint, typecheck, quality
+  Build : build-db, build-engine, build-grpc  [NEW], build
+  Dev   : run [finalized], test, down [new], status [new], fitness [new], doctor [new], pre-commit [new]
+  Deploy: deploy (sketch stays but body trimmed to single echo)
 
-1. **Schema**: Add `sessions references<session>` to user table. Rename `Role::Tourist → Role::User`. Add User fields to DB schema.
-2. **Rebuild**: `podman-compose down -v && podman-compose build --no-cache && podman-compose up -d`.
-3. **Orchestration**: Rewrite `just server run` to also start engine + rpc with signal traps.
-4. **Pre-flight**: Add health probes to fixtures so bad errors become good errors.
-5. **Spike**: Confirm Go sidecar's gRPC protocol. If Connect, keep current client. If raw gRPC, swap to `nice-grpc`.
-6. **CI**: Wrap it all in a GitHub Actions workflow that calls `just server test`.
-7. **Fitness**: Add `just server fitness` to prevent regression.
+Recipe dependency graph:
+  build ← build-db + build-engine + build-grpc
+  run   ← build (optional flag to skip for iteration)
+  test  ← (no build dep; deno task test handles preflight + suite)
+  quality ← fmt + lint + typecheck
+  pre-commit ← fmt + lint + typecheck + fitness
+```
 
-Everything else is polish.
+---
+
+## Appendix B — The Fast-Path Checklist (TL;DR for the impatient)
+
+For Phase 4–6 in one sequence:
+
+1. Extend `flake.nix` packages with cargo, go, deno, buf, jq.
+2. Rewrite `just server run` to start all three services inline with signal trap.
+3. Add `just server build-grpc` (runs `cd proto && buf generate`).
+4. Delete `tests/*.sh`, `tests/unit/01-schema.sh`, `tests/e2e/01-smoke.sh`, and `scripts/run-stack.sh`.
+5. Verify exactly one Dockerfile remains (`db/db.Dockerfile`).
+6. Implement `just server fitness` with all 10 categories.
+7. Write `README.md` quickstart and `TEMPLATE.md` cleanup checklist.
+8. Add `just server doctor` and `just server pre-commit`.
+9. Run `just server fitness` → 10/10 green.
+10. Ship.
