@@ -4,7 +4,6 @@ import { assertEquals, assertExists } from "@std/assert";
 
 Deno.test("🦀 API Items CRUD", async (t) => {
   await withApiEnv("Items Flow", async ({ api, cleanup }) => {
-    
     await t.step("I1: List items", async () => {
       const gql = `{ items(limit: 5) { id title rating } }`;
       const res = await api.query(gql);
@@ -23,21 +22,21 @@ Deno.test("🦀 API Items CRUD", async (t) => {
           title: "API Test Item",
           description: "Created via Deno test",
           status: "active",
-          tags: ["tech"]
-        }
+          tags: ["tech"],
+        },
       };
-      
+
       const res = await api.mutate(createGql, variables);
       const id = res.data.createItem.id;
       assertExists(id);
       assertOk("Create item success", res);
 
       // Cleanup
-      const deleteGql = `mutation DeleteItem($id: String!) { deleteItem(id: $id) }`;
+      const deleteGql =
+        `mutation DeleteItem($id: String!) { deleteItem(id: $id) }`;
       const delRes = await api.mutate(deleteGql, { id });
       assertEquals(delRes.data.deleteItem, true);
       assertOk("Delete item success", delRes);
     });
-
   });
 });

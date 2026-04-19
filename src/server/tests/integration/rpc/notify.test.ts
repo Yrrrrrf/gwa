@@ -6,7 +6,6 @@ import { createApiClient } from "../../lib/client.ts";
 
 Deno.test("🐹 RPC Notifier Service", async (t) => {
   await withRpcEnv("Notifier", async ({ rpc }) => {
-    
     await t.step("N1: Dispatch notification", async () => {
       // Get a real token for the sidecar
       const api = createApiClient({ baseUrl: "http://localhost:3000/graphql" });
@@ -21,12 +20,11 @@ Deno.test("🐹 RPC Notifier Service", async (t) => {
         subject: "Welcome!",
         body: "Hello world",
       }, {
-        "Authorization": `Bearer ${token}`
+        "Authorization": `Bearer ${token}`,
       });
-      
+
       assertEquals(res.success, true);
       assertOk("Notification dispatched", res);
     });
-
   });
 });

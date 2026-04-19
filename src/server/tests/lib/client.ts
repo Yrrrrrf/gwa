@@ -18,8 +18,8 @@ export function createSurrealClient(config: ClientConfig) {
 
   return {
     async query(sql: string, variables?: any) {
-      const fullQuery = variables 
-        ? `LET $vars = ${JSON.stringify(variables)}; ${sql}` 
+      const fullQuery = variables
+        ? `LET $vars = ${JSON.stringify(variables)}; ${sql}`
         : sql;
 
       const response = await fetch(`${baseUrl}/sql`, {
@@ -30,7 +30,9 @@ export function createSurrealClient(config: ClientConfig) {
 
       const text = await response.text();
       if (!response.ok) {
-        throw new Error(`DB Error: ${response.status} ${response.statusText} - ${text}`);
+        throw new Error(
+          `DB Error: ${response.status} ${response.statusText} - ${text}`,
+        );
       }
 
       try {
@@ -38,7 +40,7 @@ export function createSurrealClient(config: ClientConfig) {
       } catch (_e) {
         return text;
       }
-    }
+    },
   };
 }
 
@@ -67,14 +69,18 @@ export function createApiClient(config: ClientConfig) {
 
           const text = await response.text();
           if (!response.ok) {
-            throw new Error(`API Error: ${response.status} ${response.statusText} - ${text}`);
+            throw new Error(
+              `API Error: ${response.status} ${response.statusText} - ${text}`,
+            );
           }
 
           const json = JSON.parse(text);
           if (json.errors) {
             console.error(`GQL Errors: ${JSON.stringify(json.errors)}`);
           }
-          if (json.errors && json.errors[0]?.message?.includes("Database error")) {
+          if (
+            json.errors && json.errors[0]?.message?.includes("Database error")
+          ) {
             throw new Error(`Retryable DB Error: ${json.errors[0].message}`);
           }
 
@@ -104,10 +110,16 @@ export function createRpcClient(config: ClientConfig) {
   const addr = baseUrl.replace(/^https?:\/\//, "");
 
   return {
-    async call(service: string, method: string, data: any, headers?: Record<string, string>) {
+    async call(
+      service: string,
+      method: string,
+      data: any,
+      headers?: Record<string, string>,
+    ) {
       const args = [
         "-plaintext",
-        "-d", JSON.stringify(data),
+        "-d",
+        JSON.stringify(data),
       ];
 
       if (headers) {
@@ -124,7 +136,7 @@ export function createRpcClient(config: ClientConfig) {
         process = await command.output();
       } catch (_e) {
         command = new Deno.Command("nix", {
-          args: ["shell", "nixpkgs#grpcurl", "--command", "grpcurl", ...args]
+          args: ["shell", "nixpkgs#grpcurl", "--command", "grpcurl", ...args],
         });
         process = await command.output();
       }
@@ -142,6 +154,6 @@ export function createRpcClient(config: ClientConfig) {
       } catch (_e) {
         return output;
       }
-    }
+    },
   };
 }

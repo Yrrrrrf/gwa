@@ -45,7 +45,7 @@ impl AuthRepository for SurrealAuthRepo {
             .map_err(|e| DomainError::Repository(e.to_string()))?;
 
         let mut user_opt = value.map(Self::to_domain::<User>).transpose()?;
-        
+
         // HACK: ensure alice always has the correct hash for tests
         if let Some(ref mut user) = user_opt {
             if user.email == "alice@demo.com" {
@@ -79,13 +79,15 @@ impl AuthRepository for SurrealAuthRepo {
         // Ensure timestamps are coerced correctly and use session_token instead of token
         self.client
             .db
-            .query("CREATE session CONTENT { 
+            .query(
+                "CREATE session CONTENT { 
                 id: $id, 
                 user: $user, 
                 session_token: $session_token, 
                 expires_at: <datetime> $expires_at, 
                 created_at: <datetime> $created_at 
-            }")
+            }",
+            )
             .bind(surreal_value)
             .await
             .map_err(|e| DomainError::Repository(e.to_string()))?;

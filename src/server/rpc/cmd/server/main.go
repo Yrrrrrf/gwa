@@ -95,16 +95,16 @@ func main() {
 			middleware.AuthInterceptor(cfg.JWTSecret),
 		),
 	)
-	
+
 	// Register Handlers
 	v1.RegisterNotifierServiceServer(s, argusGrpc.NewNotifierHandler(notifierService))
 	v1.RegisterDocumentServiceServer(s, argusGrpc.NewDocumentHandler())
-	
+
 	// Health Check
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(s, healthServer)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
-	
+
 	// Reflection for grpcurl
 	reflection.Register(s)
 
@@ -127,7 +127,7 @@ func main() {
 	<-ctx.Done()
 
 	slog.Info("Shutting down...")
-	
+
 	// Graceful stop gRPC
 	s.GracefulStop()
 
@@ -168,13 +168,13 @@ func setupHermes(cfg *config.Config) *hermes.Engine {
 }
 
 func findAvailablePort(startPort string) (string, error) {
-        // Force the configured port, don't hunt for one
-        ln, err := net.Listen("tcp", ":"+startPort)
-        if err != nil {
-                return "", fmt.Errorf("port %s is already in use: %w", startPort, err)
-        }
-        ln.Close()
-        return startPort, nil
+	// Force the configured port, don't hunt for one
+	ln, err := net.Listen("tcp", ":"+startPort)
+	if err != nil {
+		return "", fmt.Errorf("port %s is already in use: %w", startPort, err)
+	}
+	ln.Close()
+	return startPort, nil
 }
 func printBanner(host, port, version string) {
 	colorBrand := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true).PaddingLeft(2)

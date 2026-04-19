@@ -2,12 +2,14 @@ import { createSurrealClient } from "../lib/client.ts";
 import { withCleanup } from "../lib/fixtures.ts";
 import { probeSurreal } from "../lib/health.ts";
 import { StackUnavailableError } from "../lib/errors.ts";
-import { resetCounts, printSummary } from "../lib/assert.ts";
+import { printSummary, resetCounts } from "../lib/assert.ts";
 import { load } from "@std/dotenv";
 
 export async function withSurrealEnv(
-  name: string, 
-  fn: (ctx: { surreal: any; cleanup: (fn: () => Promise<void>) => void }) => Promise<void>
+  name: string,
+  fn: (
+    ctx: { surreal: any; cleanup: (fn: () => Promise<void>) => void },
+  ) => Promise<void>,
 ) {
   // Load .env from parent dir
   await load({ export: true, envPath: "../.env" });

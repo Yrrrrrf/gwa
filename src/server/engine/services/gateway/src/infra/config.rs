@@ -27,7 +27,9 @@ impl AppConfig {
                 .unwrap_or_else(|_| "3000".to_string())
                 .parse()
                 .unwrap_or(3000),
-            jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| "super-secret-template-key-change-me-in-production".to_string()),
+            jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| {
+                "super-secret-template-key-change-me-in-production".to_string()
+            }),
             rpc_url: env::var("RPC_URL").unwrap_or_else(|_| "http://localhost:4000".to_string()),
         }
     }

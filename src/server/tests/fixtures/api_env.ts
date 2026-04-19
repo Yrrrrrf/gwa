@@ -1,13 +1,19 @@
 import { createApiClient } from "../lib/client.ts";
-import { withCleanup, getToken } from "../lib/fixtures.ts";
+import { getToken, withCleanup } from "../lib/fixtures.ts";
 import { probeApi } from "../lib/health.ts";
 import { StackUnavailableError } from "../lib/errors.ts";
-import { resetCounts, printSummary } from "../lib/assert.ts";
+import { printSummary, resetCounts } from "../lib/assert.ts";
 import { load } from "@std/dotenv";
 
 export async function withApiEnv(
-  name: string, 
-  fn: (ctx: { api: any; token: string; cleanup: (fn: () => Promise<void>) => void }) => Promise<void>
+  name: string,
+  fn: (
+    ctx: {
+      api: any;
+      token: string;
+      cleanup: (fn: () => Promise<void>) => void;
+    },
+  ) => Promise<void>,
 ) {
   await load({ export: true, envPath: "../.env" });
 
@@ -21,7 +27,7 @@ export async function withApiEnv(
 
   const api = createApiClient({ baseUrl });
   const token = await getToken(api);
-  
+
   const { register, run } = withCleanup();
 
   resetCounts();

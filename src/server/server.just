@@ -4,19 +4,34 @@
 [doc('Format Server code')]
 [group('CI')]
 fmt:
+    # fmt rust
     cd engine && cargo fmt --all
+    # fmt go
+    cd rpc && go fmt ./...
+    # fmt test suite
+    cd tests && deno fmt
     @echo "✓ Server formatted successfully"
 
 [doc('Lint Server code')]
 [group('CI')]
 lint:
+    # lint rust
     cd engine && cargo clippy --all-targets --all-features
+    # lint go
+    cd rpc && go vet ./...
+    # lint test suite
+    cd tests && deno lint
     @echo "✓ Server lint passed"
 
 [doc('Type-check Server workspace')]
 [group('CI')]
 typecheck:
+    # type-check rust
     cd engine && cargo check --all-targets
+    # type-check go
+    cd rpc && go build ./...
+    # type-check test suite
+    cd tests && deno check
     @echo "✓ Type-checking Server workspace passed"
 
 [doc('Full server quality gate')]

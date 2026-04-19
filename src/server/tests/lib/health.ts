@@ -2,7 +2,9 @@ import { ClientConfig } from "./client.ts";
 
 export async function probeSurreal(url: string): Promise<boolean> {
   try {
-    const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(2000) });
+    const res = await fetch(`${url}/health`, {
+      signal: AbortSignal.timeout(2000),
+    });
     await res.body?.cancel();
     return res.status === 200;
   } catch (_err) {
@@ -36,12 +38,14 @@ export async function probeRpc(url: string): Promise<boolean> {
 
 export async function checkStackHealth(config: ClientConfig) {
   const surrealUp = await probeSurreal(config.baseUrl);
-  const engineUp = await probeApi(config.baseUrl.replace(":8000", ":3000") + "/graphql");
+  const engineUp = await probeApi(
+    config.baseUrl.replace(":8000", ":3000") + "/graphql",
+  );
   const rpcUp = await probeRpc(config.baseUrl.replace(":8000", ":4000"));
 
   return {
     surreal: surrealUp,
     engine: engineUp,
-    rpc: rpcUp
+    rpc: rpcUp,
   };
 }

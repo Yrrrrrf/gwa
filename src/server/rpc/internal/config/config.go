@@ -31,11 +31,11 @@ func Load() *Config {
 	smtpPort, _ := strconv.Atoi(getEnv("SMTP_PORT", "587"))
 
 	return &Config{
-	        Port:      getEnv("PORT_RPC", "4000"),
-	        JWTSecret: getEnv("JWT_SECRET", "super-secret-template-key-change-me-in-production"),
-	        // Default to Supabase local API if not set
-	        APIUrl:      getEnv("API_URL", "http://127.0.0.1:54321/rest/v1"),		SupabaseKey: getEnv("SUPABASE_ANON_KEY", "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"), // Local Dev Default
-		Debug:       getEnv("DEBUG", "false") == "true",
+		Port:      getEnv("PORT_RPC", "4000"),
+		JWTSecret: getEnv("JWT_SECRET", "super-secret-template-key-change-me-in-production"),
+		// Default to Supabase local API if not set
+		APIUrl: getEnv("API_URL", "http://127.0.0.1:54321/rest/v1"), SupabaseKey: getEnv("SUPABASE_ANON_KEY", "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"), // Local Dev Default
+		Debug: getEnv("DEBUG", "false") == "true",
 
 		SMTPHost:    getEnv("SMTP_HOST", ""),
 		SMTPPort:    smtpPort,

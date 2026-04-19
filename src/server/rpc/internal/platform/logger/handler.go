@@ -13,38 +13,38 @@ import (
 // Define Styles (Computed once for performance)
 var (
 	styleTime = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("241")). // Dark Gray
-		Faint(true)
+			Foreground(lipgloss.Color("241")). // Dark Gray
+			Faint(true)
 
 	styleKey = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("244")). // Light Gray
-		Italic(true)
+			Foreground(lipgloss.Color("244")). // Light Gray
+			Italic(true)
 
 	styleVal = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("250")) // Whiteish
+			Foreground(lipgloss.Color("250")) // Whiteish
 
 	// Status Pills
 	styleStatus200 = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#000000")).
-		Background(lipgloss.Color("#86efac")). // Green-300
-		Padding(0, 1)
+			Bold(true).
+			Foreground(lipgloss.Color("#000000")).
+			Background(lipgloss.Color("#86efac")). // Green-300
+			Padding(0, 1)
 
 	styleStatus400 = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#000000")).
-		Background(lipgloss.Color("#fde047")). // Yellow-300
-		Padding(0, 1)
+			Bold(true).
+			Foreground(lipgloss.Color("#000000")).
+			Background(lipgloss.Color("#fde047")). // Yellow-300
+			Padding(0, 1)
 
 	styleStatus500 = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#ffffff")).
-		Background(lipgloss.Color("#ef4444")). // Red-500
-		Padding(0, 1)
+			Bold(true).
+			Foreground(lipgloss.Color("#ffffff")).
+			Background(lipgloss.Color("#ef4444")). // Red-500
+			Padding(0, 1)
 
 	styleMethod = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("39")) // Blue
+			Bold(true).
+			Foreground(lipgloss.Color("39")) // Blue
 )
 
 type PrettyHandler struct {

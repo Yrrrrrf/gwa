@@ -2,7 +2,7 @@ export type CleanupFn = () => Promise<void>;
 
 export function withCleanup() {
   const cleanups: CleanupFn[] = [];
-  
+
   const register = (fn: CleanupFn) => {
     cleanups.push(fn);
   };
@@ -39,13 +39,13 @@ export async function getToken(apiClient: any) {
     input: {
       email: "alice@demo.com",
       password: "password", // This is the default in seed data or .env
-    }
+    },
   };
 
   try {
     const res = await apiClient.mutate(loginGql, variables);
     if (res.errors) {
-        throw new Error(`Login failed: ${JSON.stringify(res.errors)}`);
+      throw new Error(`Login failed: ${JSON.stringify(res.errors)}`);
     }
     cachedToken = res.data.login.token;
     return cachedToken!;

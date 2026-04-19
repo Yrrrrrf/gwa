@@ -36,11 +36,11 @@ func (s *SMTPProvider) SendEmail(ctx context.Context, to, subject, htmlBody stri
 		"%s\r\n", to, subject, htmlBody))
 
 	// Note: smtp.SendMail is a blocking call and doesn't take context directly
-	// To respect context cancellation, we would need a more complex implementation 
+	// To respect context cancellation, we would need a more complex implementation
 	// or run it in a goroutine with a select.
-	// For simplicity in this optimization pass (where we already have async worker), 
+	// For simplicity in this optimization pass (where we already have async worker),
 	// we assume the worker's context logic is sufficient for overall timeout management.
-	
+
 	// Check context before sending
 	if ctx.Err() != nil {
 		return ctx.Err()
