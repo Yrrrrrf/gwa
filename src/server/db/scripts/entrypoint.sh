@@ -5,7 +5,7 @@ echo "Starting SurrealDB..."
 surreal start \
     --log "${SURREAL_LOG:-info}" \
     --user "${SURREAL_USER:-root}" \
-    --pass "${SURREAL_PASS}" \
+    --pass "${SURREAL_PASS:-root}" \
     --bind "0.0.0.0:${SURREAL_PORT:-8000}" \
     "${SURREAL_PATH:-memory}" &
 PID=$!
@@ -17,8 +17,8 @@ if [ "${SEED_ON_START:-true}" = "true" ]; then
         if surreal sql \
             --endpoint "http://127.0.0.1:${SURREAL_PORT:-8000}" \
             -u "${SURREAL_USER:-root}" \
-            -p "${SURREAL_PASS}" \
-            --ns "${SURREAL_NS:-app}" \
+            -p "${SURREAL_PASS:-root}" \
+            --ns "${SURREAL_NS:-template}" \
             --db "${SURREAL_DB:-main}" \
             -q 'RETURN true;' > /dev/null 2>&1; then
             break

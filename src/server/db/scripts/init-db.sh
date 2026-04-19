@@ -14,8 +14,8 @@ BULLET='•'
 
 URL="${SURREAL_URL:-http://localhost:8000/sql}"
 SURREAL_USER="${SURREAL_USER:-root}"
-SURREAL_PASS="${SURREAL_PASS:-super_secret_dev_pass_override_me}"
-NS="${SURREAL_NS:-app}"
+SURREAL_PASS="${SURREAL_PASS:-root}"
+NS="${SURREAL_NS:-template}"
 DB="${SURREAL_DB:-main}"
 
 # ---------------------------------------------------------------------------

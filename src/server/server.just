@@ -28,20 +28,24 @@ quality: fmt lint typecheck
 
 [doc('Build DB image')]
 [group('Build')]
+[working-directory("db")]
 build-db:
-    cd db && podman-compose build --no-cache
+    podman-compose down -v
+    podman-compose build --no-cache
     @echo "✓ DB image built successfully"
 
 [doc('Build Engine')]
 [group('Build')]
+[working-directory("engine")]
 build-engine:
-    cd engine && cargo build -p gateway
+    cargo build -p gateway
     @echo "✓ Engine built successfully"
 
 [doc('Generate Go code from protobuf')]
 [group('Build')]
+[working-directory("proto")]
 build-grpc:
-    cd proto && (buf generate || nix shell nixpkgs#buf --command buf generate)
+    (buf generate || nix shell nixpkgs#buf --command buf generate)
     @echo "✓ gRPC stubs generated for Go"
 
 [doc('Build all components')]
@@ -53,52 +57,32 @@ build: build-db build-engine build-grpc
 
 [doc('Run SurrealDB (Podman)')]
 [group('Dev')]
-run-db:
-    cd db && podman-compose up
+[working-directory("db")]
+run-db: build-db
+    podman-compose up
+    @echo "✓ DB running in development mode"
 
 [doc('Run Rust Engine')]
 [group('Dev')]
-run-engine:
-    #!/usr/bin/env bash
-    if [ -f .env ]; then export $(grep -v '^#' .env | xargs); elif [ -f .env.example ]; then export $(grep -v '^#' .env.example | xargs); fi
-    cd engine && RUST_LOG=debug cargo run -p gateway
+[working-directory("engine")]
+run-engine: build-engine
+    RUST_LOG=debug cargo run -p gateway
+    @echo "✓ Engine running in development mode"
 
 [doc('Run Go RPC sidecar')]
 [group('Dev')]
-run-rpc:
-    #!/usr/bin/env bash
-    if [ -f .env ]; then export $(grep -v '^#' .env | xargs); elif [ -f .env.example ]; then export $(grep -v '^#' .env.example | xargs); fi
-    cd rpc && go run ./cmd/server
+[working-directory("rpc")]
+run-rpc: build-grpc
+    go run ./cmd/server
+    @echo "✓ RPC sidecar running in development mode"
 
 [doc('Run the full stack in development mode')]
 [group('Dev')]
 run: run-db run-engine run-rpc
-    # todo: add health check
-    @echo "✓ Full stack running"
-
-[doc('Tear down all services')]
-[group('Dev')]
-down:
-    @echo "🛑 Tearing down stack..."
-    -@cd db && podman-compose down
-    -@pkill -f "target/debug/gateway" || true
-    -@pkill -f "go run ./cmd/server" || true
-    @echo "✓ Stack down"
-
-[doc('Check service health')]
-[group('Dev')]
-status:
-    @cd tests && deno run -A preflight.ts
+    @echo "✓ Full server running in development mode"
 
 [doc('Test the server')]
 [group('Dev')]
 test:
     @echo "Running Deno unified test suite..."
     @cd tests && deno task test
-
-# ── Deploy ────────────────────────────────────────────────────
-
-[doc('Deploy to Cloud Run (sketch)')]
-[group('Deploy')]
-deploy:
-    @echo "Deploy not configured for template. See README.md for deployment strategy."

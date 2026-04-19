@@ -9,8 +9,8 @@ services:
       - surreal_data:/data
     environment:
       - SURREAL_USER=${SURREAL_USER:-root}
-      - SURREAL_PASS=${SURREAL_PASS}
-      - SURREAL_NS=${SURREAL_NS:-app}
+      - SURREAL_PASS=${SURREAL_PASS:-root}
+      - SURREAL_NS=${SURREAL_NS:-template}
       - SURREAL_DB=${SURREAL_DB:-main}
       - SURREAL_PATH=${SURREAL_PATH:-memory}
       - SURREAL_LOG=${SURREAL_LOG:-info}
