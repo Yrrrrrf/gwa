@@ -1,14 +1,14 @@
+import { config } from "dotenv";
 import { probeApi, probeRpc, probeSurreal } from "./lib/health.ts";
-import { load } from "@std/dotenv";
 
-async function main() {
-  await load({ export: true, envPath: "../.env" });
+export default async function () {
+  config({ path: "../.env" });
 
-  const dbUrl = `http://localhost:${Deno.env.get("SURREAL_PORT") || "8000"}`;
-  const apiUrl = `http://localhost:${Deno.env.get("PORT") || "3000"}`;
-  const rpcUrl = `http://localhost:${Deno.env.get("PORT_RPC") || "4000"}`;
+  const dbUrl = `http://localhost:${process.env.SURREAL_PORT || "8000"}`;
+  const apiUrl = `http://localhost:${process.env.PORT || "3000"}`;
+  const rpcUrl = `http://localhost:${process.env.PORT_RPC || "4000"}`;
 
-  console.log("── Pre-flight Check ─────────────────────────────────────");
+  console.log("\n── Pre-flight Check ─────────────────────────────────────");
 
   const dbUp = await probeSurreal(dbUrl);
   console.log(`🗄️  SurrealDB: ${dbUp ? "✅ UP" : "❌ DOWN"} (${dbUrl})`);
@@ -23,14 +23,10 @@ async function main() {
 
   if (!dbUp || !apiUp || !rpcUp) {
     console.error(
-      "\n❌ Some services are unreachable. Run 'just server run' first.",
+      "\n❌ Some services are unreachable. Run 'just run' first.",
     );
-    Deno.exit(1);
+    process.exit(1);
   }
 
   console.log("\n🚀 All services ready. Starting tests...\n");
-}
-
-if (import.meta.main) {
-  main();
 }

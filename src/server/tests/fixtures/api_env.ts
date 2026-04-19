@@ -1,9 +1,10 @@
-import { createApiClient } from "../lib/client.ts";
+import { createEngineClient } from "../lib/clients/engine.ts";
 import { getToken, withCleanup } from "../lib/fixtures.ts";
 import { probeApi } from "../lib/health.ts";
 import { StackUnavailableError } from "../lib/errors.ts";
-import { printSummary, resetCounts } from "../lib/assert.ts";
-import { load } from "@std/dotenv";
+import { config } from "dotenv";
+
+config({ path: "../.env" });
 
 export async function withApiEnv(
   name: string,
@@ -15,9 +16,7 @@ export async function withApiEnv(
     },
   ) => Promise<void>,
 ) {
-  await load({ export: true, envPath: "../.env" });
-
-  const port = Deno.env.get("PORT") || Deno.env.get("API_PORT") || "3000";
+  const port = process.env.PORT || process.env.API_PORT || "3000";
   const baseUrl = `http://localhost:${port}/graphql`;
   const rootUrl = `http://localhost:${port}`;
 
@@ -25,17 +24,16 @@ export async function withApiEnv(
     throw new StackUnavailableError("Rust Engine", rootUrl);
   }
 
-  const api = createApiClient({ baseUrl });
+  const api = createEngineClient({ baseUrl });
   const token = await getToken(api);
+  api.setToken(token);
 
   const { register, run } = withCleanup();
 
-  resetCounts();
   console.log(`\n--- Running API Test: ${name} ---`);
   try {
     await fn({ api, token, cleanup: register });
   } finally {
-    printSummary();
     await run();
   }
 }

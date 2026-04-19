@@ -1,3 +1,5 @@
+import { EngineClient } from "./clients/engine.ts";
+
 export type CleanupFn = () => Promise<void>;
 
 export function withCleanup() {
@@ -23,7 +25,7 @@ export function withCleanup() {
 
 let cachedToken: string | null = null;
 
-export async function getToken(apiClient: any) {
+export async function getToken(apiClient: EngineClient) {
   if (cachedToken) return cachedToken;
 
   const loginGql = `
@@ -44,10 +46,16 @@ export async function getToken(apiClient: any) {
 
   try {
     const res = await apiClient.mutate(loginGql, variables);
-    if (res.errors) {
+    if (res.errors && !res.data?.login) {
+      console.error("Login Result with Errors:", JSON.stringify(res, null, 2));
       throw new Error(`Login failed: ${JSON.stringify(res.errors)}`);
     }
+    if (!res.data?.login) {
+       console.error("Login Result (No data.login):", JSON.stringify(res, null, 2));
+       throw new Error("Login failed: no data.login in response");
+    }
     cachedToken = res.data.login.token;
+    console.log(`[DEBUG] Got token from engine: ${cachedToken.slice(0, 10)}...${cachedToken.slice(-10)}`);
     return cachedToken!;
   } catch (err: any) {
     console.warn(`Could not get JWT token: ${err.message}. Using mock-token.`);

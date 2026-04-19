@@ -1,30 +1,25 @@
+import { describe, it, expect } from "vite-plus/test";
 import { withRpcEnv } from "../../fixtures/rpc_env.ts";
-import { assertOk } from "../../lib/assert.ts";
-import { assertEquals } from "@std/assert";
-import { getToken } from "../../lib/fixtures.ts";
-import { createApiClient } from "../../lib/client.ts";
+import { expectOk } from "../../lib/assert-db.ts";
+import { NotifierService } from "../../gen/template/v1/notify_connect.ts";
 
-Deno.test("🐹 RPC Notifier Service", async (t) => {
-  await withRpcEnv("Notifier", async ({ rpc }) => {
-    await t.step("N1: Dispatch notification", async () => {
-      // Get a real token for the sidecar
-      const api = createApiClient({ baseUrl: "http://localhost:3000/graphql" });
-      const token = await getToken(api);
+describe("🐹 RPC Notifier Service", () => {
+  it("dispatches a notification successfully", async () => {
+    await withRpcEnv("N1: Dispatch notification", async ({ rpc }) => {
+      const client = rpc.getService(NotifierService);
 
-      const res = await rpc.call("template.v1.NotifierService", "Dispatch", {
-        order_id: "test-order",
+      const res = await client.dispatch({
+        orderId: "test-order",
         channel: "email",
         recipient: "test@example.com",
-        template_key: "welcome",
+        templateKey: "welcome",
         locale: "en",
         subject: "Welcome!",
         body: "Hello world",
-      }, {
-        "Authorization": `Bearer ${token}`,
       });
 
-      assertEquals(res.success, true);
-      assertOk("Notification dispatched", res);
+      expect(res.success).toBe(true);
+      expectOk(res);
     });
   });
 });

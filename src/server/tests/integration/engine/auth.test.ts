@@ -1,10 +1,10 @@
+import { describe, it, expect } from "vite-plus/test";
 import { withApiEnv } from "../../fixtures/api_env.ts";
-import { assertError, assertOk } from "../../lib/assert.ts";
-import { assertExists } from "@std/assert";
+import { expectError, expectOk } from "../../lib/assert-db.ts";
 
-Deno.test("🦀 API Authentication", async (t) => {
-  await withApiEnv("Auth Flow", async ({ api }) => {
-    await t.step("A1: Successful login", async () => {
+describe("🦀 API Authentication", () => {
+  it("logs in successfully with valid credentials", async () => {
+    await withApiEnv("A1: Successful login", async ({ api }) => {
       const loginGql = `
         mutation Login($input: LoginInput!) {
           login(input: $input) {
@@ -18,11 +18,13 @@ Deno.test("🦀 API Authentication", async (t) => {
       };
 
       const res = await api.mutate(loginGql, variables);
-      assertExists(res.data.login.token);
-      assertOk("Login successful", res);
+      expect(res.data.login.token).toBeDefined();
+      expectOk(res);
     });
+  });
 
-    await t.step("A2: Bad credentials rejected", async () => {
+  it("rejects bad credentials", async () => {
+    await withApiEnv("A2: Bad credentials rejected", async ({ api }) => {
       const loginGql = `
         mutation Login($input: LoginInput!) {
           login(input: $input) { token }
@@ -33,7 +35,7 @@ Deno.test("🦀 API Authentication", async (t) => {
       };
 
       const res = await api.mutate(loginGql, variables);
-      assertError("Bad password rejected", res);
+      expectError(res);
     });
   });
 });

@@ -11,10 +11,10 @@ Requires **Nix** for the authoritative toolchain.
 nix develop
 
 # 2. Build and start all services (DB + Engine + RPC)
-just server run
+just run
 
 # 3. Run the unified test suite
-just server test
+just test
 ```
 
 ## 🏗️ Architecture
@@ -24,18 +24,31 @@ just server test
 - **Hexagonal Rust Engine**: Pure domain logic isolated from transport and storage.
 - **Go Sidecar**: Specialized compute plane for tasks like notifications and document generation.
 
-## 🚦 Recipes
+## 🚦 Recipes (Modular Just)
 
-- `just server run`: Start the full stack with a signal trap for clean shutdown.
-- `just server test`: Run all Deno-based unit, integration, and E2E tests.
-- `just server build`: Build all components (DB image, Rust binary, Go stubs).
-- `just server down`: Forcefully tear down all services.
-- `just server quality`: Run `fmt`, `lint`, and `typecheck` across the workspace.
+This project uses modular justfiles. Each peer directory (`db/`, `engine/`, `rpc/`, `tests/`) owns its own recipes, which are composed at the root.
+
+- `just run`: Start the full stack (DB + Engine + RPC).
+- `just test`: Run all tests across all rings.
+- `just test-db`: Run DB inner-ring (Hurl) and outer-ring (Deno) tests.
+- `just test-engine`: Run Engine inner-ring (Cargo) and outer-ring (Deno) tests.
+- `just test-rpc`: Run RPC inner-ring (Go) and outer-ring (Deno) tests.
+- `just build`: Build all components.
+- `just quality`: Run `fmt`, `lint`, and `typecheck` across the entire workspace.
+- `just down`: Stop and remove DB containers.
+
+## 🧪 The Three-Ring Test Model
+
+We employ a three-ring testing strategy to ensure reliability while maintaining documentation value:
+
+1. **Inner Ring** (Introspective): Per-directory tests (`db/tests/*.hurl`, `engine/**/src/*.rs`, `rpc/**/*_test.go`) that verify internal machinery.
+2. **Outer Ring** (Extrospective): The `tests/` directory contains TypeScript-based tests that consume services through public contracts (GraphQL, RPC, SurrealQL). These serve as the primary usage documentation.
+3. **E2E Sub-Ring**: High-level flows in `tests/e2e/` that prove cross-service integration.
 
 ## 📁 Structure
 
-- `db/`: SurrealDB schema, functions, and seed data.
+- `db/`: SurrealDB schema, functions, seed data, and inner-ring tests.
 - `engine/`: Rust workspace (domain, store, application, gateway).
 - `rpc/`: Go sidecar (notifier, documents).
 - `proto/`: Protobuf definitions for service communication.
-- `tests/`: Unified Deno test suite.
+- `tests/`: Unified outer-ring test suite.

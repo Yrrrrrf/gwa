@@ -1,0 +1,33 @@
+import { SignJWT } from "jose";
+
+export interface TokenClaims {
+  sub: string;
+  email: string;
+  role: string;
+  [key: string]: any;
+}
+
+export async function mintToken(claims: Partial<TokenClaims> = {}): Promise<string> {
+  // Try multiple env var names and fallback to the project default
+  const secret = process.env.JWT_SECRET || "super-secret-template-key-change-me-in-production";
+  console.log(`[DEBUG] Minting token with secret: ${secret.slice(0, 4)}...${secret.slice(-4)}`);
+
+  const encodedSecret = new TextEncoder().encode(secret);
+
+  const payload = {
+    sub: "user:alice",
+    email: "alice@demo.com",
+    role: "admin",
+    ...claims,
+  };
+
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("2h")
+    .sign(encodedSecret);
+}
+
+export async function defaultTestToken(): Promise<string> {
+  return mintToken();
+}

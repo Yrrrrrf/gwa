@@ -1,27 +1,21 @@
+import { describe, it, expect } from "vite-plus/test";
 import { withRpcEnv } from "../../fixtures/rpc_env.ts";
-import { assertOk } from "../../lib/assert.ts";
-import { assertEquals, assertExists } from "@std/assert";
-import { getToken } from "../../lib/fixtures.ts";
-import { createApiClient } from "../../lib/client.ts";
+import { expectOk } from "../../lib/assert-db.ts";
+import { DocumentService } from "../../gen/template/v1/documents_connect.ts";
 
-Deno.test("🐹 RPC Document Service", async (t) => {
-  await withRpcEnv("Documents", async ({ rpc }) => {
-    await t.step("D1: Generate document", async () => {
-      // Get a real token for the sidecar
-      const api = createApiClient({ baseUrl: "http://localhost:3000/graphql" });
-      const token = await getToken(api);
+describe("🐹 RPC Document Service", () => {
+  it("generates a document successfully", async () => {
+    await withRpcEnv("D1: Generate document", async ({ rpc }) => {
+      const client = rpc.getService(DocumentService);
 
-      const res = await rpc.call("template.v1.DocumentService", "Generate", {
-        template_id: "invoice",
-        data: { record_id: "item:test" },
-        format: "pdf",
-      }, {
-        "Authorization": `Bearer ${token}`,
+      const res = await client.generate({
+        template: "commerce/invoice",
+        recordId: "invoice:123",
       });
 
-      assertExists(res.job_id);
-      assertEquals(res.status, "pending");
-      assertOk("Document generation started", res);
+      expect(res.success).toBe(true);
+      expect(res.url).toBeDefined();
+      expectOk(res);
     });
   });
 });

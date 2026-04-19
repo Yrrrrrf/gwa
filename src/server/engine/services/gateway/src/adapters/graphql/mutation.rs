@@ -31,6 +31,7 @@ impl Mutation {
     async fn create_item(&self, ctx: &Context<'_>, input: CreateItemInput) -> Result<ItemType> {
         let state = ctx.data::<AppState>()?;
         let request = CreateItemRequest {
+            id: input.id.filter(|s| !s.is_empty()),
             title: input.title,
             description: input.description,
             status: input.status,

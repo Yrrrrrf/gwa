@@ -1,27 +1,27 @@
+import { describe, it, expect } from "vite-plus/test";
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
-import { assertOk } from "../../lib/assert.ts";
-import { assertEquals } from "@std/assert";
+import { expectOk } from "../../lib/assert-db.ts";
 
-Deno.test("🗄️ DB Computed Stats (Events)", async (t) => {
-  await withSurrealEnv(
-    "Computed Stats Validation",
-    async ({ surreal, cleanup }) => {
-      await t.step("C1: Comment updates item rating and count", async () => {
+describe("🗄️ DB Computed Stats (Events)", () => {
+  it("updates item rating and count when comments are added", async () => {
+    await withSurrealEnv(
+      "Computed Stats Validation",
+      async ({ surreal, cleanup }) => {
         // 1. Create a clean item
         const itemId = `item:test_${Math.random().toString(36).slice(2, 7)}`;
-        const res0 = await surreal.sql(
+        const res0 = await surreal.query(
           `CREATE ${itemId} SET title='Stat Test', status='active', tags=[];`,
         );
-        assertOk("Item created", res0);
+        expectOk(res0);
         cleanup(async () => {
-          await surreal.sql(`DELETE ${itemId};`);
+          await surreal.query(`DELETE ${itemId};`);
         });
 
         // Small delay for consistency
         await new Promise((r) => setTimeout(r, 100));
 
         // 2. Initial check
-        let res = await surreal.sql(
+        let res = await surreal.query(
           `SELECT rating, comment_count FROM ${itemId};`,
         );
         const actualRes = res.find((r: any) =>
@@ -30,12 +30,12 @@ Deno.test("🗄️ DB Computed Stats (Events)", async (t) => {
         if (!actualRes.result?.[0]) {
           throw new Error(`Item not found after create: ${itemId}`);
         }
-        assertEquals(actualRes.result[0].rating, 0);
-        assertEquals(actualRes.result[0].comment_count, 0);
+        expect(actualRes.result[0].rating).toBe(0);
+        expect(actualRes.result[0].comment_count).toBe(0);
 
         // 3. Add a comment (rating 5)
         const userId = "user:alice";
-        await surreal.sql(
+        await surreal.query(
           `RELATE ${userId}->comment->${itemId} SET rating=5, body='Great!';`,
         );
 
@@ -43,29 +43,29 @@ Deno.test("🗄️ DB Computed Stats (Events)", async (t) => {
         await new Promise((r) => setTimeout(r, 100));
 
         // 4. Verify update
-        res = await surreal.sql(`SELECT rating, comment_count FROM ${itemId};`);
+        res = await surreal.query(`SELECT rating, comment_count FROM ${itemId};`);
         const actualResUpdate = res.find((r: any) =>
           !(r.result?.database && r.result?.namespace)
         );
-        assertEquals(actualResUpdate.result[0].rating, 5);
-        assertEquals(actualResUpdate.result[0].comment_count, 1);
+        expect(actualResUpdate.result[0].rating).toBe(5);
+        expect(actualResUpdate.result[0].comment_count).toBe(1);
 
         // 5. Add another comment (rating 1)
-        await surreal.sql(
+        await surreal.query(
           `RELATE user:bob->comment->${itemId} SET rating=1, body='Bad!';`,
         );
 
         await new Promise((r) => setTimeout(r, 100));
 
-        res = await surreal.sql(`SELECT rating, comment_count FROM ${itemId};`);
+        res = await surreal.query(`SELECT rating, comment_count FROM ${itemId};`);
         const actualResUpdate2 = res.find((r: any) =>
           !(r.result?.database && r.result?.namespace)
         );
-        assertEquals(actualResUpdate2.result[0].rating, 3); // (5+1)/2
-        assertEquals(actualResUpdate2.result[0].comment_count, 2);
+        expect(actualResUpdate2.result[0].rating).toBe(3); // (5+1)/2
+        expect(actualResUpdate2.result[0].comment_count).toBe(2);
 
-        assertOk("Item stats updated by events", res);
-      });
-    },
-  );
+        expectOk(res);
+      },
+    );
+  });
 });

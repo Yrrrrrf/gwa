@@ -81,6 +81,7 @@ impl ItemType {
 
 #[derive(InputObject)]
 pub struct CreateItemInput {
+    pub id: Option<String>,
     pub title: String,
     pub description: Option<String>,
     pub status: String,

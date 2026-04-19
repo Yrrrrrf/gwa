@@ -1,0 +1,78 @@
+mod db "db/db.just"
+mod engine "engine/engine.just"
+mod rpc "rpc/rpc.just"
+mod tests "tests/tests.just"
+
+[doc('Format Server code')]
+[group('CI')]
+fmt:
+    just db::fmt
+    just engine::fmt
+    just rpc::fmt
+    just tests::fmt
+
+[doc('Lint Server code')]
+[group('CI')]
+lint:
+    just db::lint
+    just engine::lint
+    just rpc::lint
+    just tests::lint
+
+[doc('Type-check Server workspace')]
+[group('CI')]
+typecheck:
+    just db::typecheck
+    just engine::typecheck
+    just rpc::typecheck
+    just tests::typecheck
+
+[doc('Full server quality gate')]
+[group('CI')]
+quality: fmt lint typecheck
+
+[doc('Build all components')]
+[group('Build')]
+build:
+    just db::build
+    just engine::build
+    just rpc::build
+
+[doc('Run the full stack in development mode')]
+[group('Dev')]
+run:
+    just db::run
+    just engine::run
+    just rpc::run
+
+[doc('Stop the full stack')]
+[group('Dev')]
+down:
+    just db::down
+
+[doc('Test the server')]
+[group('Dev')]
+test: test-db test-engine test-rpc test-e2e
+
+[doc('Test DB (inner + outer ring)')]
+[group('Test')]
+test-db:
+    just db::test
+    just tests::test-db
+
+[doc('Test Engine (inner + outer ring)')]
+[group('Test')]
+test-engine:
+    just engine::test
+    just tests::test-engine
+
+[doc('Test RPC (inner + outer ring)')]
+[group('Test')]
+test-rpc:
+    just rpc::test
+    just tests::test-rpc
+
+[doc('Test E2E (outer ring only)')]
+[group('Test')]
+test-e2e:
+    just tests::test-e2e

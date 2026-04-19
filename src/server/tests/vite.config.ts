@@ -1,8 +1,11 @@
-import { defineConfig } from "vite-plus";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    environment: "jsdom",
-    setupFiles: ["@testing-library/jest-dom/vitest"],
+    globals: true,
+    environment: "node",
+    globalSetup: "./globalSetup.ts",
+    include: ["**/*.test.ts"],
+    exclude: ["node_modules/**"],
   },
 });

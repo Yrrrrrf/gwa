@@ -1,40 +1,36 @@
+import { describe, it, expect } from "vite-plus/test";
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
-import { assertOk } from "../../lib/assert.ts";
-import { assertExists, assertGreater } from "@std/assert";
+import { expectOk } from "../../lib/assert-db.ts";
 
-Deno.test("🗄️ DB Graph Traversals", async (t) => {
-  await withSurrealEnv("Graph Validation", async ({ surreal, cleanup }) => {
-    await t.step("E1: Forward/Reverse traversal", async () => {
+describe("🗄️ DB Graph Traversals", () => {
+  it("performs forward and reverse traversals", async () => {
+    await withSurrealEnv("Graph Validation", async ({ surreal }) => {
       // Find items user bob liked
-      const resForward = await surreal.sql(
+      const resForward = await surreal.query(
         `SELECT ->likes->item AS liked FROM user:bob;`,
       );
       const actualForward = resForward.find((r: any) =>
         !(r.result?.database && r.result?.namespace)
       );
-      assertExists(
-        actualForward.result[0].liked,
-        "User should have liked items",
-      );
+      expect(actualForward.result[0].liked).toBeDefined();
 
       // Find users who liked item hiking_boots
-      const resReverse = await surreal.sql(
+      const resReverse = await surreal.query(
         `SELECT <-likes<-user AS liked_by FROM item:hiking_boots;`,
       );
       const actualReverse = resReverse.find((r: any) =>
         !(r.result?.database && r.result?.namespace)
       );
-      assertExists(
-        actualReverse.result[0].liked_by,
-        "Item should have been liked by users",
-      );
+      expect(actualReverse.result[0].liked_by).toBeDefined();
 
-      assertOk("Graph traversal works", resReverse);
+      expectOk(resReverse);
     });
+  });
 
-    await t.step("E2: Collaborative filtering recommendations", async () => {
+  it("executes collaborative filtering recommendations", async () => {
+    await withSurrealEnv("Graph Validation", async ({ surreal }) => {
       // fn::user_recommendations(user:carol, 3)
-      const res = await surreal.sql(
+      const res = await surreal.query(
         `RETURN fn::user_recommendations(user:carol, 3);`,
       );
       const actualRes = res.find((r: any) =>
@@ -43,7 +39,7 @@ Deno.test("🗄️ DB Graph Traversals", async (t) => {
 
       // Based on seed data, carol should have recommendations if others share her likes
       // Even if empty, the function should execute successfully
-      assertOk("Recommendation function executes", res);
+      expectOk(res);
 
       if (actualRes.result.length > 0) {
         console.log(`     Found ${actualRes.result.length} recommendations`);

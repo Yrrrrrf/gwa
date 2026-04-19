@@ -19,12 +19,54 @@ impl SurrealItemRepo {
     }
 
     fn to_domain<T: serde::de::DeserializeOwned>(value: Value) -> DomainResult<T> {
-        let json = value.into_json_value();
+        let mut json = value.into_json_value();
+        
+        // Handle Coordinates mapping if the target is Item and it has coordinates
+        if let Some(obj) = json.as_object_mut() {
+            if let Some(coords) = obj.get("coordinates").cloned() {
+                if let Some(c_obj) = coords.as_object() {
+                    if let (Some(t), Some(c)) = (c_obj.get("type"), c_obj.get("coordinates")) {
+                        if t == "Point" && c.is_array() {
+                            let arr = c.as_array().unwrap();
+                            if arr.len() == 2 {
+                                obj.insert("coordinates".to_string(), serde_json::json!({
+                                    "lng": arr[0],
+                                    "lat": arr[1]
+                                }));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         serde_json::from_value(json).map_err(|e| DomainError::Internal(e.to_string()))
     }
 
     fn from_domain<T: serde::Serialize>(data: T) -> DomainResult<Value> {
-        let json = serde_json::to_value(data).map_err(|e| DomainError::Internal(e.to_string()))?;
+        let mut json = serde_json::to_value(data).map_err(|e| DomainError::Internal(e.to_string()))?;
+        
+        // Handle Coordinates mapping back to GeoJSON Point
+        if let Some(obj) = json.as_object_mut() {
+            // Remove empty ID
+            if let Some(id) = obj.get("id") {
+                if id.is_string() && id.as_str().unwrap().is_empty() {
+                    obj.remove("id");
+                }
+            }
+
+            if let Some(coords) = obj.get("coordinates").cloned() {
+                if let Some(c_obj) = coords.as_object() {
+                    if let (Some(lat), Some(lng)) = (c_obj.get("lat"), c_obj.get("lng")) {
+                         obj.insert("coordinates".to_string(), serde_json::json!({
+                            "type": "Point",
+                            "coordinates": [lng, lat]
+                        }));
+                    }
+                }
+            }
+        }
+
         Ok(json.into_value())
     }
 
@@ -70,15 +112,52 @@ impl ItemRepository for SurrealItemRepo {
     }
 
     async fn create(&self, item: Item) -> DomainResult<Item> {
-        let surreal_value = Self::from_domain(item)?;
+        let mut json = serde_json::to_value(item).map_err(|e| DomainError::Internal(e.to_string()))?;
+        let mut target_id = None;
 
-        let value: Option<Value> = self
-            .client
-            .db
-            .create("item")
-            .content(surreal_value)
-            .await
-            .map_err(|e| DomainError::Repository(e.to_string()))?;
+        if let Some(obj) = json.as_object_mut() {
+            if let Some(id_val) = obj.get("id") {
+                if id_val.is_string() {
+                    let id_str = id_val.as_str().unwrap();
+                    if !id_str.is_empty() {
+                         target_id = Some(id_str.to_string());
+                    }
+                }
+            }
+            // Mandatory removal of id field if we want auto-id
+            obj.remove("id");
+
+            // Handle Coordinates mapping back to GeoJSON Point
+            if let Some(coords) = obj.get("coordinates").cloned() {
+                if let Some(c_obj) = coords.as_object() {
+                    if let (Some(lat), Some(lng)) = (c_obj.get("lat"), c_obj.get("lng")) {
+                         obj.insert("coordinates".to_string(), serde_json::json!({
+                            "type": "Point",
+                            "coordinates": [lng, lat]
+                        }));
+                    }
+                }
+            }
+        }
+
+        let surreal_value = json.into_value();
+
+        let value: Option<Value> = if let Some(id) = target_id {
+            let rid = Self::parse_rid(&id)?;
+            self.client
+                .db
+                .create(rid)
+                .content(surreal_value)
+                .await
+                .map_err(|e| DomainError::Repository(e.to_string()))?
+        } else {
+            self.client
+                .db
+                .create("item")
+                .content(surreal_value)
+                .await
+                .map_err(|e| DomainError::Repository(e.to_string()))?
+        };
 
         value
             .ok_or_else(|| DomainError::Internal("Failed to create item".to_string()))

@@ -8,6 +8,12 @@ plugins:
   - remote: buf.build/protocolbuffers/go
     out: ../rpc/gen
     opt: paths=source_relative
-  - remote: buf.build/grpc/go
+  - remote: buf.build/connectrpc/go
     out: ../rpc/gen
     opt: paths=source_relative
+  - local: protoc-gen-es
+    out: ../tests/gen
+    opt: target=ts
+  - local: protoc-gen-connect-es
+    out: ../tests/gen
+    opt: target=ts

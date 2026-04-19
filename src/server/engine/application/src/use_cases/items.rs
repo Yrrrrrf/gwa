@@ -7,6 +7,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateItemRequest {
+    pub id: Option<String>,
     pub title: String,
     pub description: Option<String>,
     pub status: String,
@@ -38,7 +39,7 @@ pub async fn create_item(
     payload: CreateItemRequest,
 ) -> AppResult<Item> {
     let item = Item {
-        id: "".to_string(),
+        id: ensure_id(&payload.id.unwrap_or_default(), "item"),
         title: payload.title,
         description: payload.description,
         status: payload.status,
@@ -129,6 +130,9 @@ pub async fn toggle_like(
 }
 
 fn ensure_id(id: &str, tb: &str) -> String {
+    if id.is_empty() {
+        return "".to_string();
+    }
     if id.contains(':') {
         id.to_string()
     } else {
