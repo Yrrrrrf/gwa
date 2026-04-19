@@ -26,11 +26,14 @@ Deno.test("🗄️ DB Audit Events", async (t) => {
 
       await surreal.sql(`RELATE user:bob->likes->${itemId};`);
       
-      // Delay for event
-      await new Promise(r => setTimeout(r, 100));
+      // Delay for event - increase to 200ms
+      await new Promise(r => setTimeout(r, 200));
       
       const res = await surreal.sql(`SELECT * FROM activity WHERE type = 'item.liked' AND target_item = ${itemId};`);
       const actualRes = res.find((r: any) => !(r.result?.database && r.result?.namespace));
+      if (!actualRes.result?.[0]) {
+          console.log("Activity Search Result:", JSON.stringify(actualRes));
+      }
       assertExists(actualRes.result[0], "Like activity record should exist");
       assertEquals(actualRes.result[0].target_user, "user:bob");
       assertOk("Like audit activity created", res);

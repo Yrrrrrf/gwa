@@ -1,13 +1,8 @@
-USE NS app; USE DB main;
 -- =============================================================================
 -- Template — Table Definitions
 -- Pipeline order: tables → fields → indexes → functions → events → seed
 -- =============================================================================
 
-DEFINE NAMESPACE app;
-USE NAMESPACE app;
-DEFINE DATABASE main;
-USE DATABASE main;
 
 -- Core domain
 DEFINE TABLE user     SCHEMAFULL PERMISSIONS FULL;

@@ -1,4 +1,3 @@
-USE NS app; USE DB main;
 -- =============================================================================
 -- Template — Index Definitions
 -- =============================================================================
@@ -14,5 +13,8 @@ DEFINE ANALYZER ascii_bm25
     TOKENIZERS blank, class, camel, punct
     FILTERS ascii, lowercase, snowball(english);
 
-DEFINE INDEX item_search ON item
-    FIELDS title, description FULLTEXT ANALYZER ascii_bm25 BM25;
+DEFINE INDEX item_title_search ON item
+    FIELDS title FULLTEXT ANALYZER ascii_bm25 BM25;
+
+DEFINE INDEX item_description_search ON item
+    FIELDS description FULLTEXT ANALYZER ascii_bm25 BM25;

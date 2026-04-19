@@ -14,18 +14,16 @@ BULLET='•'
 
 URL="${SURREAL_URL:-http://localhost:8000/sql}"
 SURREAL_USER="${SURREAL_USER:-root}"
-SURREAL_PASS="${SURREAL_PASS:-root}"
+SURREAL_PASS="${SURREAL_PASS:-super_secret_dev_pass_override_me}"
 NS="${SURREAL_NS:-app}"
 DB="${SURREAL_DB:-main}"
 
 # ---------------------------------------------------------------------------
 run_surql() {
-    curl -s -X POST "$URL" \
+    (echo "USE NS $NS; USE DB $DB;"; cat "$1") | curl -s -X POST "$URL" \
         -H "Accept: application/json" \
-        -H "surreal-ns: $NS" \
-        -H "surreal-db: $DB" \
         -u "$SURREAL_USER:$SURREAL_PASS" \
-        --data-binary "@$1"
+        --data-binary @-
 }
 
 execute_surql_file() {

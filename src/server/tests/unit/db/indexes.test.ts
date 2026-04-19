@@ -19,7 +19,12 @@ Deno.test("🗄️ DB Unique Indexes", async (t) => {
       const res2 = await surreal.sql(
         `CREATE user SET email='${email}', username='${u2}', password_hash='x', role='user';`
       );
-      assertError("Duplicate email should be rejected", res2);
+      try {
+        assertError("Duplicate email should be rejected", res2);
+      } catch (err) {
+        console.log("Failed Index Response:", JSON.stringify(res2));
+        throw err;
+      }
     });
 
     await t.step("B2: Duplicate tag slug rejected", async () => {
@@ -29,7 +34,12 @@ Deno.test("🗄️ DB Unique Indexes", async (t) => {
       assertOk("Initial tag created", res1);
       
       const res2 = await surreal.sql(`CREATE tag SET name='T2', slug='${slug}';`);
-      assertError("Duplicate slug should be rejected", res2);
+      try {
+        assertError("Duplicate slug should be rejected", res2);
+      } catch (err) {
+        console.log("Failed Slug Response:", JSON.stringify(res2));
+        throw err;
+      }
     });
 
     printSummary();

@@ -16,7 +16,9 @@ export function assertOk(label: string, response: any) {
       // If we used USE NS/DB, the first two results are for those
       const actualResults = response.filter(res => {
           // Skip USE statement results which look like { result: { database: '...', namespace: '...' } }
-          if (res.result && typeof res.result === 'object' && res.result.database && res.result.namespace) {
+          // In SurrealDB 3, these can have null values
+          if (res.result && typeof res.result === 'object' && 
+              ('database' in res.result || 'namespace' in res.result)) {
               return false;
           }
           return true;
@@ -46,13 +48,15 @@ export function assertError(label: string, response: any) {
     let hasError = false;
     if (Array.isArray(response)) {
         const actualResults = response.filter(res => {
-            if (res.result && typeof res.result === 'object' && res.result.database && res.result.namespace) {
+            if (res.result && typeof res.result === 'object' && 
+                ('database' in res.result || 'namespace' in res.result)) {
                 return false;
             }
             return true;
         });
       hasError = actualResults.some(res => res.status === "ERR");
-    } else if (response?.errors) {
+    }
+ else if (response?.errors) {
       hasError = true;
     }
 

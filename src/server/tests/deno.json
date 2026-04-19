@@ -6,9 +6,9 @@
     "test:rpc": "deno test -A --parallel integration/rpc/"
   },
   "imports": {
-    "@std/assert": "jsr:@std/assert@1",
-    "@std/dotenv": "jsr:@std/dotenv@0.224.2",
-    "@connectrpc/connect": "npm:@connectrpc/connect@^1.4.0",
-    "@connectrpc/connect-web": "npm:@connectrpc/connect-web@^1.4.0"
+    "@std/assert": "jsr:@std/assert",
+    "@std/dotenv": "jsr:@std/dotenv",
+    "@connectrpc/connect": "npm:@connectrpc/connect",
+    "@connectrpc/connect-web": "npm:@connectrpc/connect-web"
   }
 }
