@@ -168,18 +168,14 @@ func setupHermes(cfg *config.Config) *hermes.Engine {
 }
 
 func findAvailablePort(startPort string) (string, error) {
-	port, _ := strconv.Atoi(startPort)
-	for i := 0; i < 100; i++ {
-		current := strconv.Itoa(port + i)
-		ln, err := net.Listen("tcp", ":"+current)
-		if err == nil {
-			ln.Close()
-			return current, nil
-		}
-	}
-	return "", fmt.Errorf("no available ports")
+        // Force the configured port, don't hunt for one
+        ln, err := net.Listen("tcp", ":"+startPort)
+        if err != nil {
+                return "", fmt.Errorf("port %s is already in use: %w", startPort, err)
+        }
+        ln.Close()
+        return startPort, nil
 }
-
 func printBanner(host, port, version string) {
 	colorBrand := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true).PaddingLeft(2)
 	fmt.Println()
