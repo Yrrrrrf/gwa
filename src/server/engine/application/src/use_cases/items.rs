@@ -1,7 +1,7 @@
 use crate::error::{AppError, AppResult};
 use chrono::Utc;
-use domain::entities::item::{Item, Coordinates};
 use domain::entities::comment::Comment;
+use domain::entities::item::{Coordinates, Item};
 use domain::ports::item::ItemRepository;
 use serde::Deserialize;
 
@@ -58,7 +58,11 @@ pub async fn delete_item(item_repo: &dyn ItemRepository, id: &str) -> AppResult<
     item_repo.delete(&full_id).await.map_err(Into::into)
 }
 
-pub async fn search_items(item_repo: &dyn ItemRepository, query: &str, limit: i32) -> AppResult<Vec<Item>> {
+pub async fn search_items(
+    item_repo: &dyn ItemRepository,
+    query: &str,
+    limit: i32,
+) -> AppResult<Vec<Item>> {
     item_repo.search(query, limit).await.map_err(Into::into)
 }
 
@@ -66,30 +70,62 @@ pub async fn get_popular_items(item_repo: &dyn ItemRepository, limit: i32) -> Ap
     item_repo.popular(limit).await.map_err(Into::into)
 }
 
-pub async fn get_items_near(item_repo: &dyn ItemRepository, lat: f64, lng: f64, radius_km: f64) -> AppResult<Vec<Item>> {
-    item_repo.near(Coordinates { lat, lng }, radius_km).await.map_err(Into::into)
+pub async fn get_items_near(
+    item_repo: &dyn ItemRepository,
+    lat: f64,
+    lng: f64,
+    radius_km: f64,
+) -> AppResult<Vec<Item>> {
+    item_repo
+        .near(Coordinates { lat, lng }, radius_km)
+        .await
+        .map_err(Into::into)
 }
 
-pub async fn get_recommendations(item_repo: &dyn ItemRepository, user_id: &str, limit: i32) -> AppResult<Vec<Item>> {
+pub async fn get_recommendations(
+    item_repo: &dyn ItemRepository,
+    user_id: &str,
+    limit: i32,
+) -> AppResult<Vec<Item>> {
     let full_id = ensure_id(user_id, "user");
-    item_repo.recommendations(&full_id, limit).await.map_err(Into::into)
+    item_repo
+        .recommendations(&full_id, limit)
+        .await
+        .map_err(Into::into)
 }
 
-pub async fn add_comment(item_repo: &dyn ItemRepository, user_id: &str, payload: AddCommentRequest) -> AppResult<Comment> {
+pub async fn add_comment(
+    item_repo: &dyn ItemRepository,
+    user_id: &str,
+    payload: AddCommentRequest,
+) -> AppResult<Comment> {
     let user_full_id = ensure_id(user_id, "user");
     let item_full_id = ensure_id(&payload.item_id, "item");
-    item_repo.add_comment(&user_full_id, &item_full_id, payload.rating, payload.body).await.map_err(Into::into)
+    item_repo
+        .add_comment(&user_full_id, &item_full_id, payload.rating, payload.body)
+        .await
+        .map_err(Into::into)
 }
 
-pub async fn list_comments(item_repo: &dyn ItemRepository, item_id: &str) -> AppResult<Vec<Comment>> {
+pub async fn list_comments(
+    item_repo: &dyn ItemRepository,
+    item_id: &str,
+) -> AppResult<Vec<Comment>> {
     let full_id = ensure_id(item_id, "item");
     item_repo.list_comments(&full_id).await.map_err(Into::into)
 }
 
-pub async fn toggle_like(item_repo: &dyn ItemRepository, user_id: &str, item_id: &str) -> AppResult<()> {
+pub async fn toggle_like(
+    item_repo: &dyn ItemRepository,
+    user_id: &str,
+    item_id: &str,
+) -> AppResult<()> {
     let user_full_id = ensure_id(user_id, "user");
     let item_full_id = ensure_id(item_id, "item");
-    item_repo.toggle_like(&user_full_id, &item_full_id).await.map_err(Into::into)
+    item_repo
+        .toggle_like(&user_full_id, &item_full_id)
+        .await
+        .map_err(Into::into)
 }
 
 fn ensure_id(id: &str, tb: &str) -> String {

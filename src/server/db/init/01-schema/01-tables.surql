@@ -1,3 +1,4 @@
+USE NS app; USE DB main;
 -- =============================================================================
 -- Template — Table Definitions
 -- Pipeline order: tables → fields → indexes → functions → events → seed

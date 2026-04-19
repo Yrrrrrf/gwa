@@ -1,3 +1,4 @@
+USE NS app; USE DB main;
 -- =============================================================================
 -- Template — Function Definitions
 -- =============================================================================
@@ -9,7 +10,7 @@ DEFINE FUNCTION fn::search_items($query: string, $limit: int) {
     RETURN (
         SELECT * FROM item
         WHERE status = 'active'
-          AND (title @@ $query OR description @@ $query)
+          AND (string::lowercase(title) CONTAINS string::lowercase($query) OR string::lowercase(description) CONTAINS string::lowercase($query))
         ORDER BY rating DESC
         LIMIT $limit
     );

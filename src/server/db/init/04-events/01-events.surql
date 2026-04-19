@@ -1,3 +1,4 @@
+USE NS app; USE DB main;
 -- =============================================================================
 -- Template — Event Definitions
 -- =============================================================================
@@ -29,6 +30,17 @@ DEFINE EVENT on_comment_deleted ON comment WHEN $event = 'DELETE' THEN {
     UPDATE $item SET
         rating = $stats[0].avg_rating OR 0,
         comment_count = $stats[0].total OR 0;
+};
+
+-- ---------------------------------------------------------------------------
+-- on_item_liked: log activity
+-- ---------------------------------------------------------------------------
+DEFINE EVENT on_item_liked ON likes WHEN $event = 'CREATE' THEN {
+    CREATE activity SET
+        type = 'item.liked',
+        target_user = $after.in,
+        target_item = $after.out,
+        occurred_at = time::now();
 };
 
 -- ---------------------------------------------------------------------------

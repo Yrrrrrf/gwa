@@ -1,10 +1,12 @@
 use crate::adapters::graphql::guards::AuthGuard;
 use crate::adapters::graphql::types::auth::{AuthPayload, LoginInput, UserType};
-use crate::adapters::graphql::types::item::{CreateItemInput, ItemType};
 use crate::adapters::graphql::types::comment::{AddCommentInput, CommentType};
+use crate::adapters::graphql::types::item::{CreateItemInput, ItemType};
 use crate::adapters::http::app_state::AppState;
-use application::use_cases::auth::{LoginRequest, Claims, login as login_use_case};
-use application::use_cases::items::{CreateItemRequest, AddCommentRequest, create_item, delete_item, add_comment, toggle_like};
+use application::use_cases::auth::{Claims, LoginRequest, login as login_use_case};
+use application::use_cases::items::{
+    AddCommentRequest, CreateItemRequest, add_comment, create_item, delete_item, toggle_like,
+};
 use async_graphql::{Context, Object, Result};
 
 pub struct Mutation;

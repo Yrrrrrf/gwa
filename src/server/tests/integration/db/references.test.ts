@@ -17,6 +17,9 @@ Deno.test("🗄️ DB Referential Integrity", async (t) => {
       // 3. Delete the user
       await surreal.sql(`DELETE ${userId};`);
       
+      // Delay for event
+      await new Promise(r => setTimeout(r, 100));
+      
       // 4. Verify session is gone
       const res = await surreal.sql(`SELECT * FROM ${sessionId};`);
       const actualRes = res.find((r: any) => !(r.result?.database && r.result?.namespace));

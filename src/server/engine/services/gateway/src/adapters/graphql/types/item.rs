@@ -1,8 +1,8 @@
-use async_graphql::{ComplexObject, Context, Enum, InputObject, SimpleObject};
-use domain::entities::item::{Item, ItemAction, ItemEvent, Coordinates};
+use super::comment::CommentType;
 use crate::adapters::http::app_state::AppState;
 use application::use_cases::items::list_comments;
-use super::comment::CommentType;
+use async_graphql::{ComplexObject, Context, Enum, InputObject, SimpleObject};
+use domain::entities::item::{Coordinates, Item, ItemAction, ItemEvent};
 
 #[derive(SimpleObject)]
 pub struct CoordinatesType {

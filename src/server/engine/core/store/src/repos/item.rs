@@ -1,7 +1,7 @@
 use crate::client::SurrealClient;
 use async_trait::async_trait;
-use domain::entities::item::{Item, ItemAction, ItemEvent, Coordinates};
 use domain::entities::comment::Comment;
+use domain::entities::item::{Coordinates, Item, ItemAction, ItemEvent};
 use domain::ports::DomainError;
 use domain::ports::Result as DomainResult;
 use domain::ports::item::ItemRepository;
@@ -163,7 +163,7 @@ impl ItemRepository for SurrealItemRepo {
             "type": "Point",
             "coordinates": [coords.lng, coords.lat]
         });
-        
+
         let mut response = self
             .client
             .db
@@ -196,10 +196,16 @@ impl ItemRepository for SurrealItemRepo {
         Self::to_domain_vec(values)
     }
 
-    async fn add_comment(&self, user_id: &str, item_id: &str, rating: i32, body: Option<String>) -> DomainResult<Comment> {
+    async fn add_comment(
+        &self,
+        user_id: &str,
+        item_id: &str,
+        rating: i32,
+        body: Option<String>,
+    ) -> DomainResult<Comment> {
         let user_rid = Self::parse_rid(user_id)?;
         let item_rid = Self::parse_rid(item_id)?;
-        
+
         let mut response = self
             .client
             .db
@@ -214,7 +220,7 @@ impl ItemRepository for SurrealItemRepo {
         let value: Option<Value> = response
             .take(0)
             .map_err(|e| DomainError::Repository(e.to_string()))?;
-            
+
         value
             .ok_or_else(|| DomainError::Internal("Failed to add comment".to_string()))
             .and_then(Self::to_domain)
@@ -239,20 +245,24 @@ impl ItemRepository for SurrealItemRepo {
     async fn toggle_like(&self, user_id: &str, item_id: &str) -> DomainResult<()> {
         let user_rid = Self::parse_rid(user_id)?;
         let item_rid = Self::parse_rid(item_id)?;
-        
-        self.client.db.query("
+
+        self.client
+            .db
+            .query(
+                "
             LET $exists = (SELECT id FROM likes WHERE in = $user AND out = $item);
             IF array::len($exists) > 0 {
                 DELETE likes WHERE in = $user AND out = $item;
             } ELSE {
                 RELATE $user->likes->$item;
             };
-        ")
-        .bind(("user", user_rid))
-        .bind(("item", item_rid))
-        .await
-        .map_err(|e| DomainError::Repository(e.to_string()))?;
-        
+        ",
+            )
+            .bind(("user", user_rid))
+            .bind(("item", item_rid))
+            .await
+            .map_err(|e| DomainError::Repository(e.to_string()))?;
+
         Ok(())
     }
 }
