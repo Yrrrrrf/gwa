@@ -1,5 +1,5 @@
 import { withApiEnv } from "../../fixtures/api_env.ts";
-import { assertOk, assertError, printSummary } from "../../lib/assert.ts";
+import { assertOk, assertError } from "../../lib/assert.ts";
 import { assertExists } from "@std/assert";
 
 Deno.test("🦀 API Authentication", async (t) => {
@@ -37,6 +37,5 @@ Deno.test("🦀 API Authentication", async (t) => {
       assertError("Bad password rejected", res);
     });
 
-    printSummary();
   });
 });

@@ -1,5 +1,5 @@
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
-import { assertOk, printSummary } from "../../lib/assert.ts";
+import { assertOk } from "../../lib/assert.ts";
 import { assertExists, assertGreater } from "@std/assert";
 
 Deno.test("🗄️ DB Graph Traversals", async (t) => {
@@ -33,6 +33,5 @@ Deno.test("🗄️ DB Graph Traversals", async (t) => {
       }
     });
 
-    printSummary();
   });
 });

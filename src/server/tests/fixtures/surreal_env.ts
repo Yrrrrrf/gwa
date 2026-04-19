@@ -1,5 +1,8 @@
 import { createSurrealClient } from "../lib/client.ts";
 import { withCleanup } from "../lib/fixtures.ts";
+import { probeSurreal } from "../lib/health.ts";
+import { StackUnavailableError } from "../lib/errors.ts";
+import { resetCounts, printSummary } from "../lib/assert.ts";
 import { load } from "@std/dotenv";
 
 export async function withSurrealEnv(
@@ -14,33 +17,19 @@ export async function withSurrealEnv(
   const port = Deno.env.get("SURREAL_PORT") || "8000";
   const baseUrl = `http://localhost:${port}`;
 
+  if (!await probeSurreal(baseUrl)) {
+    throw new StackUnavailableError("SurrealDB", baseUrl);
+  }
+
   const surreal = createSurrealClient({ baseUrl, user, pass });
   const { register, run } = withCleanup();
 
-  // Wait for SurrealDB to be ready
-  let ready = false;
-  for (let i = 0; i < 10; i++) {
-    try {
-      const res = await fetch(`${baseUrl}/health`);
-      await res.text(); // Consume body
-      if (res.ok) {
-        ready = true;
-        break;
-      }
-    } catch (err) {
-      // Ignore
-    }
-    await new Promise(r => setTimeout(r, 1000));
-  }
-
-  if (!ready) {
-    throw new Error(`SurrealDB not ready at ${baseUrl}`);
-  }
-
+  resetCounts();
   console.log(`\n--- Running DB Test: ${name} ---`);
   try {
     await fn({ surreal, cleanup: register });
   } finally {
+    printSummary();
     await run();
   }
 }

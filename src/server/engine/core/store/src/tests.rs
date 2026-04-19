@@ -31,6 +31,10 @@ mod tests {
             title: "Rust Test Item".into(),
             description: Some("Created from Rust test".into()),
             status: "active".into(),
+            tags: vec![],
+            coordinates: None,
+            rating: None,
+            comment_count: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };

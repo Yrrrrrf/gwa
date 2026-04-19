@@ -1,5 +1,5 @@
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
-import { assertOk, assertError, printSummary } from "../../lib/assert.ts";
+import { assertOk, assertError } from "../../lib/assert.ts";
 import { assertEquals } from "@std/assert";
 
 Deno.test("🗄️ DB Referential Integrity", async (t) => {

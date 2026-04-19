@@ -6,22 +6,34 @@ CREATE user:alice SET
     username      = 'alice', 
     email         = 'alice@demo.com', 
     role          = 'admin', 
+    display_name  = 'Alice Admin',
+    locale        = 'en-US',
+    country_code  = 'US',
     password_hash = 'hash';
 
 CREATE user:bob SET 
     username      = 'bob', 
     email         = 'bob@demo.com', 
     role          = 'owner', 
+    display_name  = 'Bob Owner',
+    locale        = 'en-US',
+    country_code  = 'US',
     password_hash = 'hash';
 
 CREATE user:carol SET 
     username      = 'carol', 
     email         = 'carol@demo.com', 
     role          = 'user', 
+    display_name  = 'Carol User',
+    locale        = 'en-US',
+    country_code  = 'US',
     password_hash = 'hash';
 
 CREATE user:dave SET 
     username      = 'dave', 
     email         = 'dave@demo.com', 
     role          = 'user', 
+    display_name  = 'Dave User',
+    locale        = 'en-US',
+    country_code  = 'US',
     password_hash = 'hash';

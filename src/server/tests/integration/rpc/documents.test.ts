@@ -1,5 +1,5 @@
 import { withRpcEnv } from "../../fixtures/rpc_env.ts";
-import { assertOk, printSummary } from "../../lib/assert.ts";
+import { assertOk } from "../../lib/assert.ts";
 import { assertEquals, assertExists } from "@std/assert";
 
 Deno.test("🐹 RPC Document Service", async (t) => {
@@ -16,6 +16,5 @@ Deno.test("🐹 RPC Document Service", async (t) => {
       assertOk("Document generation started", res);
     });
 
-    printSummary();
   });
 });

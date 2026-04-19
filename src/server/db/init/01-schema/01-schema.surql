@@ -1,4 +1,20 @@
 -- =============================================================================
+-- Template — Table Definitions
+-- Pipeline order: tables → fields → indexes → functions → events → seed
+-- =============================================================================
+
+
+-- Core domain
+DEFINE TABLE user     SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE session  SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE item     SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE tag      SCHEMAFULL PERMISSIONS FULL;
+DEFINE TABLE activity SCHEMAFULL PERMISSIONS FULL;
+
+-- Relations (Graph)
+DEFINE TABLE comment SCHEMAFULL TYPE RELATION IN user OUT item PERMISSIONS FULL;
+DEFINE TABLE likes   SCHEMAFULL TYPE RELATION IN user OUT item PERMISSIONS FULL;
+-- =============================================================================
 -- Template — Field Definitions
 -- =============================================================================
 
@@ -16,6 +32,11 @@ DEFINE FIELD username      ON user TYPE string;
 DEFINE FIELD email         ON user TYPE string ASSERT string::is_email($value);
 DEFINE FIELD password_hash ON user TYPE string;
 DEFINE FIELD role          ON user TYPE string ASSERT $value IN ['admin', 'owner', 'user'];
+DEFINE FIELD display_name  ON user TYPE option<string>;
+DEFINE FIELD avatar_url    ON user TYPE option<string>;
+DEFINE FIELD locale        ON user TYPE string DEFAULT 'en-US';
+DEFINE FIELD country_code  ON user TYPE option<string>;
+DEFINE FIELD sessions      ON user TYPE references<session>;
 DEFINE FIELD created_at    ON user TYPE datetime DEFAULT time::now();
 DEFINE FIELD updated_at    ON user TYPE datetime DEFAULT time::now();
 
@@ -61,3 +82,23 @@ DEFINE FIELD target_item ON activity TYPE option<record<item>>;
 DEFINE FIELD meta        ON activity TYPE option<object>;
 DEFINE FIELD meta.*      ON activity TYPE any;
 DEFINE FIELD occurred_at ON activity TYPE datetime DEFAULT time::now();
+-- =============================================================================
+-- Template — Index Definitions
+-- =============================================================================
+
+-- Unique indexes
+DEFINE INDEX user_username ON user     FIELDS username UNIQUE;
+DEFINE INDEX user_email    ON user     FIELDS email    UNIQUE;
+DEFINE INDEX tag_slug      ON tag      FIELDS slug     UNIQUE;
+DEFINE INDEX comment_edge  ON comment  FIELDS in, out  UNIQUE;
+
+-- Full-text search
+DEFINE ANALYZER ascii_bm25
+    TOKENIZERS blank, class, camel, punct
+    FILTERS ascii, lowercase, snowball(english);
+
+DEFINE INDEX item_title_search ON item
+    FIELDS title FULLTEXT ANALYZER ascii_bm25 BM25;
+
+DEFINE INDEX item_description_search ON item
+    FIELDS description FULLTEXT ANALYZER ascii_bm25 BM25;

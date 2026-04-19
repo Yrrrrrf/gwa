@@ -101,13 +101,8 @@ run: build
 [doc('Test the server')]
 [group('Dev')]
 test:
-    # @echo "Running DB shell tests..."
-    # sh db/test/run-all.sh
-    # @echo "Running Rust engine tests..."
-    # cd engine && cargo test -p store -- --test-threads=1
     @echo "Running Deno unified test suite..."
-    cd tests && deno task test
-    # @echo "✓ All server tests passed"
+    @cd tests && deno task test
 
 # ── Deploy (Google Cloud) ─────────────────────────────────────
 

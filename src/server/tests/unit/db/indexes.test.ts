@@ -1,5 +1,5 @@
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
-import { assertOk, assertError, printSummary } from "../../lib/assert.ts";
+import { assertOk, assertError } from "../../lib/assert.ts";
 
 Deno.test("🗄️ DB Unique Indexes", async (t) => {
   await withSurrealEnv("Unique Index Validation", async ({ surreal, cleanup }) => {
@@ -42,6 +42,5 @@ Deno.test("🗄️ DB Unique Indexes", async (t) => {
       }
     });
 
-    printSummary();
   });
 });

@@ -7,7 +7,7 @@
 # ── GROUP A — Schema integrity ────────────────────────────────────────────────
 
 # A1: invalid email rejected
-RES=$(run_query "CREATE user SET email='not-an-email', username='bad', password_hash='x', role='tourist', locale='en';")
+RES=$(run_query "CREATE user SET email='not-an-email', username='bad', password_hash='x', role='user', locale='en';")
 if echo "$RES" | grep -qiE 'assert|conform|email|error'; then
     pass "A1 · Invalid email rejected by ASSERT"
 else

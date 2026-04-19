@@ -8,9 +8,9 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String, // user id ("user:tourist_akiko")
+    pub sub: String, // user id ("user:alice")
     pub email: String,
-    pub role: String, // "tourist", "owner", "admin"
+    pub role: String, // "user", "owner", "admin"
     pub exp: usize,   // expiry timestamp
 }
 

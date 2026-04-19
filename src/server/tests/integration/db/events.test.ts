@@ -1,5 +1,5 @@
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
-import { assertOk, printSummary } from "../../lib/assert.ts";
+import { assertOk } from "../../lib/assert.ts";
 import { assertEquals, assertExists } from "@std/assert";
 
 Deno.test("🗄️ DB Audit Events", async (t) => {
@@ -39,6 +39,5 @@ Deno.test("🗄️ DB Audit Events", async (t) => {
       assertOk("Like audit activity created", res);
     });
 
-    printSummary();
   });
 });

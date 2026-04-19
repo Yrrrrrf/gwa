@@ -19,7 +19,7 @@
     : 'bg-transparent'}"
 >
   <a
-    href={auth.role === 'tourist' ? '/discover' : auth.role ? '/dashboard' : '/'}
+    href={auth.role === 'user' ? '/discover' : auth.role ? '/dashboard' : '/'}
     class="flex items-center gap-3 group"
   >
     <div
@@ -29,14 +29,14 @@
     >
       <ICONS.brand size={24} />
     </div>
-    <span class="font-extrabold text-xl tracking-tight text-base-content hidden sm:block">Xibalba</span>
+    <span class="font-extrabold text-xl tracking-tight text-base-content hidden sm:block">Chimera</span>
   </a>
 
   <div class="flex items-center gap-3">
     {#if auth.role}
       <!-- Logged in state -->
       <div class="px-3 py-1.5 rounded-full bg-base-200/50 backdrop-blur-sm border border-base-content/5 flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full {auth.role === 'business' ? 'bg-warning' : 'bg-success'} animate-pulse"></span>
+        <span class="w-2 h-2 rounded-full {auth.role === 'owner' ? 'bg-warning' : 'bg-success'} animate-pulse"></span>
         <span class="text-xs font-bold uppercase text-base-content/70">{auth.role}</span>
       </div>
       <button 

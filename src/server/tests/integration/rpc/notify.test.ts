@@ -1,5 +1,5 @@
 import { withRpcEnv } from "../../fixtures/rpc_env.ts";
-import { assertOk, printSummary } from "../../lib/assert.ts";
+import { assertOk } from "../../lib/assert.ts";
 import { assertEquals } from "@std/assert";
 
 Deno.test("🐹 RPC Notifier Service", async (t) => {
@@ -20,6 +20,5 @@ Deno.test("🐹 RPC Notifier Service", async (t) => {
       assertOk("Notification dispatched", res);
     });
 
-    printSummary();
   });
 });

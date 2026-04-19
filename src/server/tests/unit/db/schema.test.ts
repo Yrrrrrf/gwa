@@ -1,5 +1,5 @@
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
-import { assertOk, assertError, printSummary } from "../../lib/assert.ts";
+import { assertOk, assertError } from "../../lib/assert.ts";
 
 Deno.test("🗄️ DB Schema Assertions", async (t) => {
   await withSurrealEnv("Schema Validation", async ({ surreal, cleanup }) => {
@@ -41,6 +41,5 @@ Deno.test("🗄️ DB Schema Assertions", async (t) => {
       cleanup(async () => { await surreal.sql(`DELETE ${id};`); });
     });
 
-    printSummary();
   });
 });

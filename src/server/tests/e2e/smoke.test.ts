@@ -1,5 +1,5 @@
 import { withSurrealEnv } from "../fixtures/surreal_env.ts";
-import { assertOk, printSummary } from "../lib/assert.ts";
+import { assertOk } from "../lib/assert.ts";
 import { assertEquals, assertGreaterOrEqual } from "@std/assert";
 
 Deno.test("🚀 E2E Smoke Test", async (t) => {
@@ -24,6 +24,5 @@ Deno.test("🚀 E2E Smoke Test", async (t) => {
       assertOk("FTS works", res);
     });
 
-    printSummary();
   });
 });

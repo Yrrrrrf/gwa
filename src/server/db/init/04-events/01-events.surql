@@ -41,10 +41,3 @@ DEFINE EVENT on_item_liked ON likes WHEN $event = 'CREATE' THEN {
         target_item = $after.out,
         occurred_at = time::now();
 };
-
--- ---------------------------------------------------------------------------
--- on_user_deleted: cleanup sessions (manual CASCADE)
--- ---------------------------------------------------------------------------
-DEFINE EVENT on_user_deleted ON user WHEN $event = 'DELETE' THEN {
-    DELETE session WHERE user = $before.id;
-};

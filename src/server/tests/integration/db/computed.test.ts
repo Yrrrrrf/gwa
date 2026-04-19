@@ -1,5 +1,5 @@
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
-import { assertOk, printSummary } from "../../lib/assert.ts";
+import { assertOk } from "../../lib/assert.ts";
 import { assertEquals } from "@std/assert";
 
 Deno.test("🗄️ DB Computed Stats (Events)", async (t) => {
@@ -50,6 +50,5 @@ Deno.test("🗄️ DB Computed Stats (Events)", async (t) => {
       assertOk("Item stats updated by events", res);
     });
 
-    printSummary();
   });
 });

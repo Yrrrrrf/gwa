@@ -1,6 +1,7 @@
 {
   "tasks": {
-    "test": "deno test -A --parallel",
+    "test": "deno run -A preflight.ts && deno test -A --parallel",
+    "preflight": "deno run -A preflight.ts",
     "test:db": "deno test -A --parallel unit/db/ integration/db/",
     "test:api": "deno test -A --parallel unit/api/ integration/api/",
     "test:rpc": "deno test -A --parallel integration/rpc/"

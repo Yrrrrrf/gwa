@@ -1,5 +1,5 @@
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
-import { assertOk, printSummary } from "../../lib/assert.ts";
+import { assertOk } from "../../lib/assert.ts";
 import { assertExists, assertGreaterOrEqual } from "@std/assert";
 
 Deno.test("🗄️ DB Custom Functions", async (t) => {
@@ -37,6 +37,5 @@ Deno.test("🗄️ DB Custom Functions", async (t) => {
       assertOk("Geospatial search function works", res);
     });
 
-    printSummary();
   });
 });

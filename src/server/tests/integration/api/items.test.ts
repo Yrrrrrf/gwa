@@ -1,5 +1,5 @@
 import { withApiEnv } from "../../fixtures/api_env.ts";
-import { assertOk, printSummary } from "../../lib/assert.ts";
+import { assertOk } from "../../lib/assert.ts";
 import { assertEquals, assertExists } from "@std/assert";
 
 Deno.test("🦀 API Items CRUD", async (t) => {
@@ -39,6 +39,5 @@ Deno.test("🦀 API Items CRUD", async (t) => {
       assertOk("Delete item success", delRes);
     });
 
-    printSummary();
   });
 });

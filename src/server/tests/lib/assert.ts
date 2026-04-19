@@ -74,6 +74,11 @@ export function assertError(label: string, response: any) {
   }
 }
 
+export function resetCounts() {
+  passCount = 0;
+  failCount = 0;
+}
+
 export function printSummary() {
   const total = passCount + failCount;
   console.log("\n" + "═".repeat(54));
