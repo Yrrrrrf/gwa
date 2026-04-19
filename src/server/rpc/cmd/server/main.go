@@ -1,7 +1,7 @@
 package main
 
 import (
-	"argus-rpc/gen/template/v1"
+	v1 "argus-rpc/gen/template/v1"
 	"argus-rpc/internal/config"
 	"argus-rpc/internal/middleware"
 	"argus-rpc/internal/platform/logger"

@@ -83,27 +83,36 @@ export function createApiClient(config: ClientConfig) {
   };
 }
 
-// Untyped RPC client using Connect-compatible JSON over HTTP
+// RPC client using grpcurl for native gRPC calls
 export function createRpcClient(config: ClientConfig) {
   const { baseUrl } = config;
+  // baseUrl is http://localhost:4000, grpcurl needs localhost:4000
+  const addr = baseUrl.replace(/^https?:\/\//, "");
 
   return {
     async call(service: string, method: string, data: any) {
-      const url = `${baseUrl}/${service}/${method}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+      const command = new Deno.Command("grpcurl", {
+        args: [
+          "-plaintext",
+          "-d", JSON.stringify(data),
+          addr,
+          `${service}/${method}`
+        ],
       });
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`RPC Error: ${response.status} ${response.statusText} - ${text}`);
+      const { code, stdout, stderr } = await command.output();
+      const output = new TextDecoder().decode(stdout);
+      const error = new TextDecoder().decode(stderr);
+
+      if (code !== 0) {
+        throw new Error(`RPC Error (grpcurl): ${error}`);
       }
 
-      return await response.json();
+      try {
+        return JSON.parse(output);
+      } catch (_e) {
+        return output;
+      }
     }
   };
 }

@@ -42,7 +42,7 @@ build-engine:
 [doc('Generate Go code from protobuf')]
 [group('Build')]
 build-grpc:
-    cd proto && buf generate
+    cd proto && (buf generate || nix shell nixpkgs#buf --command buf generate)
     @echo "✓ gRPC stubs generated for Go"
 
 [doc('Build all components')]
@@ -68,6 +68,11 @@ run:
 
     echo "🚀 Starting Microkernel Stack..."
 
+    # Pre-startup cleanup to ensure ports are free
+    -pkill -f "target/debug/gateway" || true
+    -pkill -f "go run ./cmd/server" || true
+    sleep 1
+
     # Start DB detached
     cd db && podman-compose up -d
     cd ..
@@ -85,17 +90,29 @@ run:
     done
     echo "🗄️ SurrealDB is ready"
 
+    # Start RPC in background (must be up before engine for NotifierService connect)
+    echo "🐹 Starting RPC Sidecar..."
+    (cd rpc && go run ./cmd/server) &
+    RPC_PID=$!
+
+    # Poll RPC health via grpcurl (if available) or simple sleep
+    echo "⌛ Waiting for RPC sidecar..."
+    TIMEOUT=30
+    while ! grpcurl -plaintext localhost:4000 grpc.health.v1.Health/Check > /dev/null 2>&1; do
+      sleep 1
+      let TIMEOUT-=1
+      if [ $TIMEOUT -eq 0 ]; then
+        echo "❌ RPC sidecar health check timed out"
+        kill $RPC_PID 2>/dev/null || true
+        exit 1
+      fi
+    done
+    echo "🐹 RPC sidecar is ready"
+
     # Start engine in background
     echo "🦀 Starting Engine..."
-    cd engine && cargo run -p gateway &
+    (cd engine && cargo run -p gateway) &
     ENGINE_PID=$!
-    cd ..
-
-    # Start RPC in background
-    echo "🐹 Starting RPC Sidecar..."
-    cd rpc && go run ./cmd/server &
-    RPC_PID=$!
-    cd ..
 
     # Trap for cleanup
     trap "echo '🛑 Shutting down...'; kill $ENGINE_PID $RPC_PID 2>/dev/null; cd db && podman-compose down; exit" INT TERM EXIT

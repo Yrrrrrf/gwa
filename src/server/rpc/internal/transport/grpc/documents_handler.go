@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	"argus-rpc/gen/template/v1"
+	v1 "argus-rpc/gen/template/v1"
 	"context"
 )
 

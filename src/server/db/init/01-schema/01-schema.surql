@@ -24,6 +24,7 @@ DEFINE TABLE likes   SCHEMAFULL TYPE RELATION IN user OUT item PERMISSIONS FULL;
 DEFINE FIELD name ON tag TYPE string;
 DEFINE FIELD slug ON tag TYPE string;
 DEFINE FIELD created_at ON tag TYPE datetime DEFAULT time::now();
+DEFINE FIELD updated_at ON tag TYPE datetime DEFAULT time::now() VALUE time::now();
 
 -- ---------------------------------------------------------------------------
 -- user: admin, owner, user
@@ -36,9 +37,8 @@ DEFINE FIELD display_name  ON user TYPE option<string>;
 DEFINE FIELD avatar_url    ON user TYPE option<string>;
 DEFINE FIELD locale        ON user TYPE string DEFAULT 'en-US';
 DEFINE FIELD country_code  ON user TYPE option<string>;
-DEFINE FIELD sessions      ON user TYPE references<session>;
 DEFINE FIELD created_at    ON user TYPE datetime DEFAULT time::now();
-DEFINE FIELD updated_at    ON user TYPE datetime DEFAULT time::now();
+DEFINE FIELD updated_at    ON user TYPE datetime DEFAULT time::now() VALUE time::now();
 
 -- ---------------------------------------------------------------------------
 -- session: auth sessions
@@ -67,6 +67,7 @@ DEFINE FIELD updated_at    ON item TYPE datetime DEFAULT time::now() VALUE time:
 DEFINE FIELD rating     ON comment TYPE int ASSERT $value >= 1 AND $value <= 5;
 DEFINE FIELD body       ON comment TYPE option<string>;
 DEFINE FIELD created_at ON comment TYPE datetime DEFAULT time::now();
+DEFINE FIELD updated_at ON comment TYPE datetime DEFAULT time::now() VALUE time::now();
 
 -- ---------------------------------------------------------------------------
 -- likes: user -> item

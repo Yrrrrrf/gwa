@@ -9,7 +9,7 @@ DEFINE FUNCTION fn::search_items($query: string, $limit: int) {
     RETURN (
         SELECT * FROM item
         WHERE status = 'active'
-          AND (string::lowercase(title) CONTAINS string::lowercase($query) OR string::lowercase(description) CONTAINS string::lowercase($query))
+          AND (string::lowercase(<string> (title OR '')) CONTAINS string::lowercase($query) OR string::lowercase(<string> (description OR '')) CONTAINS string::lowercase($query))
         ORDER BY rating DESC
         LIMIT $limit
     );

@@ -26,3 +26,4 @@ temp
 translations!**/.env.example
 
 !**/.env.example
+*.log

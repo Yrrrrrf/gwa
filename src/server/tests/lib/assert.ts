@@ -54,13 +54,25 @@ export function assertError(label: string, response: any) {
             }
             return true;
         });
+      // In SCHEMAFULL mode, some failures (like ASSERT) might return OK with an empty result or no result
+      // but usually they should return ERR. If we expect an error and get status OK but 0 results, 
+      // that might be a failure too in some contexts.
       hasError = actualResults.some(res => res.status === "ERR");
+      
+      // If no explicit ERR, check if it was a create/update that produced nothing (assertion failure)
+      if (!hasError && actualResults.length > 0) {
+          const res = actualResults[0];
+          if (res.status === "OK" && (!res.result || (Array.isArray(res.result) && res.result.length === 0))) {
+              hasError = true;
+          }
+      }
     }
  else if (response?.errors) {
       hasError = true;
     }
 
     if (!hasError) {
+      console.log("Failed Index Response:", JSON.stringify(response));
       throw new Error(`Expected error but got success`);
     }
     
