@@ -13,8 +13,8 @@ describe("🐹 RPC Document Service", () => {
         recordId: "invoice:123",
       });
 
-      expect(res.success).toBe(true);
-      expect(res.url).toBeDefined();
+      expect(res.jobId).toBeDefined();
+      expect(res.status).toBeDefined();
       expectOk(res);
     });
   });

@@ -54,25 +54,66 @@ down:
 [group('Dev')]
 test: test-db test-engine test-rpc test-e2e
 
-[doc('Test DB (inner + outer ring)')]
+[doc('Test DB (inner + outer ring, aggregated)')]
 [group('Test')]
 test-db:
-    just db::test
-    just tests::test-db
+    #!/usr/bin/env bash
+    e1=0; e2=0
+    just db::test    || e1=$?
+    just tests::test-db || e2=$?
+    exit $(( e1 > e2 ? e1 : e2 ))
 
 [doc('Test Engine (inner + outer ring)')]
 [group('Test')]
 test-engine:
-    just engine::test
-    just tests::test-engine
+    #!/usr/bin/env bash
+    e1=0; e2=0
+    just engine::test     || e1=$?
+    just tests::test-engine || e2=$?
+    exit $(( e1 > e2 ? e1 : e2 ))
 
 [doc('Test RPC (inner + outer ring)')]
 [group('Test')]
 test-rpc:
-    just rpc::test
-    just tests::test-rpc
+    #!/usr/bin/env bash
+    e1=0; e2=0
+    just rpc::test-all  || e1=$?
+    just tests::test-rpc || e2=$?
+    exit $(( e1 > e2 ? e1 : e2 ))
 
 [doc('Test E2E (outer ring only)')]
 [group('Test')]
 test-e2e:
     just tests::test-e2e
+
+[doc('Tri-path validation — all inner + outer rings with summary')]
+[group('Test')]
+test-triangle:
+    #!/usr/bin/env bash
+    declare -A results
+    
+    run_segment() {
+        local tag=$1; shift
+        "$@" 2>&1 && results[$tag]="✓" || results[$tag]="✗"
+    }
+    
+    run_segment "HURL"       just db::test
+    run_segment "SDK"        just tests::test-db
+    run_segment "CARGO"      just engine::test
+    run_segment "GQL"        just tests::test-engine
+    run_segment "GO"         just rpc::test
+    run_segment "GRPCURL"    just rpc::test-smoke
+    run_segment "CONNECT-TS" just tests::test-rpc
+    run_segment "E2E"        just tests::test-e2e
+    
+    echo ""
+    echo "╔══════════════════════════════════════╗"
+    echo "║     Tri-Path Validation Summary      ║"
+    echo "╠══════════════════════════════════════╣"
+    for tag in HURL SDK CARGO GQL GO GRPCURL CONNECT-TS E2E; do
+        printf "║  [%-11s]  %s                   ║\n" "$tag" "${results[$tag]:-?}"
+    done
+    echo "╚══════════════════════════════════════╝"
+    
+    for v in "${results[@]}"; do [[ "$v" == "✗" ]] && exit 1; done
+    exit 0

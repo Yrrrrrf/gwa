@@ -28,7 +28,18 @@ build: generate
 run:
     go run ./cmd/server
 
-[doc('Test RPC (Go)')]
+[doc('Test RPC (Go unit tests)')]
 [group('Test')]
 test:
-    go test ./...
+    go test $(go list ./... | grep -v templatev1connect) -count=1
+
+[doc('Test RPC (live grpcurl smoke)')]
+[group('Test')]
+test-smoke:
+    bash tests/grpcurl.sh
+
+[doc('Test RPC (unit + smoke)')]
+[group('Test')]
+test-all:
+    just test
+    just test-smoke

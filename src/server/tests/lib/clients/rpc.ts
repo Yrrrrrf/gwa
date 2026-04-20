@@ -1,5 +1,5 @@
 import { createPromiseClient, PromiseClient } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-node";
+import { createGrpcTransport } from "@connectrpc/connect-node";
 import { ServiceType } from "@bufbuild/protobuf";
 
 export interface RpcClient {
@@ -14,9 +14,9 @@ export interface RpcConfig {
 export function createRpcClient(config: RpcConfig): RpcClient {
   const { baseUrl, token } = config;
 
-  const transport = createConnectTransport({
+  const transport = createGrpcTransport({
     baseUrl,
-    httpVersion: "1.1",
+    httpVersion: "2",
     interceptors: [
       (next) => async (req) => {
         if (token) {

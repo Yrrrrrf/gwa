@@ -25,8 +25,8 @@ describe("🗄️ DB Referential Integrity", () => {
 
       // 4. Verify session is gone
       const res = await surreal.query(`SELECT * FROM ${sessionId};`);
-      const actualRes = res.find((r: any) =>
-        !(r.result?.database && r.result?.namespace)
+      const actualRes = res.find(
+        (r: any) => !(r.result?.database && r.result?.namespace),
       );
       if (actualRes.result.length > 0) {
         console.log("Remaining Session:", JSON.stringify(actualRes.result));

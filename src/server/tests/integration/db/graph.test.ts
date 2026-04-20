@@ -9,8 +9,8 @@ describe("🗄️ DB Graph Traversals", () => {
       const resForward = await surreal.query(
         `SELECT ->likes->item AS liked FROM user:bob;`,
       );
-      const actualForward = resForward.find((r: any) =>
-        !(r.result?.database && r.result?.namespace)
+      const actualForward = resForward.find(
+        (r: any) => !(r.result?.database && r.result?.namespace),
       );
       expect(actualForward.result[0].liked).toBeDefined();
 
@@ -18,8 +18,8 @@ describe("🗄️ DB Graph Traversals", () => {
       const resReverse = await surreal.query(
         `SELECT <-likes<-user AS liked_by FROM item:hiking_boots;`,
       );
-      const actualReverse = resReverse.find((r: any) =>
-        !(r.result?.database && r.result?.namespace)
+      const actualReverse = resReverse.find(
+        (r: any) => !(r.result?.database && r.result?.namespace),
       );
       expect(actualReverse.result[0].liked_by).toBeDefined();
 
@@ -33,8 +33,8 @@ describe("🗄️ DB Graph Traversals", () => {
       const res = await surreal.query(
         `RETURN fn::user_recommendations(user:carol, 3);`,
       );
-      const actualRes = res.find((r: any) =>
-        !(r.result?.database && r.result?.namespace)
+      const actualRes = res.find(
+        (r: any) => !(r.result?.database && r.result?.namespace),
       );
 
       // Based on seed data, carol should have recommendations if others share her likes

@@ -8,16 +8,17 @@ config({ path: "../.env" });
 
 export async function withSurrealEnv(
   name: string,
-  fn: (
-    ctx: { surreal: any; cleanup: (fn: () => Promise<void>) => void },
-  ) => Promise<void>,
+  fn: (ctx: {
+    surreal: any;
+    cleanup: (fn: () => Promise<void>) => void;
+  }) => Promise<void>,
 ) {
   const user = process.env.SURREAL_USER || "root";
   const pass = process.env.SURREAL_PASS || "root";
   const port = process.env.SURREAL_PORT || "8000";
   const baseUrl = `http://localhost:${port}`;
 
-  if (!await probeSurreal(baseUrl)) {
+  if (!(await probeSurreal(baseUrl))) {
     throw new StackUnavailableError("SurrealDB", baseUrl);
   }
 

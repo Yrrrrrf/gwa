@@ -51,11 +51,16 @@ export async function getToken(apiClient: EngineClient) {
       throw new Error(`Login failed: ${JSON.stringify(res.errors)}`);
     }
     if (!res.data?.login) {
-       console.error("Login Result (No data.login):", JSON.stringify(res, null, 2));
-       throw new Error("Login failed: no data.login in response");
+      console.error(
+        "Login Result (No data.login):",
+        JSON.stringify(res, null, 2),
+      );
+      throw new Error("Login failed: no data.login in response");
     }
     cachedToken = res.data.login.token;
-    console.log(`[DEBUG] Got token from engine: ${cachedToken.slice(0, 10)}...${cachedToken.slice(-10)}`);
+    console.log(
+      `[DEBUG] Got token from engine: ${cachedToken.slice(0, 10)}...${cachedToken.slice(-10)}`,
+    );
     return cachedToken!;
   } catch (err: any) {
     console.warn(`Could not get JWT token: ${err.message}. Using mock-token.`);

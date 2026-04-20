@@ -20,7 +20,7 @@ impl SurrealItemRepo {
 
     fn to_domain<T: serde::de::DeserializeOwned>(value: Value) -> DomainResult<T> {
         let mut json = value.into_json_value();
-        
+
         // Handle Coordinates mapping if the target is Item and it has coordinates
         if let Some(obj) = json.as_object_mut() {
             if let Some(coords) = obj.get("coordinates").cloned() {
@@ -29,10 +29,13 @@ impl SurrealItemRepo {
                         if t == "Point" && c.is_array() {
                             let arr = c.as_array().unwrap();
                             if arr.len() == 2 {
-                                obj.insert("coordinates".to_string(), serde_json::json!({
-                                    "lng": arr[0],
-                                    "lat": arr[1]
-                                }));
+                                obj.insert(
+                                    "coordinates".to_string(),
+                                    serde_json::json!({
+                                        "lng": arr[0],
+                                        "lat": arr[1]
+                                    }),
+                                );
                             }
                         }
                     }
@@ -44,8 +47,9 @@ impl SurrealItemRepo {
     }
 
     fn from_domain<T: serde::Serialize>(data: T) -> DomainResult<Value> {
-        let mut json = serde_json::to_value(data).map_err(|e| DomainError::Internal(e.to_string()))?;
-        
+        let mut json =
+            serde_json::to_value(data).map_err(|e| DomainError::Internal(e.to_string()))?;
+
         // Handle Coordinates mapping back to GeoJSON Point
         if let Some(obj) = json.as_object_mut() {
             // Remove empty ID
@@ -58,10 +62,13 @@ impl SurrealItemRepo {
             if let Some(coords) = obj.get("coordinates").cloned() {
                 if let Some(c_obj) = coords.as_object() {
                     if let (Some(lat), Some(lng)) = (c_obj.get("lat"), c_obj.get("lng")) {
-                         obj.insert("coordinates".to_string(), serde_json::json!({
-                            "type": "Point",
-                            "coordinates": [lng, lat]
-                        }));
+                        obj.insert(
+                            "coordinates".to_string(),
+                            serde_json::json!({
+                                "type": "Point",
+                                "coordinates": [lng, lat]
+                            }),
+                        );
                     }
                 }
             }
@@ -112,7 +119,8 @@ impl ItemRepository for SurrealItemRepo {
     }
 
     async fn create(&self, item: Item) -> DomainResult<Item> {
-        let mut json = serde_json::to_value(item).map_err(|e| DomainError::Internal(e.to_string()))?;
+        let mut json =
+            serde_json::to_value(item).map_err(|e| DomainError::Internal(e.to_string()))?;
         let mut target_id = None;
 
         if let Some(obj) = json.as_object_mut() {
@@ -120,7 +128,7 @@ impl ItemRepository for SurrealItemRepo {
                 if id_val.is_string() {
                     let id_str = id_val.as_str().unwrap();
                     if !id_str.is_empty() {
-                         target_id = Some(id_str.to_string());
+                        target_id = Some(id_str.to_string());
                     }
                 }
             }
@@ -131,10 +139,13 @@ impl ItemRepository for SurrealItemRepo {
             if let Some(coords) = obj.get("coordinates").cloned() {
                 if let Some(c_obj) = coords.as_object() {
                     if let (Some(lat), Some(lng)) = (c_obj.get("lat"), c_obj.get("lng")) {
-                         obj.insert("coordinates".to_string(), serde_json::json!({
-                            "type": "Point",
-                            "coordinates": [lng, lat]
-                        }));
+                        obj.insert(
+                            "coordinates".to_string(),
+                            serde_json::json!({
+                                "type": "Point",
+                                "coordinates": [lng, lat]
+                            }),
+                        );
                     }
                 }
             }

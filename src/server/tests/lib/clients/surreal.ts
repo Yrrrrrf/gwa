@@ -32,8 +32,8 @@ export function createSurrealClient(config: SurrealConfig): SurrealClient {
 
   function stringifyRecordIds(obj: any): any {
     if (obj === null || obj === undefined) return obj;
-    if (typeof obj === 'object') {
-      if (obj.constructor && obj.constructor.name === 'RecordId') {
+    if (typeof obj === "object") {
+      if (obj.constructor && obj.constructor.name === "RecordId") {
         return obj.toString();
       }
       if (Array.isArray(obj)) {
@@ -53,25 +53,27 @@ export function createSurrealClient(config: SurrealConfig): SurrealClient {
       await promise;
       try {
         const res = await db_conn.query(sql, variables);
-        
+
         if (Array.isArray(res)) {
-          return res.map(r => {
-             if (r && typeof r === 'object' && 'status' in r) {
-               return {
-                 ...r,
-                 result: stringifyRecordIds(r.result)
-               };
-             }
-             return { status: "OK", result: stringifyRecordIds(r) };
+          return res.map((r) => {
+            if (r && typeof r === "object" && "status" in r) {
+              return {
+                ...r,
+                result: stringifyRecordIds(r.result),
+              };
+            }
+            return { status: "OK", result: stringifyRecordIds(r) };
           });
         }
         return [{ status: "OK", result: stringifyRecordIds(res) }];
       } catch (err: any) {
-        return [{
-          status: "ERR",
-          result: err.message,
-          message: err.message
-        }];
+        return [
+          {
+            status: "ERR",
+            result: err.message,
+            message: err.message,
+          },
+        ];
       }
     },
     async close() {

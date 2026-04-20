@@ -15,7 +15,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strconv"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"

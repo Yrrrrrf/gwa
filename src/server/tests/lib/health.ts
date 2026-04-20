@@ -25,16 +25,16 @@ export async function probeApi(url: string): Promise<boolean> {
 export async function probeRpc(url: string): Promise<boolean> {
   try {
     const addr = url.replace(/^https?:\/\//, "");
-    
+
     // Always use nix-shell for reliability since we know it works
     const res = spawnSync("nix", [
-        "shell",
-        "nixpkgs#grpcurl",
-        "--command",
-        "grpcurl",
-        "-plaintext",
-        addr,
-        "grpc.health.v1.Health/Check",
+      "shell",
+      "nixpkgs#grpcurl",
+      "--command",
+      "grpcurl",
+      "-plaintext",
+      addr,
+      "grpc.health.v1.Health/Check",
     ]);
 
     return res.status === 0;

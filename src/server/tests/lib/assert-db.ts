@@ -18,7 +18,7 @@ export function expectOk(response: any) {
 
 export function expectError(response: any) {
   let hasError = false;
-  
+
   if (Array.isArray(response)) {
     hasError = response.some((res) => res?.status === "ERR");
 
@@ -27,8 +27,7 @@ export function expectError(response: any) {
       // In SDK 2.x, some "not found" or "invalid" might not return ERR status but empty results
       if (
         res?.status === "OK" &&
-        (!res.result ||
-          (Array.isArray(res.result) && res.result.length === 0))
+        (!res.result || (Array.isArray(res.result) && res.result.length === 0))
       ) {
         hasError = true;
       }

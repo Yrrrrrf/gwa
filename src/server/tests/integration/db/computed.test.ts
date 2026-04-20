@@ -24,8 +24,8 @@ describe("🗄️ DB Computed Stats (Events)", () => {
         let res = await surreal.query(
           `SELECT rating, comment_count FROM ${itemId};`,
         );
-        const actualRes = res.find((r: any) =>
-          !(r.result?.database && r.result?.namespace)
+        const actualRes = res.find(
+          (r: any) => !(r.result?.database && r.result?.namespace),
         );
         if (!actualRes.result?.[0]) {
           throw new Error(`Item not found after create: ${itemId}`);
@@ -43,9 +43,11 @@ describe("🗄️ DB Computed Stats (Events)", () => {
         await new Promise((r) => setTimeout(r, 100));
 
         // 4. Verify update
-        res = await surreal.query(`SELECT rating, comment_count FROM ${itemId};`);
-        const actualResUpdate = res.find((r: any) =>
-          !(r.result?.database && r.result?.namespace)
+        res = await surreal.query(
+          `SELECT rating, comment_count FROM ${itemId};`,
+        );
+        const actualResUpdate = res.find(
+          (r: any) => !(r.result?.database && r.result?.namespace),
         );
         expect(actualResUpdate.result[0].rating).toBe(5);
         expect(actualResUpdate.result[0].comment_count).toBe(1);
@@ -57,9 +59,11 @@ describe("🗄️ DB Computed Stats (Events)", () => {
 
         await new Promise((r) => setTimeout(r, 100));
 
-        res = await surreal.query(`SELECT rating, comment_count FROM ${itemId};`);
-        const actualResUpdate2 = res.find((r: any) =>
-          !(r.result?.database && r.result?.namespace)
+        res = await surreal.query(
+          `SELECT rating, comment_count FROM ${itemId};`,
+        );
+        const actualResUpdate2 = res.find(
+          (r: any) => !(r.result?.database && r.result?.namespace),
         );
         expect(actualResUpdate2.result[0].rating).toBe(3); // (5+1)/2
         expect(actualResUpdate2.result[0].comment_count).toBe(2);

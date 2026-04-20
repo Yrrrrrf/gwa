@@ -32,8 +32,18 @@ down:
     podman-compose down -v
     @echo "✓ DB stopped"
 
-[doc('Test DB (Hurl)')]
+[doc('Run DB inner-ring tests (Hurl)')]
 [group('Test')]
 test:
-    @echo "Running DB inner-ring tests..."
-    # Placeholder for Hurl invocation
+    hurl --test --variables-file tests/.env --user root:root tests/*.hurl
+
+[doc('Run a single Hurl test file (debug)')]
+[group('Test')]
+test-one FILE:
+    hurl --very-verbose --variables-file tests/.env --user root:root tests/{{FILE}}
+
+[doc('Generate Hurl HTML report')]
+[group('Test')]
+test-report:
+    mkdir -p tests/out/report
+    hurl --test --variables-file tests/.env --user root:root --report-html tests/out/report tests/*.hurl

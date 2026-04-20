@@ -22,9 +22,7 @@ export default async function () {
   console.log("────────────────────────────────────────────────────────");
 
   if (!dbUp || !apiUp || !rpcUp) {
-    console.error(
-      "\n❌ Some services are unreachable. Run 'just run' first.",
-    );
+    console.error("\n❌ Some services are unreachable. Run 'just run' first.");
     process.exit(1);
   }
 

@@ -1,6 +1,10 @@
 import { probeApi, probeRpc, probeSurreal } from "./health.ts";
 
-export async function checkAll(urls: { surreal: string; engine: string; rpc: string }) {
+export async function checkAll(urls: {
+  surreal: string;
+  engine: string;
+  rpc: string;
+}) {
   const [surreal, engine, rpc] = await Promise.all([
     probeSurreal(urls.surreal),
     probeApi(urls.engine),
