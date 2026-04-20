@@ -11,8 +11,7 @@ export async function mintToken(
   claims: Partial<TokenClaims> = {},
 ): Promise<string> {
   // Try multiple env var names and fallback to the project default
-  const secret =
-    process.env.JWT_SECRET ||
+  const secret = process.env.JWT_SECRET ||
     "super-secret-template-key-change-me-in-production";
 
   const encodedSecret = new TextEncoder().encode(secret);

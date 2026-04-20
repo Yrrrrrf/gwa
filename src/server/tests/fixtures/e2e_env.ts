@@ -1,9 +1,9 @@
 import { createSurrealClient } from "../lib/clients/surreal.ts";
 import { createEngineClient } from "../lib/clients/engine.ts";
 import { createRpcClient } from "../lib/clients/rpc.ts";
-import { withCleanup, getToken } from "../lib/fixtures.ts";
+import { getToken, withCleanup } from "../lib/fixtures.ts";
 import { mintToken } from "../lib/tokens.ts";
-import { probeSurreal, probeApi, probeRpc } from "../lib/health.ts";
+import { probeApi, probeRpc, probeSurreal } from "../lib/health.ts";
 import { StackUnavailableError } from "../lib/errors.ts";
 import { config } from "dotenv";
 

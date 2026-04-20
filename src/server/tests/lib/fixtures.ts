@@ -59,7 +59,9 @@ export async function getToken(apiClient: EngineClient) {
     }
     cachedToken = res.data.login.token;
     console.log(
-      `[DEBUG] Got token from engine: ${cachedToken.slice(0, 10)}...${cachedToken.slice(-10)}`,
+      `[DEBUG] Got token from engine: ${cachedToken.slice(0, 10)}...${
+        cachedToken.slice(-10)
+      }`,
     );
     return cachedToken!;
   } catch (err: any) {

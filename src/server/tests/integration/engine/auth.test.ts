@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 import { withApiEnv } from "../../fixtures/api_env.ts";
 import { expectError, expectOk } from "../../lib/assert-db.ts";
 

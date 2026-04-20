@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 import { withApiEnv } from "../../fixtures/api_env.ts";
 import { expectOk } from "../../lib/assert-db.ts";
 
@@ -38,7 +38,8 @@ describe("🦀 API Items CRUD", () => {
         expect(id).toBeDefined();
         expectOk(res);
 
-        const deleteGql = `mutation DeleteItem($id: String!) { deleteItem(id: $id) }`;
+        const deleteGql =
+          `mutation DeleteItem($id: String!) { deleteItem(id: $id) }`;
         const delRes = await api.mutate(deleteGql, { id });
         expect(delRes.data.deleteItem).toBe(true);
         expectOk(delRes);

@@ -44,7 +44,7 @@ export class GenerateDocumentRequest extends Message<GenerateDocumentRequest> {
       no: 1,
       name: "template_id",
       kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
+      T: 9, /* ScalarType.STRING */
     },
     { no: 2, name: "data", kind: "message", T: Struct },
     { no: 3, name: "format", kind: "scalar", T: 9 /* ScalarType.STRING */ },
@@ -88,7 +88,8 @@ export class GenerateDocumentRequest extends Message<GenerateDocumentRequest> {
 /**
  * @generated from message template.v1.GenerateDocumentResponse
  */
-export class GenerateDocumentResponse extends Message<GenerateDocumentResponse> {
+export class GenerateDocumentResponse
+  extends Message<GenerateDocumentResponse> {
   /**
    * @generated from field: string job_id = 1;
    */
@@ -149,7 +150,8 @@ export class GenerateDocumentResponse extends Message<GenerateDocumentResponse> 
 /**
  * @generated from message template.v1.GetDocumentStatusRequest
  */
-export class GetDocumentStatusRequest extends Message<GetDocumentStatusRequest> {
+export class GetDocumentStatusRequest
+  extends Message<GetDocumentStatusRequest> {
   /**
    * @generated from field: string job_id = 1;
    */
@@ -204,7 +206,8 @@ export class GetDocumentStatusRequest extends Message<GetDocumentStatusRequest> 
 /**
  * @generated from message template.v1.GetDocumentStatusResponse
  */
-export class GetDocumentStatusResponse extends Message<GetDocumentStatusResponse> {
+export class GetDocumentStatusResponse
+  extends Message<GetDocumentStatusResponse> {
   /**
    * @generated from field: string job_id = 1;
    */
@@ -239,14 +242,14 @@ export class GetDocumentStatusResponse extends Message<GetDocumentStatusResponse
       no: 3,
       name: "download_url",
       kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
+      T: 9, /* ScalarType.STRING */
       opt: true,
     },
     {
       no: 4,
       name: "error",
       kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
+      T: 9, /* ScalarType.STRING */
       opt: true,
     },
   ]);

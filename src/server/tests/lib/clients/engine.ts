@@ -1,4 +1,4 @@
-import { GraphQLClient, ClientError } from "graphql-request";
+import { ClientError, GraphQLClient } from "graphql-request";
 
 export interface EngineClient {
   query: <T = any>(gql: string, variables?: Record<string, any>) => Promise<T>;

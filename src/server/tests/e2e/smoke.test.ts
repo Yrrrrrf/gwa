@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 import { withE2eEnv } from "../fixtures/e2e_env.ts";
 import { expectOk } from "../lib/assert-db.ts";
 import { NotifierService } from "../gen/template/v1/notify_connect.ts";

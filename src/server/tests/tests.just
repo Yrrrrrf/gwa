@@ -1,17 +1,17 @@
 [doc('Format test suite')]
 [group('CI')]
 fmt:
-    bun x prettier --write .
+    deno fmt .
 
 [doc('Lint test suite')]
 [group('CI')]
 lint:
-    bun x vitest typecheck
+    deno lint .
 
 [doc('Type-check test suite')]
 [group('CI')]
 typecheck:
-    bun x tsc --noEmit
+    deno check .
 
 [doc('Run the unified test suite')]
 [group('Test')]

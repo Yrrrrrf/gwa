@@ -72,28 +72,28 @@ export class NotificationRequest extends Message<NotificationRequest> {
       no: 4,
       name: "template_key",
       kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
+      T: 9, /* ScalarType.STRING */
       opt: true,
     },
     {
       no: 5,
       name: "locale",
       kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
+      T: 9, /* ScalarType.STRING */
       opt: true,
     },
     {
       no: 6,
       name: "subject",
       kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
+      T: 9, /* ScalarType.STRING */
       opt: true,
     },
     {
       no: 7,
       name: "body",
       kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
+      T: 9, /* ScalarType.STRING */
       opt: true,
     },
     { no: 8, name: "variables", kind: "message", T: Struct },
@@ -186,7 +186,8 @@ export class NotificationResponse extends Message<NotificationResponse> {
 /**
  * @generated from message template.v1.BatchNotificationRequest
  */
-export class BatchNotificationRequest extends Message<BatchNotificationRequest> {
+export class BatchNotificationRequest
+  extends Message<BatchNotificationRequest> {
   /**
    * @generated from field: repeated template.v1.NotificationRequest requests = 1;
    */
@@ -247,7 +248,8 @@ export class BatchNotificationRequest extends Message<BatchNotificationRequest> 
 /**
  * @generated from message template.v1.BatchNotificationResponse
  */
-export class BatchNotificationResponse extends Message<BatchNotificationResponse> {
+export class BatchNotificationResponse
+  extends Message<BatchNotificationResponse> {
   /**
    * @generated from field: int32 processed_count = 1;
    */
@@ -275,19 +277,19 @@ export class BatchNotificationResponse extends Message<BatchNotificationResponse
       no: 1,
       name: "processed_count",
       kind: "scalar",
-      T: 5 /* ScalarType.INT32 */,
+      T: 5, /* ScalarType.INT32 */
     },
     {
       no: 2,
       name: "failure_count",
       kind: "scalar",
-      T: 5 /* ScalarType.INT32 */,
+      T: 5, /* ScalarType.INT32 */
     },
     {
       no: 3,
       name: "errors",
       kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
+      T: 9, /* ScalarType.STRING */
       repeated: true,
     },
   ]);
