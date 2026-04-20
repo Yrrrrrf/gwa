@@ -11,19 +11,19 @@
     "test:e2e": "vp test e2e"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^1.4.2",
-    "@connectrpc/connect": "^1.4.0",
-    "@connectrpc/connect-node": "^1.4.0",
-    "@connectrpc/connect-web": "^1.4.0",
-    "dotenv": "^16.4.5",
-    "graphql-request": "^7.1.0",
-    "jose": "^5.9.6",
-    "surrealdb": "^2.0.0",
+    "@bufbuild/protobuf": "^2.11.0",
+    "@connectrpc/connect": "^2.1.1",
+    "@connectrpc/connect-node": "^2.1.1",
+    "@connectrpc/connect-web": "^2.1.1",
+    "dotenv": "^17.4.2",
+    "graphql-request": "^7.4.0",
+    "jose": "^6.2.2",
+    "surrealdb": "^2.0.3",
     "vite-plus": "^0.1.18",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.4"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "^1.4.2",
-    "@connectrpc/protoc-gen-connect-es": "^1.4.0"
+    "@bufbuild/protoc-gen-es": "^2.11.0",
+    "@connectrpc/protoc-gen-connect-es": "^1.7.0"
   }
 }
