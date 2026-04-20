@@ -7,8 +7,6 @@
 
 # client generated files
 node_modules
-build
-gen
 
 # server generated files
 target
@@ -23,7 +21,7 @@ target
 # one * means any characters except /
 # two ** means any characters including /
 temp
-translations!**/.env.example
+translations
 
 !**/.env.example
 *.log
