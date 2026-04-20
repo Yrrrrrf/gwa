@@ -1,27 +1,27 @@
 # all that start with a dot except .gitignore
 .*
 !.gitignore
+# just remain the .env.example to show the template
+!**/.env.example
 
 # lock files (from various package managers)
 *.lock
 
-# client generated files
+# project generated files
+# client
 node_modules
+translations
 
 # server generated files
 target
 *.sum
 
 # generated
-*.pdf
+temp
+# *.pdf
 
 # ide configuration files 
 **.code-workspace
 
 # one * means any characters except /
 # two ** means any characters including /
-temp
-translations
-
-!**/.env.example
-*.log
