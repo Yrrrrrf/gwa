@@ -1,13 +1,3 @@
-# GWA · Server — engine shell.
-#
-# Rust workspace (domain, store, application, gateway, wasm).
-# Needs:
-#   - cargo/rustc/rustfmt/clippy
-#   - protobuf (tonic-build's compile_protos in gateway/build.rs)
-#
-# Does NOT need: buf (proto/ owns generation), grpcurl (tests own that),
-# go, deno. Keeping it minimal cuts shell startup and makes intent obvious.
-
 {
   description = "GWA · Server — engine (Rust gateway + workspace)";
 
@@ -22,7 +12,12 @@
   };
 
   outputs =
-    { self, nixpkgs, flake-utils, shared }:
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      shared,
+    }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -33,14 +28,12 @@
         devShells.default = pkgs.mkShell {
           name = "gwa-engine";
 
-          packages =
-            groups.base
-            ++ groups.rust
-            ++ groups.protobuf;  # required by tonic-prost-build at build.rs time
+          packages = groups.base ++ groups.rust ++ groups.protobuf; # required by tonic-prost-build at build.rs time
 
           shellHook = ''
+            ${groups.shell.colorVars}
             RUSTC_V=$(rustc --version | awk '{print $2}')
-            echo "🦀 engine shell — rustc v''${RUSTC_V} + protobuf"
+            echo "🦀 ''${PURPLE}engine shell ''${RESET}— rustc ''${CYAN}v''${RUSTC_V}''${RESET} + protobuf"
           '';
         };
       }

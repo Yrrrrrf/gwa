@@ -1,14 +1,3 @@
-# GWA · Server — root flake.
-#
-# Two responsibilities:
-#   1. Provide a kitchen-sink `nix develop` that opens the full stack.
-#   2. Re-export every sub-flake's shell so `nix develop .#engine` works
-#      from the server root without `cd engine`.
-#
-# Sub-flakes are independent — they consume only `pkgs.nix` (via a
-# non-flake path input), not this flake. That's deliberate: it keeps the
-# dependency graph acyclic while still letting this root pull them in.
-
 {
   description = "GWA · Server — microkernel root flake";
 
@@ -17,15 +6,24 @@
     flake-utils.url = "github:numtide/flake-utils";
 
     # Sub-flakes — each is independently usable via `cd <dir> && nix develop`.
-    db.url     = "path:./db";
+    db.url = "path:./db";
     engine.url = "path:./engine";
-    rpc.url    = "path:./rpc";
-    proto.url  = "path:./proto";
-    tests.url  = "path:./tests";
+    rpc.url = "path:./rpc";
+    proto.url = "path:./proto";
+    tests.url = "path:./tests";
   };
 
   outputs =
-    { self, nixpkgs, flake-utils, db, engine, rpc, proto, tests }:
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      db,
+      engine,
+      rpc,
+      proto,
+      tests,
+    }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -49,9 +47,7 @@
               ++ groups.net;
 
             shellHook = ''
-              PURPLE=$(tput setaf 5)
-              CYAN=$(tput setaf 6)
-              RESET=$(tput sgr0)
+              ${groups.shell.colorVars}
 
               JUST_V=$(just --version | awk '{print $2}')
               PODMAN_V=$(podman --version | awk '{print $3}')
@@ -65,11 +61,11 @@
 
           # Per-component shells — re-exported for `nix develop .#engine` etc.
           # Useful in CI steps that only need one toolchain.
-          db     = db.devShells.${system}.default;
+          db = db.devShells.${system}.default;
           engine = engine.devShells.${system}.default;
-          rpc    = rpc.devShells.${system}.default;
-          proto  = proto.devShells.${system}.default;
-          tests  = tests.devShells.${system}.default;
+          rpc = rpc.devShells.${system}.default;
+          proto = proto.devShells.${system}.default;
+          tests = tests.devShells.${system}.default;
         };
       }
     );

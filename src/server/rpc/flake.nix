@@ -1,12 +1,3 @@
-# GWA · Server — rpc shell.
-#
-# Go gRPC sidecar (notifier + documents). Needs:
-#   - go (compiler + module tooling)
-#   - protobuf + buf (regenerating Go stubs from ../proto)
-#   - grpcurl (local health/sanity checks during dev)
-#
-# Note: `buf` is in protobuf group because rpc and proto both need it.
-
 {
   description = "GWA · Server — rpc (Go gRPC sidecar)";
 
@@ -21,7 +12,12 @@
   };
 
   outputs =
-    { self, nixpkgs, flake-utils, shared }:
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      shared,
+    }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -32,15 +28,12 @@
         devShells.default = pkgs.mkShell {
           name = "gwa-rpc";
 
-          packages =
-            groups.base
-            ++ groups.go
-            ++ groups.protobuf
-            ++ [ pkgs.grpcurl ];  # also in groups.net but tests own that
+          packages = groups.base ++ groups.go ++ groups.protobuf ++ [ pkgs.grpcurl ]; # also in groups.net but tests own that
 
           shellHook = ''
+            ${groups.shell.colorVars}
             GO_V=$(go version | awk '{print $3}' | sed 's/go//')
-            echo "🐹 rpc shell — go v''${GO_V} + buf + grpcurl"
+            echo "🐹 ''${PURPLE}rpc shell ''${RESET}— go ''${CYAN}v''${GO_V}''${RESET} + buf + grpcurl"
           '';
         };
       }

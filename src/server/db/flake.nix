@@ -1,12 +1,3 @@
-# GWA · Server — db shell.
-#
-# SurrealDB 3.x runs in a container (db.Dockerfile) because surreal v3
-# isn't in nixpkgs yet. This shell only needs:
-#   - podman + podman-compose to drive the container
-#   - curl for db/scripts/init-db.sh
-#
-# No rust, no go, no deno. Lean on purpose.
-
 {
   description = "GWA · Server — db (SurrealDB container shell)";
 
@@ -23,7 +14,12 @@
   };
 
   outputs =
-    { self, nixpkgs, flake-utils, shared }:
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      shared,
+    }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -34,13 +30,11 @@
         devShells.default = pkgs.mkShell {
           name = "gwa-db";
 
-          packages =
-            groups.base
-            ++ groups.container
-            ++ groups.net;       # curl for init-db.sh
+          packages = groups.base ++ groups.container ++ groups.net; # curl for init-db.sh
 
           shellHook = ''
-            echo "🗄️  db shell — podman + curl ready"
+            ${groups.shell.colorVars}
+            echo "🗄️  ''${PURPLE}db shell ''${RESET}— podman + curl ready"
           '';
         };
       }

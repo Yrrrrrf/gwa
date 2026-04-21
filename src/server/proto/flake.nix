@@ -1,15 +1,3 @@
-# GWA · Server — proto shell.
-#
-# Source of truth for .proto files. This shell exists so you can lint,
-# format, and run breaking checks WITHOUT pulling in rust or go toolchains.
-#
-# Typical usage:
-#   nix develop .#proto
-#   buf lint
-#   buf format -w
-#   buf breaking --against '.git#branch=main'
-#   buf generate    # then commit generated stubs in rpc/
-
 {
   description = "GWA · Server — proto (buf + protobuf only)";
 
@@ -24,7 +12,12 @@
   };
 
   outputs =
-    { self, nixpkgs, flake-utils, shared }:
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      shared,
+    }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -35,13 +28,12 @@
         devShells.default = pkgs.mkShell {
           name = "gwa-proto";
 
-          packages =
-            groups.base
-            ++ groups.protobuf;
+          packages = groups.base ++ groups.protobuf;
 
           shellHook = ''
+            ${groups.shell.colorVars}
             BUF_V=$(buf --version 2>&1)
-            echo "📜 proto shell — buf v''${BUF_V} + protoc"
+            echo "📜 ''${PURPLE}proto shell ''${RESET}— buf ''${CYAN}v''${BUF_V}''${RESET} + protoc"
           '';
         };
       }

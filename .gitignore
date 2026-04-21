@@ -18,6 +18,7 @@ target
 
 # generated
 temp
+build
 # *.pdf
 
 # ide configuration files 

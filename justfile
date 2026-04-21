@@ -1,7 +1,8 @@
 set shell := ["bash", "-cu"]
 
-mod server 'src/server/server.just'
 mod client 'src/client/client.just'
+# mod server 'src/server/server.just'
+mod server 'src/server/justfile'
 
 import 'scripts/dev.just'
 import 'scripts/ci.just'

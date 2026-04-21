@@ -1,15 +1,15 @@
-# Shared package groups — single source of truth for which tools each
-# component needs. Sub-flakes import this via a `flake = false` path input
-# and pick the groups they want; the root flake unions them all into a
-# kitchen-sink dev shell.
-#
-# Add a tool here once, reference it from N flakes. Don't sprinkle
-# `with pkgs; [ ... ]` blocks across sub-flakes for tools more than one
-# component needs.
-
 { pkgs }:
 
 {
+  # Shared shell hooks (like terminal colors).
+  shell = {
+    colorVars = ''
+      PURPLE=$(tput setaf 5)
+      CYAN=$(tput setaf 6)
+      RESET=$(tput sgr0)
+    '';
+  };
+
   # Universal — every shell gets these.
   # `just` runs every sub-Justfile; `git` is needed for buf-breaking and
   # general repo hygiene.
@@ -45,17 +45,15 @@
     go
   ];
 
-  # Deno — tests only.
-  deno = with pkgs; [
+  web = with pkgs; [
     deno
+    bun
+    # vp
   ];
 
-  # Network/observability — used by init-db.sh, health probes, fixtures,
-  # and rpc preflight (grpcurl).
   net = with pkgs; [
-    curl # init-db.sh, health probes
-    xh # fixture scripts
-    jq # JSON parsing in shell
+    hurl
     grpcurl # rpc health + tests
+    xh
   ];
 }
