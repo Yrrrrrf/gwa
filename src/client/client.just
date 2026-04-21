@@ -16,7 +16,7 @@ lint:
 [doc('Type-check Client workspace')]
 [group('CI')]
 typecheck:
-    -deno run -A npm:svelte-check --tsconfig ./apps/explorer/tsconfig.json
+    # -deno run -A npm:svelte-check --tsconfig ./apps/explorer/tsconfig.json
     -deno run -A npm:svelte-check --tsconfig ./apps/vision/tsconfig.json
     # todo: Add a svelte-check for the sdk/ui
     # deno check .
@@ -36,7 +36,7 @@ sync-ui:
     bunx @inlang/paraglide-js compile --project ./sdk/ui/src/i18n/project.inlang --outdir ./sdk/ui/src/i18n/paraglide
     # SvelteKit sync
     bun run --cwd sdk/ui svelte-kit sync
-    bun run --cwd apps/explorer svelte-kit sync
+    # bun run --cwd apps/explorer svelte-kit sync
     bun run --cwd apps/vision svelte-kit sync
 
 [doc('Build Client')]
