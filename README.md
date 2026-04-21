@@ -1,18 +1,23 @@
 # 👁️ Project Template (Generic)
 
-> **Modern Multi-Platform Starter.** A domain-agnostic foundation for building full-stack applications with type-safety and high performance.
+> **Modern Multi-Platform Starter.** A domain-agnostic foundation for building
+> full-stack applications with type-safety and high performance.
 
 ## 🚀 Architecture
 
-This template follows a strict **Layered & Hexagonal** architecture with a **GraphQL Gateway** and **gRPC Service Mesh**:
+This template follows a strict **Layered & Hexagonal** architecture with a
+**GraphQL Gateway** and **gRPC Service Mesh**:
 
 ### Client (Deno + Svelte 5)
-- **`apps/vision`**: Development showcase app for UI primitives and state testing.
+
+- **`apps/vision`**: Development showcase app for UI primitives and state
+  testing.
 - **`sdk/ui`**: Shared UI component library using Svelte 5 Runes.
 - **`sdk/state`**: Reactive state management stores.
 - **`sdk/core`**: Domain entities and business logic interfaces (TypeScript).
 
 ### Server (Rust + Go)
+
 - **`engine/`**: The core business logic engine (Rust).
   - **`domain`**: Pure business rules and repository traits (Hexagonal/Ports).
   - **`store`**: Data persistence implementation (SurrealDB).
@@ -25,19 +30,26 @@ This template follows a strict **Layered & Hexagonal** architecture with a **Gra
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [SvelteKit 5](https://svelte.dev/) (Runes), [Deno](https://deno.com/), [Vanilla CSS]
+- **Frontend**: [SvelteKit 5](https://svelte.dev/) (Runes),
+  [Deno](https://deno.com/), [Vanilla CSS]
 - **Backend**: [Rust](https://www.rust-lang.org/), [Go](https://go.dev/)
-- **API**: [GraphQL](https://graphql.org/) (External), [gRPC](https://grpc.io/) (Internal)
+- **API**: [GraphQL](https://graphql.org/) (External), [gRPC](https://grpc.io/)
+  (Internal)
 - **Database**: [SurrealDB](https://surrealdb.com/)
-- **Infrastructure**: [Docker Compose](https://www.docker.com/), [Nix](https://nixos.org/), [Just](https://github.com/casey/just)
+- **Infrastructure**: [Docker Compose](https://www.docker.com/),
+  [Nix](https://nixos.org/), [Just](https://github.com/casey/just)
 
 ## 🚦 Getting Started
 
 ### Prerequisites
+
 - [Nix](https://nixos.org/) (highly recommended) or:
-- [Deno](https://deno.com/), [Rust](https://www.rust-lang.org/), [Go](https://go.dev/), [Just](https://github.com/casey/just), [Buf](https://buf.build/)
+- [Deno](https://deno.com/), [Rust](https://www.rust-lang.org/),
+  [Go](https://go.dev/), [Just](https://github.com/casey/just),
+  [Buf](https://buf.build/)
 
 ### Development
+
 ```bash
 # Generate code from proto
 just server proto
@@ -50,6 +62,7 @@ just server quality
 ```
 
 ## 📂 Project Structure
+
 ```text
 template/
 ├── src/

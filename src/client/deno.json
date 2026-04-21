@@ -2,31 +2,21 @@
   "version": "0.1.0",
   "description": "A comprehensive full-stack application template with Tauri integration",
   "license": "MIT",
-  "scripts": {
-    "explorer": "bun run --cwd apps/explorer dev",
-    "vision": "bun run --cwd apps/vision dev"
-  },
   "nodeModulesDir": "auto",
   "imports": {
     "svelte": "npm:svelte",
-    "svelte-check": "npm:svelte-check",
+    "vite-plus": "npm:vite-plus",
     "typescript": "npm:typescript@5.9.2",
     "@sveltejs/kit": "npm:@sveltejs/kit",
-    "@sveltejs/adapter-static": "npm:@sveltejs/adapter-static",
     "@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte",
-    "@tauri-apps/api": "npm:@tauri-apps/api",
-    "@tauri-apps/cli": "npm:@tauri-apps/cli",
-    "@inlang/paraglide-js": "npm:@inlang/paraglide-js",
-    "@tauri-apps/plugin-opener": "npm:@tauri-apps/plugin-opener",
-    "@lucide/svelte": "npm:@lucide/svelte",
-    "@lucide/svelte/icons/": "npm:@lucide/svelte/icons/",
+    "@sveltejs/adapter-static": "npm:@sveltejs/adapter-static",
+    "tailwindcss": "npm:tailwindcss",
+    "@tailwindcss/vite": "npm:@tailwindcss/vite",
     "@tailwindcss/forms": "npm:@tailwindcss/forms",
     "@tailwindcss/typography": "npm:@tailwindcss/typography",
-    "@tailwindcss/vite": "npm:@tailwindcss/vite",
-    "tailwindcss": "npm:tailwindcss",
-    "vite-plus": "npm:vite-plus",
+    "@inlang/paraglide-js": "npm:@inlang/paraglide-js",
+    "@lucide/svelte": "npm:@lucide/svelte",
     "daisyui": "npm:daisyui",
-    "rune-lab": "npm:rune-lab",
-    "lucide-svelte": "npm:lucide-svelte"
+    "rune-lab": "npm:rune-lab"
   }
 }
