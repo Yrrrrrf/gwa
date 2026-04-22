@@ -3,10 +3,12 @@
   "description": "A comprehensive full-stack application template with Tauri integration",
   "license": "MIT",
   "nodeModulesDir": "auto",
+  "workspace": [
+    "./apps/vision"
+  ],
   "imports": {
-    "svelte": "npm:svelte",
     "vite-plus": "npm:vite-plus",
-    "typescript": "npm:typescript@5.9.2",
+    "svelte": "npm:svelte",
     "@sveltejs/kit": "npm:@sveltejs/kit",
     "@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte",
     "@sveltejs/adapter-static": "npm:@sveltejs/adapter-static",
@@ -17,6 +19,9 @@
     "@inlang/paraglide-js": "npm:@inlang/paraglide-js",
     "@lucide/svelte": "npm:@lucide/svelte",
     "daisyui": "npm:daisyui",
-    "rune-lab": "npm:rune-lab"
+    "rune-lab": "npm:rune-lab@0.4.7",
+    "esm-env": "npm:esm-env",
+    "hotkeys-js": "npm:hotkeys-js",
+    "dinero.js": "npm:dinero.js"
   }
 }

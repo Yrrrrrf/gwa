@@ -7,7 +7,7 @@ const config = {
   kit: {
     adapter: adapter({
       fallback: "index.html",
-      strict: false,
+      strict: true,
     }),
     alias: {
       "@sdk/ui": "../../sdk/ui/src/mod.ts",

@@ -56,9 +56,11 @@
 <RuneProvider
 	config={{
 		favicon: "/img/rune.png",
+		icons: "material",
 		app: {
 			name: "Rune Lab",
 			version: version(),
+			description: m.rune_lab_desc(),
 			author: "Yrrrrrf",
 		},
 	}}

@@ -1,0 +1,9 @@
+{
+  "version": "0.1.0",
+  "imports": {
+    "async_hooks": "node:async_hooks",
+    "esm-env": "npm:esm-env",
+    "hotkeys-js": "npm:hotkeys-js",
+    "dinero.js": "npm:dinero.js"
+  }
+}

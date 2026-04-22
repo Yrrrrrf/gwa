@@ -50,7 +50,7 @@
                 <figure>
                     <img
                         src="https://picsum.photos/400/200?random=11"
-                        alt="Item"
+                        alt="Shoes"
                     />
                 </figure>
                 <div class="card-body">
@@ -78,7 +78,7 @@
                 <figure>
                     <img
                         src="https://picsum.photos/400/225?random=12"
-                        alt="Item"
+                        alt="Shoes"
                     />
                 </figure>
                 <div class="card-body">

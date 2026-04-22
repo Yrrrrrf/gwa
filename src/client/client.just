@@ -17,8 +17,10 @@ lint:
 [group('CI')]
 typecheck:
     # -deno run -A npm:svelte-check --tsconfig ./apps/explorer/tsconfig.json
-    -deno run -A npm:svelte-check --tsconfig ./apps/vision/tsconfig.json
+    -cd apps/vision && deno run -A npm:svelte-check --tsconfig ./tsconfig.json
+    # -cd apps/explorer && deno run -A npm:svelte-check --tsconfig ./tsconfig.json
     # todo: Add a svelte-check for the sdk/ui
+    -cd sdk/ui && deno run -A npm:svelte-check
     # deno check .
     @echo "✓ Client type-checked"
 
@@ -37,7 +39,8 @@ sync-ui:
     # SvelteKit sync
     bun run --cwd sdk/ui svelte-kit sync
     # bun run --cwd apps/explorer svelte-kit sync
-    bun run --cwd apps/vision svelte-kit sync
+    # bun run --cwd apps/vision svelte-kit sync
+    # cd apps/vision && deno run -A npm:svelte-kit sync
 
 [doc('Build Client')]
 [group('Build')]
@@ -53,8 +56,10 @@ run app=`ls apps/`: sync-ui
     # * Clean the build directory
     rm -rf apps/{{ app }}/build
     # * Build & Preview the app
-    bun run --cwd apps/{{ app }} vite build
-    bun run --cwd apps/{{ app }} vite preview
+    cd apps/{{ app }} && deno run -A npm:vite build
+    cd apps/{{ app }} && deno run -A npm:vite preview
+    # bun run --cwd apps/{{ app }} vite build
+    # bun run --cwd apps/{{ app }} vite preview
 
 [doc('Test the client')]
 [group('Dev')]

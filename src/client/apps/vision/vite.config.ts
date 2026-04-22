@@ -1,6 +1,10 @@
+// vite plus
 import { defineConfig } from "vite-plus";
-import { paraglideVitePlugin } from "@inlang/paraglide-js";
+// customization
 import tailwindcss from "@tailwindcss/vite";
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
+// main framework
+// sveltekit for local testing of the main components
 import { sveltekit } from "@sveltejs/kit/vite";
 
 export default defineConfig({
@@ -21,15 +25,7 @@ export default defineConfig({
   },
   ssr: {
     noExternal: [
-      "lucide-svelte",
+      "@lucide/svelte",
     ],
-  },
-  server: {
-    fs: {
-      allow: [
-        // searchForWorkspaceRoot(process.cwd()),
-        // path.resolve(__dirname, "../../node_modules"),
-      ],
-    },
-  },
+  }
 });

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { type Snippet, type Component } from 'svelte';
-  import { Utensils } from 'lucide-svelte';
+  import { type Snippet, type Component } from "svelte";
+  import { Utensils } from "@lucide/svelte";
 
   interface Props {
-    icon?: any; // Use any to support both Svelte 4 and 5 component types from lucide-svelte
+    icon?: any;
     title: string;
     subtitle?: string;
     action?: Snippet;
@@ -12,7 +12,9 @@
   let { icon: Icon = Utensils, title, subtitle, action }: Props = $props();
 </script>
 
-<div class="flex flex-col items-center justify-center py-12 text-center text-base-content/50">
+<div
+  class="flex flex-col items-center justify-center py-12 text-center text-base-content/50"
+>
   <div class="mb-3 text-base-content/30">
     <Icon size={48} strokeWidth={1.5} />
   </div>
