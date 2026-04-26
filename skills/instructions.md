@@ -18,6 +18,7 @@
 
 - [daisyui](./stack/daisyui.md)
 - [lucide](./stack/lucide.md)
+- [dinerojs](./stack/dinerojs.md)
 - [rune-lab](./stack/rune-lab.md)
 
 #### Server
