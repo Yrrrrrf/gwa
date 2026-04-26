@@ -47,20 +47,15 @@ run:
 
 [doc('Test the server')]
 [group('Dev')]
+[working-directory("tests")]
 test:
-    # Test db
-    just -f db/db.just test
-    # Test Engine
-    just -f engine/engine.just test
-    # Test RPC
-    just -f rpc/rpc.just test
+    just -f ../db/db.just test
+    just -f ../engine/engine.just test
+    just -f ../rpc/rpc.just test
     # * Run specialized tests from the tests suite
-    # todo: what tests should be run? :D
-    # todo: Answer: all! ^^
-    deno run -A npm:vite-plus/vp test integration/db unit/db
-    deno run -A npm:vite-plus/vp test integration/engine
-    deno run -A npm:vite-plus/vp test integration/rpc
-    deno run -A npm:vite-plus/vp test e2e
-    # just -f tests/tests.just test
-    # just -f tests/tests.just test
-    # just -f tests/tests.just test
+    -deno run -A npm:vite-plus/vp test
+    # * or run them individually:
+    # deno run -A npm:vite-plus/vp test integration/db unit/db
+    # deno run -A npm:vite-plus/vp test integration/engine
+    # deno run -A npm:vite-plus/vp test integration/rpc
+    # deno run -A npm:vite-plus/vp test e2e

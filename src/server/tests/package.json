@@ -2,14 +2,8 @@
   "name": "gwa-server-tests",
   "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "test:db": "vp test integration/db unit/db",
-    "test:engine": "vp test integration/engine",
-    "test:rpc": "vp test integration/rpc",
-    "test:e2e": "vp test e2e"
-  },
   "dependencies": {
-    "@bufbuild/protobuf": "^2.11.0",
+    "@bufbuild/protobuf": "^2.12.0",
     "@connectrpc/connect": "^2.1.1",
     "@connectrpc/connect-node": "^2.1.1",
     "@connectrpc/connect-web": "^2.1.1",
@@ -17,10 +11,10 @@
     "graphql-request": "^7.4.0",
     "jose": "^6.2.2",
     "surrealdb": "^2.0.3",
-    "vite-plus": "^0.1.18"
+    "vite-plus": "^0.1.19"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "^2.11.0",
+    "@bufbuild/protoc-gen-es": "^2.12.0",
     "@connectrpc/protoc-gen-connect-es": "^1.7.0"
   }
 }
