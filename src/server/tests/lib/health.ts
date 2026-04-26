@@ -22,7 +22,7 @@ export async function probeApi(url: string): Promise<boolean> {
   }
 }
 
-export async function probeRpc(url: string): Promise<boolean> {
+export function probeRpc(url: string): Promise<boolean> {
   try {
     const addr = url.replace(/^https?:\/\//, "");
 
@@ -37,8 +37,8 @@ export async function probeRpc(url: string): Promise<boolean> {
       "grpc.health.v1.Health/Check",
     ]);
 
-    return res.status === 0;
+    return Promise.resolve(res.status === 0);
   } catch (_err) {
-    return false;
+    return Promise.resolve(false);
   }
 }

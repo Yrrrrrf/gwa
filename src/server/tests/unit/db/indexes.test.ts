@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, it } from "vite-plus/test";
 import { withSurrealEnv } from "../../fixtures/surreal_env.ts";
 import { expectError, expectOk } from "../../lib/assert-db.ts";
 

@@ -15,7 +15,8 @@ export function withCleanup() {
       try {
         await cleanups[i]();
       } catch (err: any) {
-        console.error(`Cleanup failed: ${err.message}`);
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`Cleanup failed: ${message}`);
       }
     }
   };
@@ -45,7 +46,10 @@ export async function getToken(apiClient: EngineClient) {
   };
 
   try {
-    const res = await apiClient.mutate(loginGql, variables);
+    const res = await apiClient.mutate(loginGql, variables) as {
+      data?: { login?: { token: string } };
+      errors?: any;
+    };
     if (res.errors && !res.data?.login) {
       console.error("Login Result with Errors:", JSON.stringify(res, null, 2));
       throw new Error(`Login failed: ${JSON.stringify(res.errors)}`);
@@ -63,9 +67,10 @@ export async function getToken(apiClient: EngineClient) {
         cachedToken.slice(-10)
       }`,
     );
-    return cachedToken!;
+    return cachedToken;
   } catch (err: any) {
-    console.warn(`Could not get JWT token: ${err.message}. Using mock-token.`);
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`Could not get JWT token: ${message}. Using mock-token.`);
     return "mock-token";
   }
 }

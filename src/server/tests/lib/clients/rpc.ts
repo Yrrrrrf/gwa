@@ -1,9 +1,9 @@
-import { createPromiseClient, PromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import { createGrpcTransport } from "@connectrpc/connect-node";
-import { ServiceType } from "@bufbuild/protobuf";
 
 export interface RpcClient {
-  getService: <T extends ServiceType>(service: T) => PromiseClient<T>;
+  // deno-lint-ignore no-explicit-any
+  getService: (service: any) => any;
 }
 
 export interface RpcConfig {
@@ -16,9 +16,8 @@ export function createRpcClient(config: RpcConfig): RpcClient {
 
   const transport = createGrpcTransport({
     baseUrl,
-    httpVersion: "2",
     interceptors: [
-      (next) => async (req) => {
+      (next) => (req) => {
         if (token) {
           req.header.set("Authorization", `Bearer ${token}`);
         }
@@ -28,8 +27,8 @@ export function createRpcClient(config: RpcConfig): RpcClient {
   });
 
   return {
-    getService<T extends ServiceType>(service: T) {
-      return createPromiseClient(service, transport);
+    getService(service: any) {
+      return createClient(service, transport);
     },
   };
 }

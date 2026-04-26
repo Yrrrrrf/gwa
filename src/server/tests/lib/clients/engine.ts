@@ -1,8 +1,14 @@
 import { ClientError, GraphQLClient } from "graphql-request";
 
 export interface EngineClient {
-  query: <T = any>(gql: string, variables?: Record<string, any>) => Promise<T>;
-  mutate: <T = any>(gql: string, variables?: Record<string, any>) => Promise<T>;
+  query: <T = unknown>(
+    gql: string,
+    variables?: Record<string, unknown>,
+  ) => Promise<T>;
+  mutate: <T = unknown>(
+    gql: string,
+    variables?: Record<string, unknown>,
+  ) => Promise<T>;
   setToken: (token: string) => void;
 }
 
@@ -20,7 +26,7 @@ export function createEngineClient(config: EngineConfig): EngineClient {
   }
 
   return {
-    async query<T = any>(gql: string, variables?: Record<string, any>) {
+    async query<T = unknown>(gql: string, variables?: Record<string, unknown>) {
       try {
         const data = await client.request<any>(gql, variables);
         return { data } as T;
@@ -31,7 +37,10 @@ export function createEngineClient(config: EngineConfig): EngineClient {
         throw err;
       }
     },
-    async mutate<T = any>(gql: string, variables?: Record<string, any>) {
+    async mutate<T = unknown>(
+      gql: string,
+      variables?: Record<string, unknown>,
+    ) {
       try {
         const data = await client.request<any>(gql, variables);
         return { data } as T;

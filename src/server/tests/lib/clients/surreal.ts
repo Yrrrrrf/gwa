@@ -1,7 +1,10 @@
 import { Surreal } from "surrealdb";
 
 export interface SurrealClient {
-  query: (sql: string, variables?: Record<string, any>) => Promise<any[]>;
+  query: (
+    sql: string,
+    variables?: Record<string, unknown>,
+  ) => Promise<unknown[]>;
   close: () => Promise<void>;
 }
 
@@ -26,22 +29,24 @@ export function createSurrealClient(config: SurrealConfig): SurrealClient {
       });
       await db_conn.use({ namespace: ns, database: db });
     } catch (err: any) {
-      console.error(`SurrealDB connection error: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`SurrealDB connection error: ${message}`);
     }
   })();
 
   function stringifyRecordIds(obj: any): any {
     if (obj === null || obj === undefined) return obj;
     if (typeof obj === "object") {
+      // @ts-ignore: constructor name check for RecordId
       if (obj.constructor && obj.constructor.name === "RecordId") {
         return obj.toString();
       }
       if (Array.isArray(obj)) {
         return obj.map(stringifyRecordIds);
       }
-      const newObj: any = {};
-      for (const key in obj) {
-        newObj[key] = stringifyRecordIds(obj[key]);
+      const newObj: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        newObj[key] = stringifyRecordIds(value);
       }
       return newObj;
     }
@@ -49,13 +54,13 @@ export function createSurrealClient(config: SurrealConfig): SurrealClient {
   }
 
   return {
-    async query(sql: string, variables?: Record<string, any>) {
+    async query(sql: string, variables?: Record<string, unknown>) {
       await promise;
       try {
         const res = await db_conn.query(sql, variables);
 
         if (Array.isArray(res)) {
-          return res.map((r) => {
+          return res.map((r: any) => {
             if (r && typeof r === "object" && "status" in r) {
               return {
                 ...r,
@@ -67,11 +72,12 @@ export function createSurrealClient(config: SurrealConfig): SurrealClient {
         }
         return [{ status: "OK", result: stringifyRecordIds(res) }];
       } catch (err: any) {
+        const message = err instanceof Error ? err.message : String(err);
         return [
           {
             status: "ERR",
-            result: err.message,
-            message: err.message,
+            result: message,
+            message: message,
           },
         ];
       }

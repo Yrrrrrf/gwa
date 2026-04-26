@@ -22,24 +22,22 @@ impl SurrealItemRepo {
         let mut json = value.into_json_value();
 
         // Handle Coordinates mapping if the target is Item and it has coordinates
-        if let Some(obj) = json.as_object_mut() {
-            if let Some(coords) = obj.get("coordinates").cloned() {
-                if let Some(c_obj) = coords.as_object() {
-                    if let (Some(t), Some(c)) = (c_obj.get("type"), c_obj.get("coordinates")) {
-                        if t == "Point" && c.is_array() {
-                            let arr = c.as_array().unwrap();
-                            if arr.len() == 2 {
-                                obj.insert(
-                                    "coordinates".to_string(),
-                                    serde_json::json!({
-                                        "lng": arr[0],
-                                        "lat": arr[1]
-                                    }),
-                                );
-                            }
-                        }
-                    }
-                }
+        if let Some(obj) = json.as_object_mut()
+            && let Some(coords) = obj.get("coordinates").cloned()
+            && let Some(c_obj) = coords.as_object()
+            && let (Some(t), Some(c)) = (c_obj.get("type"), c_obj.get("coordinates"))
+            && t == "Point"
+            && c.is_array()
+        {
+            let arr = c.as_array().unwrap();
+            if arr.len() == 2 {
+                obj.insert(
+                    "coordinates".to_string(),
+                    serde_json::json!({
+                        "lng": arr[0],
+                        "lat": arr[1]
+                    }),
+                );
             }
         }
 
@@ -93,30 +91,29 @@ impl ItemRepository for SurrealItemRepo {
         let mut target_id = None;
 
         if let Some(obj) = json.as_object_mut() {
-            if let Some(id_val) = obj.get("id") {
-                if id_val.is_string() {
-                    let id_str = id_val.as_str().unwrap();
-                    if !id_str.is_empty() {
-                        target_id = Some(id_str.to_string());
-                    }
+            if let Some(id_val) = obj.get("id")
+                && id_val.is_string()
+            {
+                let id_str = id_val.as_str().unwrap();
+                if !id_str.is_empty() {
+                    target_id = Some(id_str.to_string());
                 }
             }
             // Mandatory removal of id field if we want auto-id
             obj.remove("id");
 
             // Handle Coordinates mapping back to GeoJSON Point
-            if let Some(coords) = obj.get("coordinates").cloned() {
-                if let Some(c_obj) = coords.as_object() {
-                    if let (Some(lat), Some(lng)) = (c_obj.get("lat"), c_obj.get("lng")) {
-                        obj.insert(
-                            "coordinates".to_string(),
-                            serde_json::json!({
-                                "type": "Point",
-                                "coordinates": [lng, lat]
-                            }),
-                        );
-                    }
-                }
+            if let Some(coords) = obj.get("coordinates").cloned()
+                && let Some(c_obj) = coords.as_object()
+                && let (Some(lat), Some(lng)) = (c_obj.get("lat"), c_obj.get("lng"))
+            {
+                obj.insert(
+                    "coordinates".to_string(),
+                    serde_json::json!({
+                        "type": "Point",
+                        "coordinates": [lng, lat]
+                    }),
+                );
             }
         }
 

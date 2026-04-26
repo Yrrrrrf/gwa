@@ -12,6 +12,7 @@ lint:
 [group('CI')]
 typecheck:
     deno check .
+    # deno check . --sloppy-imports
 
 # Test integration
 

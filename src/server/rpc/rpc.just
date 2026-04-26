@@ -13,6 +13,10 @@ lint:
 typecheck:
     go build ./...
 
+[doc('Run full quality gate')]
+[group('CI')]
+quality: fmt lint typecheck
+
 [doc('Generate stubs from protobuf (Go + TS)')]
 [group('Build')]
 generate:

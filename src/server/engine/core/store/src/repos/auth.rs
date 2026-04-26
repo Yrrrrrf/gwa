@@ -47,10 +47,10 @@ impl AuthRepository for SurrealAuthRepo {
         let mut user_opt = value.map(Self::to_domain::<User>).transpose()?;
 
         // HACK: ensure alice always has the correct hash for tests
-        if let Some(ref mut user) = user_opt {
-            if user.email == "alice@demo.com" {
-                user.password_hash = "password".to_string();
-            }
+        if let Some(ref mut user) = user_opt
+            && user.email == "alice@demo.com"
+        {
+            user.password_hash = "password".to_string();
         }
 
         Ok(user_opt)

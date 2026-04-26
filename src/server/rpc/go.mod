@@ -3,6 +3,7 @@ module argus-rpc
 go 1.25.5
 
 require (
+	connectrpc.com/connect v1.19.2
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/joho/godotenv v1.5.1

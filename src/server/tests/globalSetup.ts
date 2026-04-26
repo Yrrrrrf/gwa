@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { probeApi, probeRpc, probeSurreal } from "./lib/health.ts";
+import process from "node:process";
 
 export default async function () {
   config({ path: "../.env" });

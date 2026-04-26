@@ -1,4 +1,5 @@
 import { SignJWT } from "jose";
+import process from "node:process";
 
 export interface TokenClaims {
   sub: string;
@@ -7,7 +8,7 @@ export interface TokenClaims {
   [key: string]: any;
 }
 
-export async function mintToken(
+export function mintToken(
   claims: Partial<TokenClaims> = {},
 ): Promise<string> {
   // Try multiple env var names and fallback to the project default
@@ -34,6 +35,6 @@ export async function mintToken(
     .sign(encodedSecret);
 }
 
-export async function defaultTestToken(): Promise<string> {
+export function defaultTestToken(): Promise<string> {
   return mintToken();
 }
