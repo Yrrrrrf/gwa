@@ -27,5 +27,5 @@ export default defineConfig({
     noExternal: [
       "@lucide/svelte",
     ],
-  }
+  },
 });

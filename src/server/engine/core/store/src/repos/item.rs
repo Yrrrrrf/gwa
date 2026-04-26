@@ -46,37 +46,6 @@ impl SurrealItemRepo {
         serde_json::from_value(json).map_err(|e| DomainError::Internal(e.to_string()))
     }
 
-    fn from_domain<T: serde::Serialize>(data: T) -> DomainResult<Value> {
-        let mut json =
-            serde_json::to_value(data).map_err(|e| DomainError::Internal(e.to_string()))?;
-
-        // Handle Coordinates mapping back to GeoJSON Point
-        if let Some(obj) = json.as_object_mut() {
-            // Remove empty ID
-            if let Some(id) = obj.get("id") {
-                if id.is_string() && id.as_str().unwrap().is_empty() {
-                    obj.remove("id");
-                }
-            }
-
-            if let Some(coords) = obj.get("coordinates").cloned() {
-                if let Some(c_obj) = coords.as_object() {
-                    if let (Some(lat), Some(lng)) = (c_obj.get("lat"), c_obj.get("lng")) {
-                        obj.insert(
-                            "coordinates".to_string(),
-                            serde_json::json!({
-                                "type": "Point",
-                                "coordinates": [lng, lat]
-                            }),
-                        );
-                    }
-                }
-            }
-        }
-
-        Ok(json.into_value())
-    }
-
     fn to_domain_vec<T: serde::de::DeserializeOwned>(values: Vec<Value>) -> DomainResult<Vec<T>> {
         values.into_iter().map(Self::to_domain).collect()
     }

@@ -22,12 +22,12 @@ lto = "thin"
 
 [workspace.dependencies]
 # Runtime
-tokio = { version = "1.51.1", features = ["full"] }
+tokio = { version = "1.52.1", features = ["full"] }
 async-trait = { version = "0.1.89" }
 # Web
-axum = { version = "0.8.8", features = ["macros"] }
+axum = { version = "0.8.9", features = ["macros"] }
 axum-core = { version = "0.5.6" }
-axum-macros = { version = "0.5.0" }
+axum-macros = { version = "0.5.1" }
 tower = { version = "0.5.3" }
 tower-http = { version = "0.6.8", features = ["cors", "trace"] }
 futures-util = { version = "0.3.32" }
@@ -47,7 +47,7 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
 thiserror = { version = "2.0.18" }
 anyhow = { version = "1.0.102" }
 # Utils
-uuid = { version = "1.23.0", features = ["v4", "js", "serde"] }
+uuid = { version = "1.23.1", features = ["v4", "js", "serde"] }
 chrono = { version = "0.4.44", features = ["serde"] }
 secrecy = { version = "0.10.3", features = ["serde"] }
 trait-variant = { version = "0.1.2" }

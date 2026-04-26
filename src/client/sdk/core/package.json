@@ -7,8 +7,5 @@
   "types": "./src/mod.ts",
   "dependencies": {
     "zod": "*"
-  },
-  "scripts": {
-    "test": "bun test"
   }
 }

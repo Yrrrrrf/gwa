@@ -42,24 +42,28 @@ sync-ui:
     # bun run --cwd apps/vision svelte-kit sync
     # cd apps/vision && deno run -A npm:svelte-kit sync
 
-[doc('Build Client')]
+[doc('Build all apps, or a specific one')]
 [group('Build')]
-build: sync-ui
-    @echo "✓ Client built and synced successfully"
+build app='': sync-ui
+    @if [ -z "{{ app }}" ]; then \
+        for dir in apps/*/; do \
+            cd "$dir" && deno run -A npm:vite build && cd - > /dev/null; \
+        done; \
+    else \
+        cd apps/{{ app }} && deno run -A npm:vite build; \
+    fi
 
-[doc('Run the client in development mode')]
+[doc('Preview a built app')]
 [group('Dev')]
-run app=`ls apps/`: sync-ui
-    # todo: Add a way to run all apps at once
-    # todo: Somehow orchestrate the apps to run in parallel
-    # bun run --cwd apps/{{ app }} vite dev --host
-    # * Clean the build directory
-    rm -rf apps/{{ app }}/build
-    # * Build & Preview the app
-    cd apps/{{ app }} && deno run -A npm:vite build
-    cd apps/{{ app }} && deno run -A npm:vite preview
-    # bun run --cwd apps/{{ app }} vite build
-    # bun run --cwd apps/{{ app }} vite preview
+[working-directory('apps')]
+preview app=`ls apps/`: (build app)
+    cd {{ app }} && deno run -A npm:vite preview
+
+[doc('Run an app in development mode')]
+[group('Dev')]
+[working-directory('apps')]
+run app=`ls apps/`:
+    cd {{ app }} && deno run -A npm:vite dev
 
 [doc('Test the client')]
 [group('Dev')]
