@@ -309,7 +309,7 @@ const file_template_v1_notify_proto_rawDesc = "" +
 	"\x0fNotifierService\x12O\n" +
 	"\bDispatch\x12 .template.v1.NotificationRequest\x1a!.template.v1.NotificationResponse\x12^\n" +
 	"\rBatchDispatch\x12%.template.v1.BatchNotificationRequest\x1a&.template.v1.BatchNotificationResponseB\x91\x01\n" +
-	"\x0fcom.template.v1B\vNotifyProtoP\x01Z$argus-rpc/gen/template/v1;templatev1\xa2\x02\x03TXX\xaa\x02\vTemplate.V1\xca\x02\vTemplate\\V1\xe2\x02\x17Template\\V1\\GPBMetadata\xea\x02\fTemplate::V1b\x06proto3"
+	"\x0fcom.template.v1B\vNotifyProtoP\x01Z$gwa-rpc/gen/template/v1;templatev1\xa2\x02\x03TXX\xaa\x02\vTemplate.V1\xca\x02\vTemplate\\V1\xe2\x02\x17Template\\V1\\GPBMetadata\xea\x02\fTemplate::V1b\x06proto3"
 
 var (
 	file_template_v1_notify_proto_rawDescOnce sync.Once

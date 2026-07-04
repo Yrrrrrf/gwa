@@ -1,49 +1,55 @@
+set shell := ["nu", "-c"]
+
+[default]
+list:
+    @just --list --unsorted
+
 [doc('Format RPC code')]
-[group('CI')]
+[group('check')]
 fmt:
     go fmt ./...
 
 [doc('Lint RPC code')]
-[group('CI')]
+[group('check')]
 lint:
     go vet ./...
 
 [doc('Type-check RPC code')]
-[group('CI')]
-typecheck:
+[group('check')]
+types:
     go build ./...
 
-[doc('Run full quality gate')]
-[group('CI')]
-quality: fmt lint typecheck
+[doc('Run all code checks')]
+[group('check')]
+check: fmt lint types
 
 [doc('Generate stubs from protobuf (Go + TS)')]
-[group('Build')]
+[group('dev')]
 generate:
-    cd ../proto && PATH="../tests/node_modules/.bin:$PATH" buf generate
+    cd ../proto; with-env {PATH: ($env.PATH | prepend "../tests/node_modules/.bin")} { buf generate }
 
 [doc('Build RPC')]
-[group('Build')]
+[group('dev')]
 build: generate
     go build -o target/rpc ./cmd/server
 
 [doc('Run Go RPC sidecar')]
-[group('Dev')]
+[group('dev')]
 run:
     go run ./cmd/server
 
+# Generated connect stubs are excluded because they carry no tests worth compiling repeatedly.
 [doc('Test RPC (Go unit tests)')]
-[group('Test')]
+[group('test')]
 test:
-    go test $(go list ./... | grep -v templatev1connect) -count=1
+    ^go test ...(go list ./... | lines | where {|l| not ($l | str contains "templatev1connect")}) -count=1
 
 [doc('Test RPC (live grpcurl smoke)')]
-[group('Test')]
+[group('test')]
 test-smoke:
-    bash tests/grpcurl.sh
+    nu tests/grpcurl.nu
 
+# The old body called bare `just test`, which resolved to the root justfile via upward discovery because rpc/ has no justfile; dependencies make this static and correct.
 [doc('Test RPC (unit + smoke)')]
-[group('Test')]
-test-all:
-    just test
-    just test-smoke
+[group('test')]
+test-all: test test-smoke

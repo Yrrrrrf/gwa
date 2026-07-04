@@ -1,13 +1,8 @@
-set dotenv-load := true
+# Server stack components are started individually in development mode (e.g. `just server::db::run`, `just server::engine::run`, etc.).
+[doc('Run development environment')]
+[group('dev')]
+run: client::run
 
-[doc('Run project in development mode')]
-[group('Dev')]
-run:
-    just -f src/server/server.just run
-    just -f src/client/client.just run
-
-[doc('Test the entire project')]
-[group('Dev')]
-test:
-    just -f src/server/server.just test
-    just -f src/client/client.just test
+[doc('Build all namespaces')]
+[group('dev')]
+build: client::build server::build cli::build

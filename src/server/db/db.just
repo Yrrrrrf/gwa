@@ -1,49 +1,56 @@
-[doc('Format DB code')]
-[group('CI')]
+set shell := ["nu", "-c"]
+
+[default]
+list:
+    @just --list --unsorted
+
+# No SurrealQL formatter is adopted; this placeholder keeps the verb surface uniform.
+[group('check')]
 fmt:
-    @echo "✓ DB formatted successfully"
+    @echo "fmt: no SurrealQL formatter adopted; skipping"
 
-[doc('Lint DB code')]
-[group('CI')]
+# No SurrealQL linter is adopted; this placeholder keeps the verb surface uniform.
+[group('check')]
 lint:
-    @echo "✓ DB lint passed"
+    @echo "lint: no SurrealQL linter adopted; skipping"
 
-[doc('Type-check DB code')]
-[group('CI')]
-typecheck:
-    @echo "✓ DB type-checking passed"
+# No SurrealQL typechecker exists; this placeholder keeps the verb surface uniform.
+[group('check')]
+types:
+    @echo "types: no SurrealQL typechecker exists; skipping"
+
+[doc('Run all code checks')]
+[group('check')]
+check: fmt lint types
 
 [doc('Build DB image')]
-[group('Build')]
+[group('dev')]
 build:
     podman-compose down -v
     podman-compose build --no-cache
-    @echo "✓ DB image built successfully"
 
 [doc('Run SurrealDB (Podman)')]
-[group('Dev')]
+[group('dev')]
 run: build
     podman-compose up
-    @echo "✓ DB running in development mode"
 
 [doc('Stop SurrealDB (Podman)')]
-[group('Dev')]
+[group('dev')]
 down:
     podman-compose down -v
-    @echo "✓ DB stopped"
 
 [doc('Run DB inner-ring tests (Hurl)')]
-[group('Test')]
+[group('test')]
 test:
-    hurl --test --variables-file tests/.env --user root:root tests/*.hurl
+    hurl --test --variables-file tests/.env --user root:root (glob tests/*.hurl)
 
 [doc('Run a single Hurl test file (debug)')]
-[group('Test')]
+[group('test')]
 test-one FILE:
     hurl --very-verbose --variables-file tests/.env --user root:root tests/{{FILE}}
 
 [doc('Generate Hurl HTML report')]
-[group('Test')]
+[group('test')]
 test-report:
     mkdir -p tests/out/report
-    hurl --test --variables-file tests/.env --user root:root --report-html tests/out/report tests/*.hurl
+    hurl --test --variables-file tests/.env --user root:root --report-html tests/out/report (glob tests/*.hurl)

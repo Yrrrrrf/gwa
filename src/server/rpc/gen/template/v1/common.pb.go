@@ -82,7 +82,7 @@ const file_template_v1_common_proto_rawDesc = "" +
 	"Pagination\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limitB\x91\x01\n" +
-	"\x0fcom.template.v1B\vCommonProtoP\x01Z$argus-rpc/gen/template/v1;templatev1\xa2\x02\x03TXX\xaa\x02\vTemplate.V1\xca\x02\vTemplate\\V1\xe2\x02\x17Template\\V1\\GPBMetadata\xea\x02\fTemplate::V1b\x06proto3"
+	"\x0fcom.template.v1B\vCommonProtoP\x01Z$gwa-rpc/gen/template/v1;templatev1\xa2\x02\x03TXX\xaa\x02\vTemplate.V1\xca\x02\vTemplate\\V1\xe2\x02\x17Template\\V1\\GPBMetadata\xea\x02\fTemplate::V1b\x06proto3"
 
 var (
 	file_template_v1_common_proto_rawDescOnce sync.Once

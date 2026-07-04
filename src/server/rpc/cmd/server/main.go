@@ -1,16 +1,16 @@
 package main
 
 import (
-	v1 "argus-rpc/gen/template/v1"
-	"argus-rpc/internal/config"
-	"argus-rpc/internal/middleware"
-	"argus-rpc/internal/platform/logger"
-	"argus-rpc/internal/platform/providers"
-	"argus-rpc/internal/service/notifier"
-	argusGrpc "argus-rpc/internal/transport/grpc"
 	"context"
 	"flag"
 	"fmt"
+	v1 "gwa-rpc/gen/template/v1"
+	"gwa-rpc/internal/config"
+	"gwa-rpc/internal/middleware"
+	"gwa-rpc/internal/platform/logger"
+	"gwa-rpc/internal/platform/providers"
+	"gwa-rpc/internal/service/notifier"
+	gwaGrpc "gwa-rpc/internal/transport/grpc"
 	"log/slog"
 	"net"
 	"os"
@@ -96,8 +96,8 @@ func main() {
 	)
 
 	// Register Handlers
-	v1.RegisterNotifierServiceServer(s, argusGrpc.NewNotifierHandler(notifierService))
-	v1.RegisterDocumentServiceServer(s, argusGrpc.NewDocumentHandler())
+	v1.RegisterNotifierServiceServer(s, gwaGrpc.NewNotifierHandler(notifierService))
+	v1.RegisterDocumentServiceServer(s, gwaGrpc.NewDocumentHandler())
 
 	// Health Check
 	healthServer := health.NewServer()

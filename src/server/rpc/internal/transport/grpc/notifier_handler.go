@@ -1,10 +1,10 @@
 package grpc
 
 import (
-	v1 "argus-rpc/gen/template/v1"
-	"argus-rpc/internal/core"
-	"argus-rpc/internal/service/notifier"
 	"context"
+	v1 "gwa-rpc/gen/template/v1"
+	"gwa-rpc/internal/core"
+	"gwa-rpc/internal/service/notifier"
 )
 
 type NotifierHandler struct {

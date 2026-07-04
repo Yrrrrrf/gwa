@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	v1 "argus-rpc/gen/template/v1"
 	"context"
+	v1 "gwa-rpc/gen/template/v1"
 )
 
 type DocumentHandler struct {

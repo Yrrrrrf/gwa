@@ -1,29 +1,39 @@
+set shell := ["nu", "-c"]
+
+[default]
+list:
+    @just --list --unsorted
+
 [doc('Format Engine code')]
-[group('CI')]
+[group('check')]
 fmt:
     cargo fmt --all
 
 [doc('Lint Engine code')]
-[group('CI')]
+[group('check')]
 lint:
     cargo clippy --all-targets --all-features
 
 [doc('Type-check Engine code')]
-[group('CI')]
-typecheck:
+[group('check')]
+types:
     cargo check --all-targets
 
+[doc('Run all code checks')]
+[group('check')]
+check: fmt lint types
+
 [doc('Build Engine')]
-[group('Build')]
+[group('dev')]
 build:
     cargo build -p gateway
 
 [doc('Run Rust Engine')]
-[group('Dev')]
+[group('dev')]
 run:
-    RUST_LOG=debug cargo run -p gateway
+    with-env {RUST_LOG: "debug"} { cargo run -p gateway }
 
 [doc('Test Engine (Cargo)')]
-[group('Test')]
+[group('test')]
 test:
     cargo test --workspace

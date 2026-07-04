@@ -271,7 +271,7 @@ const file_template_v1_documents_proto_rawDesc = "" +
 	"\x0fDocumentService\x12W\n" +
 	"\bGenerate\x12$.template.v1.GenerateDocumentRequest\x1a%.template.v1.GenerateDocumentResponse\x12Z\n" +
 	"\tGetStatus\x12%.template.v1.GetDocumentStatusRequest\x1a&.template.v1.GetDocumentStatusResponseB\x94\x01\n" +
-	"\x0fcom.template.v1B\x0eDocumentsProtoP\x01Z$argus-rpc/gen/template/v1;templatev1\xa2\x02\x03TXX\xaa\x02\vTemplate.V1\xca\x02\vTemplate\\V1\xe2\x02\x17Template\\V1\\GPBMetadata\xea\x02\fTemplate::V1b\x06proto3"
+	"\x0fcom.template.v1B\x0eDocumentsProtoP\x01Z$gwa-rpc/gen/template/v1;templatev1\xa2\x02\x03TXX\xaa\x02\vTemplate.V1\xca\x02\vTemplate\\V1\xe2\x02\x17Template\\V1\\GPBMetadata\xea\x02\fTemplate::V1b\x06proto3"
 
 var (
 	file_template_v1_documents_proto_rawDescOnce sync.Once

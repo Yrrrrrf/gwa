@@ -16,6 +16,7 @@
   base = with pkgs; [
     just
     git
+    nushell
   ];
 
   # Container runtime — db owns the SurrealDB image; tests may spawn
@@ -49,6 +50,10 @@
     deno
     bun
     # vp
+  ];
+
+  deno = with pkgs; [
+    deno
   ];
 
   net = with pkgs; [

@@ -1,10 +1,10 @@
 package notifier
 
 import (
-	"argus-rpc/internal/core"
 	"context"
 	"encoding/json"
 	"fmt"
+	"gwa-rpc/internal/core"
 	"log/slog"
 	"net/http"
 	"net/url"

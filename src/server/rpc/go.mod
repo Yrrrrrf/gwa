@@ -1,4 +1,4 @@
-module argus-rpc
+module gwa-rpc
 
 go 1.25.5
 

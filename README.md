@@ -1,4 +1,4 @@
-# 👁️ Project Template (Generic)
+# Project Template (Generic)
 
 > **Modern Multi-Platform Starter.** A domain-agnostic foundation for building
 > full-stack applications with type-safety and high performance.
@@ -52,13 +52,13 @@ This template follows a strict **Layered & Hexagonal** architecture with a
 
 ```bash
 # Generate code from proto
-just server proto
+just server::rpc::generate
 
 # Start all services
-just dev
+just run
 
-# Run server quality gate (fmt + lint + typecheck + proto)
-just server quality
+# Run server quality gate (fmt + lint + types)
+just server::check
 ```
 
 ## 📂 Project Structure

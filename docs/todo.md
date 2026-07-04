@@ -8,11 +8,11 @@ derivación queda colgado.
 
 Concretamente, veinte minutos de trabajo: decides una versión (recomendaría v2
 porque es donde va el ecosistema), alineas `buf.gen.yaml` con `package.json`,
-regeneras, confirmas que `just tests::test` queda verde. Ese es el día uno.
+regeneras, confirmas que `just server::tests::test` queda verde. Ese es el día uno.
 
 ### Semana 1 — Limpia la base que ya tienes.** Fase 1 del spec del servidor: audita `db/init/`, verifica que no haya entidades de sobra, que las quince pruebas de Hurl cubran cada capacidad, escribe el README que mapea capacidad→test. Esto es trabajo de contracción, no de expansión. El premio es que quedas con un `db/` del que puedes decir con seguridad "esto es el mínimo que ejercita las siete capacidades de SurrealDB". Todo lo que venga después descansa sobre esa afirmación.
 
-### Semana 2 — Proto como fuente única de formas de cable.** Fase 2 del servidor: escribe `entities.proto`, wirea `tonic-prost-build`, escribe la capa de conversión proto↔domain, verifica que `just proto:check` detecta drift. Esta es la fase de mayor riesgo porque toca tres lenguajes, pero es también la que desbloquea todo lo del cliente después. Si quieres un test de fe rápido: cambia un campo en el `.proto`, regenera, confirma que el código Rust y Go ven el cambio sin que tocaras nada más.
+### Semana 2 — Proto como fuente única de formas de cable.** Fase 2 del servidor: escribe `entities.proto`, wirea `tonic-prost-build`, escribe la capa de conversión proto↔domain, verifica drift (using a future rpc drift-check recipe, as `just server::rpc::proto-check` is not yet implemented). Esta es la fase de mayor riesgo porque toca tres lenguajes, pero es también la que desbloquea todo lo del cliente después. Si quieres un test de fe rápido: cambia un campo en el `.proto`, regenera, confirma que el código Rust y Go ven el cambio sin que tocaras nada más.
 
 ### Semana 3 — WASM + schema export en paralelo.** Fases 3 y 4 del servidor. Estas dos son independientes entre sí, puedes hacerlas en orden o en paralelo si el tiempo te alcanza. El WASM es más delicado (tsify tiene bordes filosos), el schema export es literalmente un binario que escribe a stdout — 200 líneas. Haz primero el schema export para tener una victoria rápida y confianza, después métete al WASM.
 
@@ -61,3 +61,8 @@ Vas bien. El hecho de que hayamos podido tener esta conversación de siete turno
 sin que la arquitectura se contradijera a sí misma significa que tienes el
 modelo mental correcto. Ahora es ejecución, y la ejecución es aburrida a
 propósito — aburrida es buena, aburrida significa predecible. xD
+
+---
+
+### **D6 Reminder: Docker Compose Rewrite**
+Root `docker-compose.yml` currently targets a previous architecture (Python `server/api`, `app.Dockerfile`, postgres volume) and mounts a nonexistent `traefik.yml`. This must be rewritten to match the real stack (SurrealDB, Go RPC, Svelte/Deno client) before the root or server `deploy` recipes can graduate from being honest stubs.

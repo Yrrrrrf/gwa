@@ -5,10 +5,10 @@
 package templatev1connect
 
 import (
-	v1 "argus-rpc/gen/template/v1"
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
+	v1 "gwa-rpc/gen/template/v1"
 	http "net/http"
 	strings "strings"
 )

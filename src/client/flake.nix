@@ -22,7 +22,8 @@
           name = "gwa-client";
 
           packages = with pkgs; [
-            bun # runtime · install · test · task runner
+            deno # runtime · install · test · task runner
+            nushell # shell runner for just recipes
             just # justfile commands (client.just)
             nodejs # peer requirement for some vite/npm: deps
             podman # container engine
@@ -36,12 +37,12 @@
             RESET=$(tput sgr0)
 
             # Get clean versions
-            BUN_V=$(bun --version)
+            DENO_V=$(deno --version | head -n 1 | awk '{print $2}')
             JUST_V=$(just --version | awk '{print $2}')
             PODMAN_V=$(podman --version | awk '{print $3}')
 
             # Use ''${} so Nix ignores it and lets bash evaluate the variables!
-            echo "🦇 ''${PURPLE}GWA Client ''${RESET}[🐰 ''${CYAN}v''${BUN_V}''${RESET} | ✅ ''${CYAN}v''${JUST_V}''${RESET} | 📦 ''${CYAN}v''${PODMAN_V}''${RESET}]"
+            echo "🦇 ''${PURPLE}GWA Client ''${RESET}[🦕 ''${CYAN}v''${DENO_V}''${RESET} | ✅ ''${CYAN}v''${JUST_V}''${RESET} | 📦 ''${CYAN}v''${PODMAN_V}''${RESET}]"
           '';
         };
       }

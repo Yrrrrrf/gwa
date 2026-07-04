@@ -7,21 +7,21 @@
     "./apps/vision"
   ],
   "imports": {
-    "vite-plus": "npm:vite-plus",
-    "svelte": "npm:svelte",
-    "@sveltejs/kit": "npm:@sveltejs/kit",
-    "@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte",
-    "@sveltejs/adapter-static": "npm:@sveltejs/adapter-static",
-    "tailwindcss": "npm:tailwindcss",
-    "@tailwindcss/vite": "npm:@tailwindcss/vite",
-    "@tailwindcss/forms": "npm:@tailwindcss/forms",
-    "@tailwindcss/typography": "npm:@tailwindcss/typography",
-    "@inlang/paraglide-js": "npm:@inlang/paraglide-js",
-    "@lucide/svelte": "npm:@lucide/svelte",
-    "daisyui": "npm:daisyui",
-    "rune-lab": "npm:rune-lab@0.4.7",
-    "esm-env": "npm:esm-env",
-    "hotkeys-js": "npm:hotkeys-js",
-    "dinero.js": "npm:dinero.js"
+    "vite-plus": "0.1.24",
+    "svelte": "5.56.3",
+    "@sveltejs/kit": "2.65.0",
+    "@sveltejs/vite-plugin-svelte": "7.1.2",
+    "@sveltejs/adapter-static": "3.0.10",
+    "tailwindcss": "4.3.1",
+    "@tailwindcss/vite": "4.3.1",
+    "@tailwindcss/forms": "0.5.11",
+    "@tailwindcss/typography": "0.5.20",
+    "@inlang/paraglide-js": "2.19.0",
+    "@lucide/svelte": "1.18.0",
+    "daisyui": "5.5.23",
+    "rune-lab": "0.4.7",
+    "esm-env": "1.2.2",
+    "hotkeys-js": "4.0.4",
+    "dinero.js": "2.0.2"
   }
 }
