@@ -3,15 +3,14 @@
 ci: check test
 
 # commit answer='y': ci
-[doc('Commit with AI-generated message via azathoth (auto-accepts prompt)')]
+[doc('Commit with AI-generated message via azathoth (pass y to auto-accept)')]
 [group('ci')]
-commit answer='y':
+commit answer='': fmt
     #!/usr/bin/env nu
     open --raw ("~/Documents/lab/ai/.env" | path expand)
         | lines
-        | where $it =~ '^\s*[A-Za-z_][A-Za-z0-9_]*='
-        | split column -n 2 '=' key value
-        | reduce -f {} {|row, acc| $acc | insert $row.key $row.value }
+        | parse "{key}={value}"
+        | reduce -f {} {|it, acc| $acc | insert $it.key $it.value }
         | load-env
     git add -A
-    '{{ answer }}' | uvx azathoth workflow commit
+    {{ if answer == '' { '' } else { "'" + answer + "' | " } }}uvx azathoth workflow commit
