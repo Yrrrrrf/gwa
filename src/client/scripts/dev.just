@@ -1,8 +1,10 @@
 [doc('Sync SvelteKit UI and Compile Paraglide translation files')]
 [group('dev')]
 sync-ui:
+    pwd
     deno run -A npm:@inlang/paraglide-js compile --project ./sdk/ui/src/i18n/project.inlang --outdir ./sdk/ui/src/i18n/paraglide
-    cd sdk/ui; deno run -A npm:svelte-kit sync
+    cd sdk/ui; deno run -A npm:@sveltejs/kit/svelte-kit sync
+    # deno approve-scripts
 
 [doc('Build all apps or a specific one')]
 [group('dev')]

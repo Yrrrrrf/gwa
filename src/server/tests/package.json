@@ -3,18 +3,18 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "@bufbuild/protobuf": "^2.12.0",
-    "@connectrpc/connect": "^2.1.1",
-    "@connectrpc/connect-node": "^2.1.1",
-    "@connectrpc/connect-web": "^2.1.1",
+    "@bufbuild/protobuf": "^2.12.1",
+    "@connectrpc/connect": "^2.1.2",
+    "@connectrpc/connect-node": "^2.1.2",
+    "@connectrpc/connect-web": "^2.1.2",
     "dotenv": "^17.4.2",
     "graphql-request": "^7.4.0",
-    "jose": "^6.2.2",
-    "surrealdb": "^2.0.3",
-    "vite-plus": "^0.1.19"
+    "jose": "^6.2.3",
+    "surrealdb": "^2.0.4",
+    "vite-plus": "^0.2.2"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "^2.12.0",
+    "@bufbuild/protoc-gen-es": "^2.12.1",
     "@connectrpc/protoc-gen-connect-es": "^1.7.0"
   }
 }

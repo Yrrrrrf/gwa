@@ -5,4 +5,4 @@ ci: check test
 [doc('Placeholder — nothing to purge/reinstall here yet')]
 [group('ci')]
 prepare:
-    @print "prepare: not implemented; skipping"
+    @print "prepare: not implemented on cli side yet"
