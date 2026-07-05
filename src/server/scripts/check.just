@@ -10,6 +10,10 @@ lint: db::lint engine::lint rpc::lint tests::lint
 [group('check')]
 types: db::types engine::types rpc::types tests::types
 
+# [doc('Audit all code namespaces')]
+# [group('check')]
+# audit: db::audit engine::audit rpc::audit tests::audit
+
 [doc('Run all server quality gates')]
 [group('check')]
 check: fmt lint types

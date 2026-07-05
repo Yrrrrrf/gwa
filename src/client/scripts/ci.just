@@ -7,4 +7,5 @@ ci: check test
 prepare: && sync-ui
     fd -u --prune '^(node_modules|\.svelte-kit|\.vite|deno\.lock)$' | lines | each {|p| rm -r -f $p }
     deno install
-    cd apps/vision; deno run -A npm:svelte-kit sync
+    cd sdk/ui; deno run -A npm:@sveltejs/kit/svelte-kit sync
+    cd apps/vision; deno run -A npm:@sveltejs/kit/svelte-kit sync
