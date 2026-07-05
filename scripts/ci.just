@@ -2,7 +2,10 @@
 [group('ci')]
 ci: check test
 
-# commit answer='y': ci
+[doc('Clear cache. Remove and reinstall dependencies')]
+[group('ci')]
+prepare: client::prepare server::prepare cli::prepare
+
 [doc('Commit with AI-generated message via azathoth (pass y to auto-accept)')]
 [group('ci')]
 commit answer='': fmt

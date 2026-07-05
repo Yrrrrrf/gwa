@@ -6,7 +6,7 @@ sync-ui:
 
 [doc('Build all apps or a specific one')]
 [group('dev')]
-build app='': sync-ui
+build app='': prepare
     #!/usr/bin/env nu
     if ("{{ app }}" | is-empty) {
         let base = $env.PWD
