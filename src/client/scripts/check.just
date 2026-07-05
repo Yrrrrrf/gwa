@@ -13,6 +13,7 @@ lint:
 types:
     cd apps/vision; deno run -A npm:svelte-check --tsconfig ./tsconfig.json
     cd sdk/ui; deno run -A npm:svelte-check
+    # Add fallow as cmd for each! :D
 
 [doc('Run all client quality gates')]
 [group('check')]

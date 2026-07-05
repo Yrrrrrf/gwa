@@ -19,13 +19,9 @@ export default defineConfig({
     }),
   ],
   optimizeDeps: {
-    exclude: [
-      "@sdk/ui",
-    ],
+    exclude: ["@sdk/ui"],
   },
   ssr: {
-    noExternal: [
-      "@lucide/svelte",
-    ],
+    noExternal: ["@lucide/svelte"],
   },
 });

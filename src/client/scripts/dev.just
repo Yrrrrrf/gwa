@@ -8,7 +8,7 @@ sync-ui:
 [group('dev')]
 build app='': sync-ui
     #!/usr/bin/env nu
-    if ("{{app}}" | is-empty) {
+    if ("{{ app }}" | is-empty) {
         let base = $env.PWD
         for dir in (ls apps | get name) {
             if ($dir | path type) == "dir" {
@@ -18,7 +18,7 @@ build app='': sync-ui
             }
         }
     } else {
-        cd $"apps/{{app}}"
+        cd $"apps/{{ app }}"
         deno run -A npm:vite build
     }
 
@@ -26,13 +26,13 @@ build app='': sync-ui
 [group('dev')]
 [working-directory('apps')]
 preview app='vision': (build app)
-    cd {{ app }} && deno run -A npm:vite preview
+    cd {{ app }}; deno run -A npm:vite preview
 
 [doc('Run an app in development mode')]
 [group('dev')]
 [working-directory('apps')]
 run app='vision':
-    cd {{ app }} && deno run -A npm:vite dev
+    cd {{ app }}; deno run -A npm:vite dev
 
 # todo: Implement pwa-check in src/client/scripts/pwa-check.nu
 [doc('Verify PWA installability flags')]
