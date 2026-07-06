@@ -1,11 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-    "core/domain",
-    "core/store",
-    "application",
-    "services/gateway",
-    "services/wasm",
+    "src/core/domain",
+    "src/core/store",
+    "src/application",
+    "src/services/gateway",
+    "src/services/wasm",
 ]
 
 # Optimize development compile times
