@@ -3,7 +3,7 @@
 	"description": "A comprehensive full-stack application template with Tauri integration",
 	"license": "MIT",
 	"nodeModulesDir": "auto",
-	"workspace": ["./apps/vision", "./sdk/core", "./sdk/state", "./sdk/ui"],
+	"workspace": ["./sdk/core", "./sdk/state", "./sdk/ui"],
 	"imports": {
 		"vite-plus": "npm:vite-plus",
 		"svelte": "npm:svelte",

@@ -2,12 +2,13 @@
 
 [doc('Build the rune-lab package: deno.json -> build/{dist, package.json, README, LICENSE}')]
 [group('Build')]
-build:
+build app='vision':
     # * Clean previous build
     rm -rf build
     # * Compile i18n messages → paraglide runtime
     # just _paraglide src/packages/plugins/i18n/src/lang/project.inlang src/packages/plugins/i18n/src/lang/paraglide
     # * Bundle workspace members: core + ui always, plugins from BUILD_PLUGINS
+    cd apps/{{ app }}; deno run -A npm:vite build
     -biome format --write --vcs-use-ignore-file=false ./build
     -biome check --fix --vcs-use-ignore-file=false ./build
     @echo "✓ build done"
@@ -23,11 +24,7 @@ _with-brave +cmd:
 
 [doc('Publish build/ to npm')]
 [group('Deploy')]
-publish: build (_with-brave "bun publish")
-
-[doc('npm login')]
-[group('Deploy')]
-login: (_with-brave "bunx npm login")
+publish: build (_with-brave "echo 'Here some publish command confirmation script!'")
 
 [doc('Inject the built pkg (build/) into lab for local testing')]
 [group('Deploy')]
