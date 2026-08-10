@@ -1,24 +1,36 @@
-[doc('Format client code')]
+[doc('Format workspace')]
 [group('check')]
 fmt:
-    deno fmt .
+    -biome format --write .
 
-[doc('Lint client code')]
+[doc('Lint workspace')]
 [group('check')]
 lint:
-    deno lint .
+    -deno lint .
 
-[doc('Type-check client code')]
+[doc('Type-check workspace')]
 [group('check')]
 types:
-    cd apps/vision; deno run -A npm:svelte-check --tsconfig ./tsconfig.json
-    cd sdk/ui; deno run -A npm:svelte-check
+    -cd src; deno run -A npm:svelte-check --tsconfig ./tsconfig.json
+    -cd apps/lab; deno run -A npm:svelte-check --tsconfig ./tsconfig.json
 
 [doc('Audit all code namespaces')]
 [group('check')]
 audit:
-    deno run -A npm:fallow
+    deno run -A npm:fallow -c src/.fallowrc.json
 
-[doc('Run all client quality gates')]
+[doc('Test coverage')]
+[group('check')]
+coverage:
+    deno test --coverage
+
+[doc('Run all check quality gates')]
 [group('check')]
 check: fmt lint types
+
+[doc('Run biome check. This one is even stricter than deno!')]
+[group('check')]
+biome:
+    just prune
+    -biome check --fix .
+    just fmt

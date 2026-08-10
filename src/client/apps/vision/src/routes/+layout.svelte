@@ -1,73 +1,35 @@
 <script lang="ts">
-	import "./layout.css";
-	import {
-		RuneProvider,
-		LayoutPlugin,
-		PalettesPlugin,
-		MoneyPlugin,
-		type NavigationSection,
-		version,
-	} from "rune-lab";
-	import { setLocale } from "$lib/i18n/paraglide/runtime.js";
-	import { m } from "$lib/i18n/messages.ts";
-	import AppLayout from "./AppLayout.svelte";
+import "./layout.css";
+import { RuneProvider, version } from "rune-lab";
+import { i18n } from "rune-lab/i18n";
+import { layout } from "rune-lab/layout";
+import { observer } from "rune-lab/observer";
+import { palettes } from "rune-lab/palettes";
+import type { Snippet } from "svelte";
+import faviconUrl from "$lib/assets/img/rune.png";
+import AppLayout from "./AppLayout.svelte";
 
-	let { children } = $props();
-
-	const sections: NavigationSection[] = [
-		{
-			id: "lab",
-			title: m.lab_label(),
-			items: [
-				{
-					id: "lab.overview",
-					label: m.overview_label(),
-					icon: "🔬",
-					href: "/lab",
-				},
-				{
-					id: "lab.components",
-					label: m.components_label(),
-					icon: "🧩",
-				},
-				{ id: "lab.themes", label: m.themes_label(), icon: "🎨" },
-			],
-		},
-		{
-			id: "system",
-			title: m.system_label(),
-			items: [
-				{
-					id: "system.settings",
-					label: m.settings_label(),
-					icon: "⚙️",
-				},
-				{
-					id: "system.logs",
-					label: m.activity_logs_label(),
-					icon: "📋",
-				},
-				{ id: "system.users", label: m.users_label(), icon: "👤" },
-			],
-		},
-	];
+let { children }: { children: Snippet } = $props();
 </script>
 
 <RuneProvider
-	config={{
-		favicon: "/img/rune.png",
-		icons: "material",
-		app: {
-			name: "Rune Lab",
-			version: version(),
-			description: m.rune_lab_desc(),
-			author: "Yrrrrrf",
-		},
-	}}
-	plugins={[LayoutPlugin, PalettesPlugin, MoneyPlugin]}
-	onLanguageChange={(l) => setLocale(l)}
+  plugins={[
+    layout, 
+    palettes, 
+    i18n, 
+    observer
+    ]}
+  config={{
+    app: {
+      name: "Rune Lab",
+      version: version(),
+      description: "Plugin test bench",
+      author: "Yrrrrrf",
+      icon: faviconUrl,
+    }
+  }}
 >
-	<AppLayout {sections}>
-		{@render children()}
-	</AppLayout>
+  <AppLayout>
+    {@render children()}
+  </AppLayout>
 </RuneProvider>

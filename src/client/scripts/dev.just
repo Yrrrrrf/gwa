@@ -1,43 +1,18 @@
-[doc('Sync SvelteKit UI and Compile Paraglide translation files')]
-[group('dev')]
-sync-ui:
-    pwd
-    deno run -A npm:@inlang/paraglide-js compile --project ./sdk/ui/src/i18n/project.inlang --outdir ./sdk/ui/src/i18n/paraglide
-    cd sdk/ui; deno run -A npm:@sveltejs/kit/svelte-kit sync
-    # deno approve-scripts
+# Both recipes depend on `inject` (which runs `build` first), so every app
+# session consumes the freshly built pkg from node_modules — like a real user.
 
-[doc('Build all apps or a specific one')]
-[group('dev')]
-build app='': prepare
-    #!/usr/bin/env nu
-    if ("{{ app }}" | is-empty) {
-        let base = $env.PWD
-        for dir in (ls apps | get name) {
-            if ($dir | path type) == "dir" {
-                cd $dir
-                deno run -A npm:vite build
-                cd $base
-            }
-        }
-    } else {
-        cd $"apps/{{ app }}"
-        deno run -A npm:vite build
-    }
+[doc('Run an app on the dev server against the freshly injected pkg')]
+[group('Dev')]
+run app='lab': inject
+    cd apps/{{ app }}; deno run -A npm:vite dev --host
 
-[doc('Preview a built app')]
-[group('dev')]
+# todo: Add run/preview/inject variants that iterate over all apps at once :D
+
+[doc('Production-build and preview an app against the freshly injected pkg')]
+[group('Dev')]
 [working-directory('apps')]
-preview app='vision': (build app)
-    cd {{ app }}; deno run -A npm:vite preview
-
-[doc('Run an app in development mode')]
-[group('dev')]
-[working-directory('apps')]
-run app='vision':
-    cd {{ app }}; deno run -A npm:vite dev
-
-# todo: Implement pwa-check in src/client/scripts/pwa-check.nu
-[doc('Verify PWA installability flags')]
-[group('dev')]
-pwa-check:
-    error make {msg: "pwa-check not implemented — expected script src/client/scripts/pwa-check.nu is missing"}
+preview app='lab': inject
+    @echo "{{ app }}"
+    rm -rf "{{ app }}/build"
+    cd "{{ app }}"; deno run -A npm:vite build
+    cd "{{ app }}"; deno run -A npm:vite preview

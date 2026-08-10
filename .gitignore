@@ -26,3 +26,6 @@ build
 
 # one * means any characters except /
 # two ** means any characters including /
+
+# some toggled ones
+docs
