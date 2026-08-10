@@ -8,8 +8,6 @@ run app='vision':
 
 [doc('Production-build and preview an app against the freshly injected pkg')]
 [group('Dev')]
-[working-directory('apps')]
-preview app='vision': build
-    @echo "{{ app }}"
-    rm -rf "{{ app }}/build"
-    cd "{{ app }}"; deno run -A npm:vite preview
+preview app='vision': (build app)
+    echo {{ app }}
+    cd apps/{{ app }}; deno run -A npm:vite preview

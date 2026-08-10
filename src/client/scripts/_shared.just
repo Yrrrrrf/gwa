@@ -9,15 +9,6 @@ list:
 _paraglide project outdir:
     deno run -A npm:@inlang/paraglide-js compile --project "{{ project }}" --outdir "{{ outdir }}" --emit-ts-declarations
 
-SVELTE_SHIM := justfile_directory() / "scripts/shims/package.json"
-
-[doc('Package one workspace member: src/packages/<dir>/src → build/dist/src/<dir>')]
-[group('Build')]
-svelte-package dir out=("src" / dir):
-    just with-shim src "{{ SVELTE_SHIM }}" \
-      deno run -A --node-modules-dir=auto npm:@sveltejs/package -i packages/{{ dir }}/src \
-      -o "{{ justfile_directory() }}/build/dist/{{ out }}"
-
 [doc('Copy a shim file into dir, run cmd there, always remove the shim')]
 [positional-arguments]
 [private]

@@ -3,6 +3,7 @@
 	"description": "A comprehensive full-stack application template with Tauri integration",
 	"license": "MIT",
 	"nodeModulesDir": "auto",
+	"minimumDependencyAge": "0",
 	"workspace": ["./sdk/core", "./sdk/state", "./sdk/ui"],
 	"imports": {
 		"vite-plus": "npm:vite-plus",
@@ -14,12 +15,9 @@
 		"@tailwindcss/vite": "npm:@tailwindcss/vite",
 		"@tailwindcss/forms": "npm:@tailwindcss/forms",
 		"@tailwindcss/typography": "npm:@tailwindcss/typography",
-		"@inlang/paraglide-js": "npm:@inlang/paraglide-js",
 		"@lucide/svelte": "npm:@lucide/svelte",
 		"daisyui": "npm:daisyui",
-		"rune-lab": "npm:rune-lab@0.4.8",
-		"esm-env": "npm:esm-env",
-		"hotkeys-js": "npm:hotkeys-js",
-		"dinero.js": "npm:dinero.js"
+		"rune-lab": "npm:rune-lab@0.5.2-rc.2",
+		"esm-env": "npm:esm-env"
 	}
 }
