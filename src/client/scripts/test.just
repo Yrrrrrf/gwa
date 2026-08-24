@@ -7,3 +7,8 @@ test-vp:
 [group('test')]
 test:
     deno test --allow-all sdk/
+
+[doc('Test coverage')]
+[group('check')]
+coverage:
+    deno test --coverage
