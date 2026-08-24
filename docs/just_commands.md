@@ -20,8 +20,8 @@ These commands are run directly from the project root (e.g., `just <command>`). 
 | `just types` | `check` | Type-check all code namespaces. | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/scripts/check.just) |
 | `just check` | `check` | Run all quality gates (`fmt` + `lint` + `types`). | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/scripts/check.just) |
 | `just test` | `test` | Run all test suites. | [scripts/test.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/scripts/test.just) |
-| `just ci` | `ci` | Run full CI pipeline (`check` + `test`). | [scripts/ci.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/scripts/ci.just) |
-| `just commit <msg>` | `ci` | Commit code with safety checks, ensuring no broken tree is committed. | [scripts/ci.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/scripts/ci.just) |
+| `just prepare` | `dev` | Clear cache, remove and reinstall dependencies. | [scripts/dev.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/scripts/dev.just) |
+| `just ci` | `deploy` | Run full CI pipeline (`check` + `test`). | [scripts/deploy.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/scripts/deploy.just) |
 | `just deploy` | `deploy` | Deploy the entire application stack. *(Note: currently blocked)* | [scripts/deploy.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/scripts/deploy.just) |
 
 ---
@@ -37,13 +37,15 @@ Defined in [src/client/client.just](file:///home/yrrrrrf/Documents/lab/tek/packa
 | `just client build [app]` | `dev` | Build all apps or a specific one (e.g., `just client build vision`). | [scripts/dev.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/dev.just) |
 | `just client run [app]` | `dev` | Run an app in development mode (e.g. `just client run vision`). | [scripts/dev.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/dev.just) |
 | `just client preview [app]` | `dev` | Preview a built app. | [scripts/dev.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/dev.just) |
+| `just client prepare` | `dev` | Purge caches & lockfiles, reinstall deps, resync generated code. | [scripts/dev.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/dev.just) |
+| `just client prune` | `dev` | Prune node_modules, .svelte-kit, .vite, deno.lock. | [scripts/dev.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/dev.just) |
 | `just client pwa-check` | `dev` | Verify PWA installability flags. | [scripts/dev.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/dev.just) |
 | `just client fmt` | `check` | Format client code (`deno fmt`). | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/check.just) |
 | `just client lint` | `check` | Lint client code (`deno lint`). | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/check.just) |
 | `just client types` | `check` | Type-check client code (`svelte-check`). | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/check.just) |
 | `just client check` | `check` | Run all client quality gates. | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/check.just) |
 | `just client test` | `test` | Run client test suite (`deno test`). | [scripts/test.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/test.just) |
-| `just client ci` | `ci` | Run client CI pipeline. | [scripts/ci.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/ci.just) |
+| `just client ci` | `Deploy` | Run client CI pipeline. | [scripts/deploy.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/deploy.just) |
 | `just client deploy` | `deploy` | Deploy client application. *(Note: currently blocked)* | [scripts/deploy.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/scripts/deploy.just) |
 
 ---
@@ -62,7 +64,8 @@ Defined in [src/server/server.just](file:///home/yrrrrrf/Documents/lab/tek/packa
 | `just server types` | `check` | Type-check all server components. | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/server/scripts/check.just) |
 | `just server check` | `check` | Run all server quality gates. | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/server/scripts/check.just) |
 | `just server test` | `test` | Run all server tests (unit + integration + smoke). | [scripts/test.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/server/scripts/test.just) |
-| `just server ci` | `ci` | Run server CI pipeline. | [scripts/ci.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/server/scripts/ci.just) |
+| `just server prepare` | `dev` | Prepare server dependencies / placeholder. | [scripts/dev.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/server/scripts/dev.just) |
+| `just server ci` | `deploy` | Run server CI pipeline. | [scripts/deploy.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/server/scripts/deploy.just) |
 | `just server deploy` | `deploy` | Deploy server stack. *(Note: currently blocked)* | [scripts/deploy.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/server/scripts/deploy.just) |
 
 ### 🗄️ Server Database Submodule (`just server::db <command>`)
@@ -117,5 +120,6 @@ Defined in [src/cli/cli.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gw
 | `just cli types` | `check` | Type-check CLI code. | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/cli/scripts/check.just) |
 | `just cli check` | `check` | Run all CLI quality gates. | [scripts/check.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/cli/scripts/check.just) |
 | `just cli test` | `test` | Run CLI test suite. | [scripts/test.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/cli/scripts/test.just) |
-| `just cli ci` | `ci` | Run CLI CI pipeline. | [scripts/ci.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/cli/scripts/ci.just) |
+| `just cli prepare` | `dev` | Prepare CLI dependencies / placeholder. | [scripts/dev.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/cli/scripts/dev.just) |
+| `just cli ci` | `deploy` | Run CLI CI pipeline. | [scripts/deploy.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/cli/scripts/deploy.just) |
 | `just cli deploy` | `deploy` | Deploy CLI application. | [scripts/deploy.just](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/cli/scripts/deploy.just) |

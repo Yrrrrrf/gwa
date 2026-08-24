@@ -1,25 +1,25 @@
 <script lang="ts">
-  interface Props {
-    value?: string | number;
-    label?: string;
-    type?: "text" | "password" | "email" | "number" | "tel" | "textarea" | "url";
-    placeholder?: string;
-    class?: string;
-    required?: boolean;
-    disabled?: boolean;
-  }
+interface Props {
+	value?: string | number;
+	label?: string;
+	type?: "text" | "password" | "email" | "number" | "tel" | "textarea" | "url";
+	placeholder?: string;
+	class?: string;
+	required?: boolean;
+	disabled?: boolean;
+}
 
-  let {
-    value = $bindable(""),
-    label = "",
-    type = "text",
-    placeholder = "",
-    class: className = "",
-    required = false,
-    disabled = false,
-  }: Props = $props();
+let {
+	value = $bindable(""),
+	label = "",
+	type = "text",
+	placeholder = "",
+	class: className = "",
+	required = false,
+	disabled = false,
+}: Props = $props();
 
-  const id = `input-${Math.random().toString(36).substring(2, 9)}`;
+const id = `input-${Math.random().toString(36).substring(2, 9)}`;
 </script>
 
 <div class="form-control w-full {className}">

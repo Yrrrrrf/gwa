@@ -9,7 +9,7 @@ description: >-
 > Authoritative, code-first `just` reference + the house build harness. The full recipe/attribute/function surface (simple → strange), the traps that produce parse errors or wrong output, and the five-verb layered skeleton (`dev`/`check`/`test`/`ci`/`deploy`) that drops into every repo unchanged.
 
 ## 📥 Inputs
-- **Context:** `justfile` / `server.just`, `scripts/_shared.just`, layer files (`scripts/dev.just`/`scripts/check.just`/`scripts/test.just`/`scripts/ci.just`/`scripts/deploy.just`), CI workflows that call `just ci`.
+- **Context:** `justfile` / `server.just`, `scripts/_shared.just`, layer files (`scripts/dev.just`/`scripts/check.just`/`scripts/test.just`/`scripts/deploy.just`), CI workflows that call `just ci`.
 - **Constraints:** Runner is `just`, shell is `nushell` (`set shell := ["nu", "-c"]`). Not `make`, not bash. Tools are assumed present — recipes never check for or fall back from them.
 
 ## 📤 Outputs
@@ -318,7 +318,7 @@ just --choose / --completions SHELL / --init
 
 ---
 
-## 15. The house harness (five verbs, six files)
+## 15. The house harness (five verbs, five files)
 
 Split **by audience, not by topic**. A higher verb *calls* the lower one — never re-list steps.
 
@@ -326,11 +326,10 @@ Split **by audience, not by topic**. A higher verb *calls* the lower one — nev
 server.just       root · set shell := ["nu","-c"] · imports every layer
 └── scripts/
     ├── _shared.just  PRIVATE · vars (PROJECT/VERSION/PKG_ID), _helpers, `list` (the default)
-    ├── dev.just      LOOP    · run · watch · build · clean        (human, tight loop)
+    ├── dev.just      LOOP    · run · watch · build · prepare · prune (human, tight loop)
     ├── check.just    FIX·WRITES · fmt · lint · types · (audit, opt) · check
     ├── test.just     PROVE   · test · test NAME · watch · cov      (reads only)
-    ├── ci.just       AUTOMATE· ci(check+test) · commit · hooks
-    └── deploy.just   SHIP    · release · deploy · publish
+    └── deploy.just   SHIP    · ci(check+test) · release · deploy · publish
 ```
 
 **Composition ladder** (change `fmt` once → every verb above inherits it):
@@ -370,7 +369,6 @@ import 'scripts/_shared.just'
 import 'scripts/dev.just'
 import 'scripts/check.just'
 import 'scripts/test.just'
-import 'scripts/ci.just'
 import 'scripts/deploy.just'
 ```
 ```just

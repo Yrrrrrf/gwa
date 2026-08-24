@@ -1,45 +1,45 @@
 <script lang="ts">
-   import { ICONS, GlassCard, GlassContainer } from "@sdk/ui";
-   import { authStore } from "@sdk/state";
-   import {
-      Shield,
-      AlertTriangle,
-      Lock,
-      Activity,
-      Users,
-      Database,
-      Globe,
-      Zap,
-      ArrowRight,
-      Terminal,
-   } from "@lucide/svelte";
+import { ICONS, GlassCard, GlassContainer } from "@sdk/ui";
+import { authStore } from "@sdk/state";
+import {
+	Shield,
+	AlertTriangle,
+	Lock,
+	Activity,
+	Users,
+	Database,
+	Globe,
+	Zap,
+	ArrowRight,
+	Terminal,
+} from "@lucide/svelte";
 
-   const securityItems = [
-      { label: "Actividad sospechosa", value: "hace 2h", status: "warning" },
-      { label: "Intentos fallidos hoy", value: "7", status: "error" },
-      { label: "Tokens activos", value: "3", status: "success" },
-   ];
+const securityItems = [
+	{ label: "Actividad sospechosa", value: "hace 2h", status: "warning" },
+	{ label: "Intentos fallidos hoy", value: "7", status: "error" },
+	{ label: "Tokens activos", value: "3", status: "success" },
+];
 
-   const metrics = [
-      {
-         label: "Registros",
-         value: "+24",
-         data: [20, 45, 30, 60, 40, 70, 55],
-         color: "bg-primary",
-      },
-      {
-         label: "Reportes",
-         value: "0",
-         data: [10, 5, 8, 3, 0, 2, 0],
-         color: "bg-success",
-      },
-      {
-         label: "Latencia",
-         value: "42ms",
-         data: [40, 42, 45, 41, 42, 43, 42],
-         color: "text-info",
-      },
-   ];
+const metrics = [
+	{
+		label: "Registros",
+		value: "+24",
+		data: [20, 45, 30, 60, 40, 70, 55],
+		color: "bg-primary",
+	},
+	{
+		label: "Reportes",
+		value: "0",
+		data: [10, 5, 8, 3, 0, 2, 0],
+		color: "bg-success",
+	},
+	{
+		label: "Latencia",
+		value: "42ms",
+		data: [40, 42, 45, 41, 42, 43, 42],
+		color: "text-info",
+	},
+];
 </script>
 
 <div class="space-y-12 pb-24">

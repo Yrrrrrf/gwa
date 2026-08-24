@@ -1,9 +1,9 @@
 {
-  "app_name": "Template System",
-  "discover_subtitle": "Generic starter for multi-platform projects.",
-  "nav_menu": "Menu",
-  "nav_discover": "Items",
-  "nav_saved": "Dashboard",
-  "nav_profile": "Profile",
-  "nav_logout": "Logout"
+	"app_name": "Template System",
+	"discover_subtitle": "Generic starter for multi-platform projects.",
+	"nav_menu": "Menu",
+	"nav_discover": "Items",
+	"nav_saved": "Dashboard",
+	"nav_profile": "Profile",
+	"nav_logout": "Logout"
 }

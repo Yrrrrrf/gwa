@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { type Snippet } from "svelte";
+import { type Snippet } from "svelte";
 
-  interface Props {
-    children: Snippet;
-    class?: string;
-    style?: string;
-    accent?: string;
-    title?: string;
-  }
+interface Props {
+	children: Snippet;
+	class?: string;
+	style?: string;
+	accent?: string;
+	title?: string;
+}
 
-  let {
-    children,
-    class: className = "",
-    style = "",
-    accent = "",
-    title = "",
-  }: Props = $props();
+let {
+	children,
+	class: className = "",
+	style = "",
+	accent = "",
+	title = "",
+}: Props = $props();
 </script>
 
 <div

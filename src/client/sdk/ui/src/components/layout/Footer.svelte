@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ICONS, m } from "../../mod.js";
+import { ICONS, m } from "../../mod.js";
 </script>
 
 <footer class="mt-auto py-12 px-6 border-t border-base-content/5 backdrop-blur-3xl bg-base-100/20 z-10 relative">

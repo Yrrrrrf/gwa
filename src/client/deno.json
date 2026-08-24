@@ -1,16 +1,22 @@
 {
 	"version": "0.1.0",
-	"description": "A comprehensive full-stack application template with Tauri integration",
+	"description": "A comprehensive full-stack application template",
 	"license": "MIT",
 	"nodeModulesDir": "auto",
 	"minimumDependencyAge": "0",
-	"workspace": ["./sdk/core", "./sdk/state", "./sdk/ui"],
+	"workspace": [
+		"./sdk/core",
+		"./sdk/api",
+		"./sdk/state",
+		"./sdk/ui",
+		"./apps/vision"
+	],
 	"imports": {
 		"vite-plus": "npm:vite-plus",
-		"svelte": "npm:svelte",
-		"@sveltejs/kit": "npm:@sveltejs/kit",
+		"svelte": "npm:svelte@^5.56.4",
+		"@sveltejs/kit": "npm:@sveltejs/kit@next",
+		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static@next",
 		"@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte",
-		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static",
 		"tailwindcss": "npm:tailwindcss",
 		"@tailwindcss/vite": "npm:@tailwindcss/vite",
 		"@tailwindcss/forms": "npm:@tailwindcss/forms",
@@ -18,6 +24,7 @@
 		"@lucide/svelte": "npm:@lucide/svelte",
 		"daisyui": "npm:daisyui",
 		"rune-lab": "npm:rune-lab@0.5.2-rc.2",
-		"esm-env": "npm:esm-env"
+		"esm-env": "npm:esm-env",
+		"arktype": "npm:arktype"
 	}
 }

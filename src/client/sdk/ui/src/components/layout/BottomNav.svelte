@@ -1,40 +1,40 @@
 <script lang="ts">
-  import * as m from "../../i18n/paraglide/messages.js";
-  import { authStore } from "@sdk/state";
+import * as m from "../../i18n/paraglide/messages.js";
+import { authStore } from "@sdk/state";
 
-  interface Props {
-    activeTab?: string;
-    ontabchange?: (tab: string) => void;
-    mode?: "consumer" | "owner";
-  }
+interface Props {
+	activeTab?: string;
+	ontabchange?: (tab: string) => void;
+	mode?: "consumer" | "owner";
+}
 
-  let {
-    activeTab = "discover",
-    ontabchange,
-    mode = "consumer",
-  }: Props = $props();
+let {
+	activeTab = "discover",
+	ontabchange,
+	mode = "consumer",
+}: Props = $props();
 
-  const auth = authStore;
+const auth = authStore;
 
-  const consumerItems = [
-    { id: "discover", label: m.nav_discover() },
-    { id: "saved", label: m.nav_saved() },
-    { id: "profile", label: m.nav_profile() },
-  ];
+const consumerItems = [
+	{ id: "discover", label: m.nav_discover() },
+	{ id: "saved", label: m.nav_saved() },
+	{ id: "profile", label: m.nav_profile() },
+];
 
-  const ownerItems = [
-    {
-      id: "dashboard",
-      label: m.nav_dashboard(),
-    },
-    { id: "menu", label: m.nav_menu() },
-    { id: "profile", label: m.nav_profile() },
-    { id: "share", label: "Compartir" }, // Use share icon if available
-  ];
+const ownerItems = [
+	{
+		id: "dashboard",
+		label: m.nav_dashboard(),
+	},
+	{ id: "menu", label: m.nav_menu() },
+	{ id: "profile", label: m.nav_profile() },
+	{ id: "share", label: "Compartir" }, // Use share icon if available
+];
 
-  const items = $derived(mode === "consumer" ? consumerItems : ownerItems);
+const items = $derived(mode === "consumer" ? consumerItems : ownerItems);
 
-  const isActive = (id: string) => activeTab === id;
+const isActive = (id: string) => activeTab === id;
 </script>
 
 {#if auth.role}

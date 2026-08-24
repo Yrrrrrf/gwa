@@ -6,3 +6,8 @@ run: db::run engine::run rpc::run
 [doc('Build all server components')]
 [group('dev')]
 build: db::build engine::build rpc::build
+
+[doc('Placeholder — nothing to purge/reinstall here yet')]
+[group('dev')]
+prepare:
+    @print "prepare: not implemented on server side yet"

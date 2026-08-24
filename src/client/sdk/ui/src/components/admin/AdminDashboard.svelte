@@ -1,28 +1,28 @@
 <script lang="ts">
-  import { ShieldAlert, CheckCircle, XCircle, Package } from "@lucide/svelte";
-  import { GlassCard } from "../primitives/mod.ts";
-  import { type Item } from "@sdk/core";
+import { ShieldAlert, CheckCircle, XCircle, Package } from "@lucide/svelte";
+import { GlassCard } from "../primitives/mod.ts";
+import { type Item } from "@sdk/core";
 
-  interface ItemBase {
-    id: string;
-    title: string;
-    status: string;
-    description?: string | null;
-  }
+interface ItemBase {
+	id: string;
+	title: string;
+	status: string;
+	description?: string | null;
+}
 
-  interface Props {
-    items?: ItemBase[];
-    onApprove?: (id: string) => void;
-    onDelete?: (id: string) => void;
-  }
+interface Props {
+	items?: ItemBase[];
+	onApprove?: (id: string) => void;
+	onDelete?: (id: string) => void;
+}
 
-  let { items = [], onApprove, onDelete }: Props = $props();
+let { items = [], onApprove, onDelete }: Props = $props();
 
-  const stats = $derived({
-    total: items.length,
-    active: items.filter((i) => i.status === "active").length,
-    pending: items.filter((i) => i.status === "pending").length,
-  });
+const stats = $derived({
+	total: items.length,
+	active: items.filter((i) => i.status === "active").length,
+	pending: items.filter((i) => i.status === "pending").length,
+});
 </script>
 
 <div class="space-y-6">

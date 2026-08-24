@@ -1,23 +1,23 @@
 [doc('Format workspace')]
 [group('check')]
 fmt:
-    -biome format --write .
+    biome format --config-path=config/biome.json --write .
 
 [doc('Lint workspace')]
 [group('check')]
 lint:
-    -deno lint .
+    deno lint .
 
 [doc('Type-check workspace')]
 [group('check')]
 types:
-    -cd src; deno run -A npm:svelte-check --tsconfig ./tsconfig.json
-    -cd apps/lab; deno run -A npm:svelte-check --tsconfig ./tsconfig.json
+    deno check sdk/core/src/mod.ts sdk/api/src/mod.ts sdk/state/src/mod.ts sdk/ui/src/mod.ts
+    cd apps/vision; deno run -A npm:@sveltejs/kit@next/svelte-kit sync; deno run -A npm:svelte-check@^4.7.5 --tsconfig ./tsconfig.json
 
 [doc('Audit all code namespaces')]
 [group('check')]
 audit:
-    deno run -A npm:fallow -c src/.fallowrc.json
+    deno run -A npm:fallow
 
 [doc('Test coverage')]
 [group('check')]
@@ -32,5 +32,5 @@ check: fmt lint types
 [group('check')]
 biome:
     just prune
-    -biome check --fix .
+    biome check --config-path=config/biome.json --fix .
     just fmt

@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { type Snippet, type Component } from "svelte";
-  import { Utensils } from "@lucide/svelte";
+import { type Snippet, type Component } from "svelte";
+import { Utensils } from "@lucide/svelte";
 
-  interface Props {
-    icon?: any;
-    title: string;
-    subtitle?: string;
-    action?: Snippet;
-  }
+interface Props {
+	icon?: any;
+	title: string;
+	subtitle?: string;
+	action?: Snippet;
+}
 
-  let { icon: Icon = Utensils, title, subtitle, action }: Props = $props();
+let { icon: Icon = Utensils, title, subtitle, action }: Props = $props();
 </script>
 
 <div

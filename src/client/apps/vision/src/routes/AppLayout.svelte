@@ -1,11 +1,11 @@
 <script lang="ts">
 import { getLayoutStore, WorkspaceLayout } from "rune-lab/layout";
 import {
-  type Command,
-  getCommandStore,
-  getRegistryStore,
-  getToastStore,
-  useShortcuts,
+	type Command,
+	getCommandStore,
+	getRegistryStore,
+	getToastStore,
+	useShortcuts,
 } from "rune-lab/palettes";
 import { onMount, type Snippet } from "svelte";
 
@@ -17,78 +17,78 @@ const registry = getRegistryStore();
 const toasts = getToastStore();
 
 const zoneToggles = [
-  { zone: "strip", keys: "alt+1", label: "Toggle Workspace Strip" },
-  { zone: "nav", keys: "alt+2", label: "Toggle Navigation Panel" },
-  { zone: "detail", keys: "alt+3", label: "Toggle Detail Panel" },
-  { zone: "statusbar", keys: "alt+4", label: "Toggle Statusbar" },
+	{ zone: "strip", keys: "alt+1", label: "Toggle Workspace Strip" },
+	{ zone: "nav", keys: "alt+2", label: "Toggle Navigation Panel" },
+	{ zone: "detail", keys: "alt+3", label: "Toggle Detail Panel" },
+	{ zone: "statusbar", keys: "alt+4", label: "Toggle Statusbar" },
 ] as const;
 
 useShortcuts([
-  ...zoneToggles.map(({ zone, keys, label }) => ({
-    id: `lab.toggle.${zone}`,
-    keys,
-    label,
-    category: "Layout",
-    handler: (e: KeyboardEvent) => {
-      e.preventDefault();
-      layout.toggleZone(zone);
-    },
-  })),
-  {
-    id: "lab.palette.commands",
-    keys: "ctrl+space",
-    label: "Open Command Palette",
-    category: "Palettes",
-    handler: (e: KeyboardEvent) => {
-      e.preventDefault();
-      registry.open("commands");
-    },
-  },
+	...zoneToggles.map(({ zone, keys, label }) => ({
+		id: `lab.toggle.${zone}`,
+		keys,
+		label,
+		category: "Layout",
+		handler: (e: KeyboardEvent) => {
+			e.preventDefault();
+			layout.toggleZone(zone);
+		},
+	})),
+	{
+		id: "lab.palette.commands",
+		keys: "ctrl+space",
+		label: "Open Command Palette",
+		category: "Palettes",
+		handler: (e: KeyboardEvent) => {
+			e.preventDefault();
+			registry.open("commands");
+		},
+	},
 ]);
 
 onMount(() => {
-  const demoCommands: Command[] = [
-    ...zoneToggles.map(({ zone, label }) => ({
-      id: `lab.cmd.toggle.${zone}`,
-      label,
-      category: "View",
-      action: () => layout.toggleZone(zone),
-    })),
-    ...(["page", "docs", "workspace"] as const).map((preset) => ({
-      id: `lab.cmd.preset.${preset}`,
-      label: `Preset: ${preset}`,
-      category: "View",
-      action: () => layout.applyPreset(preset),
-    })),
-    {
-      id: "lab.cmd.toasts",
-      label: "Toasts…",
-      category: "Demo",
-      children: [
-        {
-          id: "lab.cmd.toasts.success",
-          label: "Send success toast",
-          action: () => toasts.success("It works! 🎉"),
-        },
-        {
-          id: "lab.cmd.toasts.error",
-          label: "Send error toast",
-          action: () => toasts.error("Something exploded 💥"),
-        },
-      ],
-    },
-  ];
+	const demoCommands: Command[] = [
+		...zoneToggles.map(({ zone, label }) => ({
+			id: `lab.cmd.toggle.${zone}`,
+			label,
+			category: "View",
+			action: () => layout.toggleZone(zone),
+		})),
+		...(["page", "docs", "workspace"] as const).map((preset) => ({
+			id: `lab.cmd.preset.${preset}`,
+			label: `Preset: ${preset}`,
+			category: "View",
+			action: () => layout.applyPreset(preset),
+		})),
+		{
+			id: "lab.cmd.toasts",
+			label: "Toasts…",
+			category: "Demo",
+			children: [
+				{
+					id: "lab.cmd.toasts.success",
+					label: "Send success toast",
+					action: () => toasts.success("It works! 🎉"),
+				},
+				{
+					id: "lab.cmd.toasts.error",
+					label: "Send error toast",
+					action: () => toasts.error("Something exploded 💥"),
+				},
+			],
+		},
+	];
 
-  for (const cmd of demoCommands) commands.register(cmd);
-  return () => {
-    for (const cmd of demoCommands) commands.unregister(cmd.id);
-  };
+	for (const cmd of demoCommands) commands.register(cmd);
+	return () => {
+		for (const cmd of demoCommands) commands.unregister(cmd.id);
+	};
 });
 
 const visibleZones = $derived(
-  Object.entries(layout.zones)
-    .filter(([id, z]) => id !== "overlay-anchor" && z.visible)
-    .map(([id]) => id),
+	Object.entries(layout.zones)
+		.filter(([id, z]) => id !== "overlay-anchor" && z.visible)
+		.map(([id]) => id),
 );
 </script>
 

@@ -1,8 +1,9 @@
 {
-  "name": "@sdk/state",
-  "version": "0.0.1",
-  "exports": "./src/mod.ts",
-  "imports": {
-    "@sdk/core": "workspace:*"
-  }
+	"name": "@sdk/state",
+	"version": "0.0.1",
+	"exports": "./src/mod.ts",
+	"imports": {
+		"@sdk/core": "workspace:*",
+		"@sdk/api": "workspace:*"
+	}
 }

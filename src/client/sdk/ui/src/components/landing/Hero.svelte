@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { GlassContainer } from "../primitives/mod.ts";
+import { GlassContainer } from "../primitives/mod.ts";
 </script>
 
 <div class="hero-container">

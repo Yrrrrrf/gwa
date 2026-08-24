@@ -1,3 +1,7 @@
+[doc('Run server CI pipeline (check + test)')]
+[group('deploy')]
+ci: check test
+
 # Server deploy requires consolidating and rewriting the docker-compose configuration.
 [doc('Deploy server stack')]
 [group('deploy')]

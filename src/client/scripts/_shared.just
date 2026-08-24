@@ -1,24 +1,37 @@
+# _shared.just — vars, private helpers, and the front door. Shared into every
+# layer via `import`; settings and variables live here once.
+
+PROJECT := "gwa-client"
+VERSION := `open deno.json | get version`
+
 [default]
-[doc('List all available recipes')]
+[doc('List all available client recipes')]
 [group('meta')]
 list:
     @just --list --unsorted
 
+# Interactive autocomplete over every public recipe — type to fuzzy-filter.
+[doc('Interactive recipe picker (fuzzy-filtered via gum)')]
+[group('meta')]
+menu:
+    #!/usr/bin/env nu
+    let recipes = (just --summary | str trim | split row ' ')
+    let choice = ($recipes | str join "\n" | ^gum filter --placeholder ($"($PROJECT) recipe...")) | str trim
+    if ($choice | is-not-empty) { just $choice }
+
+[private]
+[group('meta')]
+_banner msg:
+    #!/usr/bin/env nu
+    ^gum style --foreground 212 --border rounded --padding "0 2" "{{msg}}"
+
+[private]
+[group('meta')]
+_clean-tree:
+    #!/usr/bin/env nu
+    if (git status --porcelain | is-not-empty) { error make {msg: "working tree dirty"} }
+
 [doc('Compile an inlang project into a paraglide runtime')]
-[group('Build')]
+[group('build')]
 _paraglide project outdir:
     deno run -A npm:@inlang/paraglide-js compile --project "{{ project }}" --outdir "{{ outdir }}" --emit-ts-declarations
-
-[doc('Copy a shim file into dir, run cmd there, always remove the shim')]
-[positional-arguments]
-[private]
-with-shim dir shim *cmd:
-    #!/usr/bin/env nu
-    def --wrapped main [dir: string, shim: string, ...cmd: string] {
-      let dest = ($dir | path join ($shim | path basename))
-      let run = { cd $dir; ^($cmd | first) ...($cmd | skip 1) }
-      if ($dest | path exists) { do $run } else {
-        cp $shim $dest
-        try { do $run } finally { rm -f $dest }
-      }
-    }

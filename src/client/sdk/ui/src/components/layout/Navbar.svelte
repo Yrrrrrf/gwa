@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { ICONS, m } from "../../mod.js";
-  import { authStore } from "@sdk/state";
-  import { goto } from "$app/navigation";
-  import { page } from "$app/stores";
+import { ICONS, m } from "../../mod.js";
+import { authStore } from "@sdk/state";
+import { goto } from "$app/navigation";
+import { page } from "$app/stores";
 
-  const auth = authStore;
+const auth = authStore;
 </script>
 
 <header

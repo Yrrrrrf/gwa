@@ -1,29 +1,29 @@
 <script lang="ts">
-  import { type Snippet } from "svelte";
+import { type Snippet } from "svelte";
 
-  interface Props {
-    children: Snippet;
-    class?: string;
-    style?: string;
-    onclick?: () => void;
-    glowColor?: string;
-    enable3D?: boolean;
-    accent?: string;
-    use?: any[];
-    enableShimmer?: boolean;
-  }
+interface Props {
+	children: Snippet;
+	class?: string;
+	style?: string;
+	onclick?: () => void;
+	glowColor?: string;
+	enable3D?: boolean;
+	accent?: string;
+	use?: any[];
+	enableShimmer?: boolean;
+}
 
-  let {
-    children,
-    class: className = "",
-    style = "",
-    onclick,
-    glowColor = "oklch(var(--p))",
-    enable3D = false,
-    accent = "",
-    use = [],
-    enableShimmer = false,
-  }: Props = $props();
+let {
+	children,
+	class: className = "",
+	style = "",
+	onclick,
+	glowColor = "oklch(var(--p))",
+	enable3D = false,
+	accent = "",
+	use = [],
+	enableShimmer = false,
+}: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->

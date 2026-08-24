@@ -1,10 +1,9 @@
-[doc('Run one workspace member through vite-plus (shim in, test, shim out)')]
+[doc('Run workspace tests via vite-plus using test.config.ts')]
 [group('test')]
-test-project dir:
-    just with-shim . "{{ justfile_directory() / "scripts/shims/package.json" }}" deno run -A npm:vite-plus/vp test {{ dir }}
+test-vp:
+    deno run -A npm:vite-plus test --config ./config/vite/test.config.ts
 
-[doc('Run the full test suite: core via deno test, then each vp workspace')]
+[doc('Run the test suite across sdk and workspace')]
 [group('test')]
 test:
-    deno test --allow-all src/packages/core/src/
-    just test-project src/
+    deno test --allow-all sdk/

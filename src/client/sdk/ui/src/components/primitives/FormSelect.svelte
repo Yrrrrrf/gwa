@@ -1,30 +1,30 @@
 <script lang="ts">
-  interface Option {
-    value: string;
-    label: string;
-  }
+interface Option {
+	value: string;
+	label: string;
+}
 
-  interface Props {
-    value?: string;
-    label?: string;
-    options: Option[];
-    placeholder?: string;
-    class?: string;
-    required?: boolean;
-    disabled?: boolean;
-  }
+interface Props {
+	value?: string;
+	label?: string;
+	options: Option[];
+	placeholder?: string;
+	class?: string;
+	required?: boolean;
+	disabled?: boolean;
+}
 
-  let {
-    value = $bindable(""),
-    label = "",
-    options = [],
-    placeholder = "Select an option",
-    class: className = "",
-    required = false,
-    disabled = false,
-  }: Props = $props();
+let {
+	value = $bindable(""),
+	label = "",
+	options = [],
+	placeholder = "Select an option",
+	class: className = "",
+	required = false,
+	disabled = false,
+}: Props = $props();
 
-  const id = `select-${Math.random().toString(36).substring(2, 9)}`;
+const id = `select-${Math.random().toString(36).substring(2, 9)}`;
 </script>
 
 <div class="form-control w-full {className}">

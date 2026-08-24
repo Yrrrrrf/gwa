@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>the harness — dev › test › check › deploy</title>
+		<style>
+		:root {
+			/* catppuccin mocha — same base16 scheme as the rest of the stack */
+			--crust: #11111b;
+			--mantle: #181825;
+			--base: #1e1e2e;
+			--surface0: #313244;
+			--surface1: #45475a;
+			--subtext: #a6adc8;
+			--text: #cdd6f4;
+
+			--lavender: #b4befe;
+			--mauve: #cba6f7;
+			--teal: #94e2d5;
+			--peach: #fab387;
+			--green: #a6e3a1;
+			--red: #f38ba8;
+			--sapphire: #74c7ec;
+
+			--r-island: 12px;
+			--r-pill: 10px;
+			--border-w: 1px;
+			--op: 0.95;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			background: var(--crust);
+			color: var(--text);
+			font-family:
+				"JetBrains Mono", "Fira Code", ui-monospace, "Cascadia Code", Menlo,
+				Consolas, monospace;
+		}
+
+		.spectrum {
+			height: 3px;
+			background: linear-gradient(
+				90deg,
+				var(--mauve),
+				var(--red),
+				var(--green),
+				var(--sapphire),
+				var(--teal)
+			);
+		}
+
+		body {
+			background:
+				radial-gradient(
+					circle at 12% -10%,
+					rgba(203, 166, 247, 0.1),
+					transparent 40%
+				),
+				radial-gradient(
+					circle at 100% 15%,
+					rgba(148, 226, 213, 0.08),
+					transparent 45%
+				),
+				repeating-linear-gradient(
+					0deg,
+					rgba(255, 255, 255, 0.012) 0px,
+					rgba(255, 255, 255, 0.012) 1px,
+					transparent 1px,
+					transparent 3px
+				),
+				var(--crust);
+			min-height: 100vh;
+			padding: 40px 20px 80px;
+		}
+
+		main {
+			max-width: 900px;
+			margin: 0 auto;
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.cursor,
+			.ci-glow,
+			.flow-line {
+				animation: none !important;
+			}
+		}
+
+		/* ---------- header ---------- */
+
+		.prompt {
+			font-size: 13px;
+			color: var(--subtext);
+			margin-bottom: 14px;
+		}
+		.prompt .path {
+			color: var(--teal);
+		}
+		.prompt .chevron {
+			color: var(--mauve);
+		}
+		.prompt .cmd {
+			color: var(--text);
+		}
+		.cursor {
+			display: inline-block;
+			width: 7px;
+			height: 14px;
+			background: var(--mauve);
+			margin-left: 2px;
+			vertical-align: -2px;
+			animation: blink 1.1s steps(1) infinite;
+		}
+		@keyframes blink {
+			50% {
+				opacity: 0;
+			}
+		}
+
+		h1 {
+			font-size: 30px;
+			margin: 0 0 10px;
+			letter-spacing: -0.02em;
+			color: var(--text);
+		}
+		h1 .dim {
+			color: var(--surface1);
+		}
+
+		.meta-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 11.5px;
+			color: var(--subtext);
+			background: color-mix(in srgb, var(--base) var(--op), transparent);
+			border: var(--border-w) solid var(--surface0);
+			border-radius: var(--r-pill);
+			padding: 3px 10px;
+			margin-bottom: 26px;
+		}
+		.meta-badge b {
+			color: var(--green);
+			font-weight: 600;
+		}
+		.meta-badge span {
+			color: var(--surface1);
+		}
+
+		.lede {
+			color: var(--subtext);
+			font-size: 14px;
+			line-height: 1.7;
+			max-width: 68ch;
+			margin: 0 0 44px;
+		}
+		.lede b {
+			color: var(--peach);
+			font-weight: 600;
+		}
+		.lede code {
+			color: var(--sapphire);
+			font-size: 12.5px;
+		}
+
+		section {
+			margin-bottom: 52px;
+		}
+
+		.section-head {
+			display: flex;
+			align-items: baseline;
+			gap: 10px;
+			margin-bottom: 6px;
+		}
+		.tag {
+			font-size: 11px;
+			letter-spacing: 0.12em;
+			text-transform: uppercase;
+			padding: 2px 9px;
+			border-radius: var(--r-pill);
+			border: var(--border-w) solid;
+			white-space: nowrap;
+		}
+		.section-title {
+			font-size: 16px;
+			color: var(--text);
+			font-weight: 600;
+		}
+		.section-sub {
+			font-size: 12.5px;
+			color: var(--surface1);
+			margin: 0 0 22px;
+		}
+
+		.layer {
+			position: relative;
+			border-radius: var(--r-island);
+			border: var(--border-w) solid var(--surface0);
+			background: color-mix(in srgb, var(--mantle) var(--op), transparent);
+		}
+		.ring-tab {
+			position: absolute;
+			top: -10px;
+			left: 18px;
+			background: var(--crust);
+			padding: 0 8px;
+			font-size: 10.5px;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+			color: var(--lavender);
+		}
+
+		/* ---------- pipeline diagram ---------- */
+
+		.diagram-frame {
+			padding: 34px 18px 22px;
+		}
+		.diagram-scroll {
+			overflow-x: auto;
+		}
+		.diagram {
+			display: block;
+			margin: 0 auto;
+		}
+		.diagram text {
+			font-family:
+				"JetBrains Mono", "Fira Code", ui-monospace, "Cascadia Code", Menlo,
+				Consolas, monospace;
+		}
+
+		.pill-label {
+			font-size: 13px;
+			font-weight: 700;
+			letter-spacing: 0.03em;
+		}
+		.chip-label {
+			font-size: 11.5px;
+			fill: var(--text);
+		}
+		.chip-dashed-label {
+			font-size: 10.5px;
+			fill: var(--subtext);
+		}
+		.node-label {
+			font-size: 13.5px;
+			font-weight: 700;
+		}
+		.tick {
+			stroke: var(--surface1);
+			stroke-width: 1;
+			opacity: 0.6;
+		}
+
+		.ci-glow {
+			animation: pulse 2.6s ease-in-out infinite;
+			transform-origin: 592px 344px;
+		}
+		@keyframes pulse {
+			0%,
+			100% {
+				opacity: 0.16;
+			}
+			50% {
+				opacity: 0.42;
+			}
+		}
+
+		.flow-line {
+			stroke-dasharray: 5 5;
+			animation: dash 1.4s linear infinite;
+		}
+		@keyframes dash {
+			to {
+				stroke-dashoffset: -20;
+			}
+		}
+
+		.chip-group {
+			transition: transform 0.15s ease;
+		}
+		.chip-group:hover {
+			transform: translateY(-2px);
+		}
+
+		.diagram-captions {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 10px;
+			margin-top: 18px;
+		}
+		.diagram-captions div {
+			font-size: 11px;
+			color: var(--surface1);
+			line-height: 1.5;
+			padding: 0 4px;
+		}
+		.diagram-captions b {
+			display: block;
+			font-size: 11.5px;
+			margin-bottom: 3px;
+		}
+
+		/* ---------- phase cards ---------- */
+
+		.phase-grid {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 12px;
+		}
+		.phase-card {
+			background: color-mix(in srgb, var(--base) var(--op), transparent);
+			border: var(--border-w) solid var(--surface0);
+			border-top: 3px solid var(--phase-color, var(--surface1));
+			border-radius: var(--r-island);
+			padding: 16px 14px;
+		}
+		.phase-card h3 {
+			margin: 0 0 3px;
+			font-size: 14px;
+			color: var(--phase-color, var(--text));
+		}
+		.phase-card .role {
+			font-size: 10px;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: var(--surface1);
+			margin-bottom: 12px;
+		}
+		.phase-card ul {
+			list-style: none;
+			margin: 0;
+			padding: 0;
+		}
+		.phase-card li {
+			font-size: 12px;
+			color: var(--subtext);
+			padding: 5px 0;
+			border-top: 1px solid var(--surface0);
+		}
+		.phase-card li:first-child {
+			border-top: none;
+		}
+		.phase-card li b {
+			color: var(--text);
+			font-weight: 600;
+		}
+		.phase-card .compose {
+			margin-top: 12px;
+			font-size: 11px;
+			color: var(--surface1);
+			border-top: 1px dashed var(--surface0);
+			padding-top: 8px;
+		}
+		.phase-card .compose code {
+			color: var(--sapphire);
+		}
+
+		/* ---------- ladder ---------- */
+
+		.ladder {
+			margin: 18px 0 0;
+			font-size: 12.5px;
+			line-height: 1.9;
+			color: var(--surface1);
+			white-space: pre;
+		}
+		.ladder .v {
+			color: var(--text);
+		}
+		.ladder .op {
+			color: var(--surface1);
+		}
+		.ladder .check {
+			color: var(--green);
+		}
+		.ladder .ci {
+			color: var(--sapphire);
+		}
+		.ladder .deploy {
+			color: var(--teal);
+		}
+		.ladder .note {
+			color: var(--surface1);
+			font-style: italic;
+		}
+
+		/* ---------- shared / front door ---------- */
+
+		.code-block {
+			background: var(--mantle);
+			border: var(--border-w) solid var(--surface0);
+			border-radius: var(--r-island);
+			padding: 18px 20px;
+			font-size: 12.5px;
+			line-height: 1.75;
+			overflow-x: auto;
+		}
+		.code-block .c-comment {
+			color: var(--surface1);
+		}
+		.code-block .c-kw {
+			color: var(--mauve);
+		}
+		.code-block .c-str {
+			color: var(--green);
+		}
+		.code-block .c-fn {
+			color: var(--sapphire);
+		}
+		.code-block .c-attr {
+			color: var(--peach);
+		}
+		.code-block .c-var {
+			color: var(--text);
+		}
+		.code-block pre {
+			margin: 0;
+			white-space: pre;
+		}
+
+		.terminal {
+			border-radius: var(--r-island);
+			overflow: hidden;
+			border: var(--border-w) solid var(--surface0);
+			background: var(--mantle);
+			box-shadow:
+				0 0 50px -14px rgba(203, 166, 247, 0.22),
+				0 0 90px -28px rgba(148, 226, 213, 0.16);
+			margin-top: 16px;
+		}
+		.term-bar {
+			display: flex;
+			align-items: center;
+			gap: 9px;
+			padding: 9px 16px;
+			background: var(--surface0);
+			font-size: 12px;
+			color: var(--subtext);
+		}
+		.term-dot {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background: var(--green);
+			box-shadow: 0 0 7px var(--green);
+		}
+		.term-title b {
+			color: var(--text);
+		}
+		.term-body {
+			padding: 18px 20px 22px;
+			font-size: 13px;
+			line-height: 1.75;
+		}
+		.term-prompt {
+			color: var(--text);
+			margin-bottom: 4px;
+		}
+		.term-prompt .chevron {
+			color: var(--mauve);
+			margin-right: 6px;
+		}
+		.filter-box {
+			border: var(--border-w) solid var(--mauve);
+			border-radius: var(--r-pill);
+			padding: 6px 12px;
+			margin: 8px 0 10px;
+			color: var(--subtext);
+			font-size: 12.5px;
+			display: inline-block;
+		}
+		.filter-box .typed {
+			color: var(--text);
+		}
+		.filter-box .ph {
+			color: var(--surface1);
+		}
+		.term-menu-item {
+			padding: 3px 4px;
+			font-size: 12.5px;
+			color: var(--surface1);
+		}
+		.term-menu-item.active {
+			color: var(--base);
+			background: var(--green);
+			border-radius: 5px;
+		}
+		.term-result {
+			color: var(--green);
+			margin-top: 8px;
+		}
+		.term-idle {
+			margin-top: 12px;
+		}
+		.term-idle .chevron {
+			color: var(--mauve);
+			margin-right: 6px;
+		}
+
+		.banner-callout {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			margin-top: 16px;
+			border: var(--border-w) solid var(--red);
+			border-radius: var(--r-island);
+			padding: 8px 16px;
+			font-size: 12.5px;
+			color: var(--text);
+		}
+		.banner-callout .src {
+			color: var(--surface1);
+			font-size: 10.5px;
+		}
+
+		footer {
+			margin-top: 60px;
+			font-size: 11.5px;
+			color: var(--surface1);
+			text-align: center;
+		}
+
+		@media (max-width: 720px) {
+			.phase-grid {
+				grid-template-columns: 1fr 1fr;
+			}
+			.diagram-captions {
+				grid-template-columns: 1fr 1fr;
+			}
+		}
+		@media (max-width: 480px) {
+			.phase-grid {
+				grid-template-columns: 1fr;
+			}
+			.diagram-captions {
+				grid-template-columns: 1fr;
+				text-align: left;
+			}
+		}
+		</style>
+	</head>
+	<body>
+		<div class="spectrum"></div>
+		<main>
+			<div class="prompt">
+				<span class="path">~/poly-core</span> <span class="chevron">❯</span>
+				<span class="cmd">just menu</span><span class="cursor"></span>
+			</div>
+
+			<h1>the harness<span class="dim">.just</span></h1>
+			<div class="meta-badge">
+				<b>poly-core</b><span>·</span>v0.3.1-a4f9c21-dirty
+			</div>
+
+			<p class="lede">
+				Four phases, not six files. <b>dev</b>, <b>test</b>, <b>check</b>, and
+				<b>deploy</b>
+				are the only recipes a human ever types by name — everything else hangs
+				underneath them. <b>ci</b> isn't a phase at all; it's what falls out
+				when <code>check</code> and <code>test</code> meet. And every recipe
+				here is reachable the same way, through one front door:
+				<code>_shared.just</code>.
+			</p>
+
+			<!-- DIAGRAM -->
+			<section>
+				<div class="section-head">
+					<span
+						class="tag"
+						style="color:var(--sapphire); border-color:var(--sapphire);"
+						>pipeline</span
+					>
+					<span class="section-title">four phases, one convergence</span>
+				</div>
+				<p class="section-sub">
+					the verb is constant, the tool underneath swaps — this is the shape
+					every repo shares
+				</p>
+
+				<div class="layer diagram-frame">
+					<span class="ring-tab">justfile</span>
+
+					<div class="diagram-scroll">
+						<svg
+							class="diagram"
+							width="780"
+							height="400"
+							viewBox="0 0 780 400"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<defs>
+								<marker
+									id="a-green"
+									viewBox="0 0 10 10"
+									refX="8"
+									refY="5"
+									markerWidth="7"
+									markerHeight="7"
+									orient="auto-start-reverse"
+								>
+									<path d="M0,0 L10,5 L0,10 z" fill="var(--green)"></path>
+								</marker>
+								<marker
+									id="a-red"
+									viewBox="0 0 10 10"
+									refX="8"
+									refY="5"
+									markerWidth="7"
+									markerHeight="7"
+									orient="auto-start-reverse"
+								>
+									<path d="M0,0 L10,5 L0,10 z" fill="var(--red)"></path>
+								</marker>
+								<marker
+									id="a-sapphire"
+									viewBox="0 0 10 10"
+									refX="8"
+									refY="5"
+									markerWidth="7"
+									markerHeight="7"
+									orient="auto-start-reverse"
+								>
+									<path d="M0,0 L10,5 L0,10 z" fill="var(--sapphire)"></path>
+								</marker>
+								<marker
+									id="a-mauve"
+									viewBox="0 0 10 10"
+									refX="8"
+									refY="5"
+									markerWidth="7"
+									markerHeight="7"
+									orient="auto-start-reverse"
+								>
+									<path d="M0,0 L10,5 L0,10 z" fill="var(--mauve)"></path>
+								</marker>
+								<filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+									<feGaussianBlur stdDeviation="9"></feGaussianBlur>
+								</filter>
+							</defs>
+
+							<!-- phase pills -->
+							<g>
+								<rect
+									x="26"
+									y="16"
+									width="140"
+									height="36"
+									rx="10"
+									fill="var(--mantle)"
+									stroke="var(--mauve)"
+								></rect>
+								<text
+									x="96"
+									y="39"
+									text-anchor="middle"
+									class="pill-label"
+									fill="var(--mauve)"
+								>
+									dev
+								</text>
+
+								<rect
+									x="220"
+									y="16"
+									width="140"
+									height="36"
+									rx="10"
+									fill="var(--mantle)"
+									stroke="var(--red)"
+								></rect>
+								<text
+									x="290"
+									y="39"
+									text-anchor="middle"
+									class="pill-label"
+									fill="var(--red)"
+								>
+									test
+								</text>
+
+								<rect
+									x="420"
+									y="16"
+									width="140"
+									height="36"
+									rx="10"
+									fill="var(--mantle)"
+									stroke="var(--green)"
+								></rect>
+								<text
+									x="490"
+									y="39"
+									text-anchor="middle"
+									class="pill-label"
+									fill="var(--green)"
+								>
+									check
+								</text>
+
+								<rect
+									x="614"
+									y="16"
+									width="140"
+									height="36"
+									rx="10"
+									fill="var(--mantle)"
+									stroke="var(--teal)"
+								></rect>
+								<text
+									x="684"
+									y="39"
+									text-anchor="middle"
+									class="pill-label"
+									fill="var(--teal)"
+								>
+									deploy
+								</text>
+							</g>
+
+							<!-- connector ticks: pill -> first chip -->
+							<line class="tick" x1="96" y1="52" x2="96" y2="70"></line>
+							<line class="tick" x1="290" y1="52" x2="290" y2="70"></line>
+							<line class="tick" x1="490" y1="52" x2="490" y2="70"></line>
+							<line class="tick" x1="684" y1="52" x2="684" y2="70"></line>
+
+							<!-- dev chips -->
+							<g class="chip-group">
+								<rect
+									x="32"
+									y="70"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--mauve)"
+								></rect>
+								<text x="96" y="90" text-anchor="middle" class="chip-label">
+									prune
+								</text>
+							</g>
+							<g class="chip-group">
+								<rect
+									x="32"
+									y="108"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--mauve)"
+								></rect>
+								<text x="96" y="128" text-anchor="middle" class="chip-label">
+									prepare
+								</text>
+							</g>
+							<g class="chip-group">
+								<rect
+									x="32"
+									y="146"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--mauve)"
+								></rect>
+								<text x="96" y="166" text-anchor="middle" class="chip-label">
+									run &lt;T&gt;
+								</text>
+							</g>
+							<!-- dev loop -->
+							<path
+								d="M 32 176 C -30 176, -30 40, 24 34"
+								fill="none"
+								stroke="var(--mauve)"
+								stroke-width="1.3"
+								stroke-dasharray="4 4"
+								marker-end="url(#a-mauve)"
+							></path>
+
+							<!-- test chips -->
+							<g class="chip-group">
+								<rect
+									x="226"
+									y="70"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--red)"
+								></rect>
+								<text x="290" y="90" text-anchor="middle" class="chip-label">
+									test
+								</text>
+							</g>
+							<g class="chip-group">
+								<rect
+									x="226"
+									y="108"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--red)"
+								></rect>
+								<text x="290" y="128" text-anchor="middle" class="chip-label">
+									test -&lt;T&gt;
+								</text>
+							</g>
+							<g class="chip-group">
+								<rect
+									x="226"
+									y="146"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--red)"
+								></rect>
+								<text x="290" y="166" text-anchor="middle" class="chip-label">
+									coverage
+								</text>
+							</g>
+
+							<!-- check chips -->
+							<g class="chip-group">
+								<rect
+									x="426"
+									y="70"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--green)"
+								></rect>
+								<text x="490" y="90" text-anchor="middle" class="chip-label">
+									fmt
+								</text>
+							</g>
+							<g class="chip-group">
+								<rect
+									x="426"
+									y="108"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--green)"
+								></rect>
+								<text x="490" y="128" text-anchor="middle" class="chip-label">
+									lint
+								</text>
+							</g>
+							<g class="chip-group">
+								<rect
+									x="426"
+									y="146"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--green)"
+								></rect>
+								<text x="490" y="166" text-anchor="middle" class="chip-label">
+									types
+								</text>
+							</g>
+							<!-- audit: optional, dashed -->
+							<rect
+								x="506"
+								y="192"
+								width="108"
+								height="26"
+								rx="7"
+								fill="var(--base)"
+								stroke="var(--surface1)"
+								stroke-dasharray="3 3"
+							></rect>
+							<text
+								x="560"
+								y="209"
+								text-anchor="middle"
+								class="chip-dashed-label"
+							>
+								audit
+							</text>
+							<path
+								d="M 490 176 L 545 192"
+								stroke="var(--surface1)"
+								stroke-width="1"
+								stroke-dasharray="3 3"
+							></path>
+
+							<!-- deploy chips -->
+							<g class="chip-group">
+								<rect
+									x="620"
+									y="70"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--teal)"
+								></rect>
+								<text x="684" y="90" text-anchor="middle" class="chip-label">
+									build
+								</text>
+							</g>
+							<g class="chip-group">
+								<rect
+									x="620"
+									y="108"
+									width="128"
+									height="30"
+									rx="8"
+									fill="var(--base)"
+									stroke="var(--teal)"
+								></rect>
+								<text x="684" y="128" text-anchor="middle" class="chip-label">
+									publish
+								</text>
+							</g>
+							<!-- preview: side artifact, dashed -->
+							<rect
+								x="630"
+								y="150"
+								width="108"
+								height="26"
+								rx="7"
+								fill="var(--base)"
+								stroke="var(--peach)"
+								stroke-dasharray="3 3"
+							></rect>
+							<text
+								x="684"
+								y="167"
+								text-anchor="middle"
+								class="chip-dashed-label"
+								fill="var(--peach)"
+							>
+								preview
+							</text>
+
+							<!-- crossing convergence lines -->
+							<line
+								x1="490"
+								y1="176"
+								x2="398"
+								y2="281"
+								stroke="var(--green)"
+								stroke-width="1.6"
+								marker-end="url(#a-green)"
+							></line>
+							<line
+								x1="290"
+								y1="176"
+								x2="584"
+								y2="325"
+								stroke="var(--red)"
+								stroke-width="1.6"
+								marker-end="url(#a-red)"
+							></line>
+							<line
+								x1="463"
+								y1="303"
+								x2="519"
+								y2="337"
+								stroke="var(--sapphire)"
+								stroke-width="1.6"
+								marker-end="url(#a-sapphire)"
+							></line>
+
+							<!-- check node -->
+							<rect
+								x="315"
+								y="281"
+								width="150"
+								height="38"
+								rx="10"
+								fill="var(--mantle)"
+								stroke="var(--green)"
+								stroke-width="1.4"
+							></rect>
+							<text
+								x="390"
+								y="305"
+								text-anchor="middle"
+								class="node-label"
+								fill="var(--green)"
+							>
+								check
+							</text>
+
+							<!-- ci node with glow -->
+							<rect
+								class="ci-glow"
+								x="497"
+								y="315"
+								width="190"
+								height="58"
+								rx="16"
+								fill="var(--sapphire)"
+								filter="url(#glow)"
+							></rect>
+							<rect
+								x="517"
+								y="325"
+								width="150"
+								height="38"
+								rx="10"
+								fill="var(--mantle)"
+								stroke="var(--sapphire)"
+								stroke-width="1.4"
+							></rect>
+							<text
+								x="592"
+								y="349"
+								text-anchor="middle"
+								class="node-label"
+								fill="var(--sapphire)"
+							>
+								ci
+							</text>
+
+							<!-- ci -> publish (deploy depends on ci) -->
+							<path
+								class="flow-line"
+								d="M 592 325 C 592 250, 660 170, 684 138"
+								fill="none"
+								stroke="var(--sapphire)"
+								stroke-width="1.4"
+								marker-end="url(#a-sapphire)"
+							></path>
+						</svg>
+					</div>
+
+					<div class="diagram-captions">
+						<div>
+							<b style="color:var(--mauve);">dev</b>the human's loop — prune,
+							prepare, run. never part of ci.
+						</div>
+						<div>
+							<b style="color:var(--green);">check</b>fmt + lint + types.
+							rewrites the tree in place.
+						</div>
+						<div>
+							<b style="color:var(--sapphire);">ci</b>check + test. the one
+							thing a PR must pass.
+						</div>
+						<div>
+							<b style="color:var(--teal);">publish</b>ci + deploy. only runs on
+							a green ci.
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- PHASE CARDS -->
+			<section>
+				<div class="section-head">
+					<span
+						class="tag"
+						style="color:var(--peach); border-color:var(--peach);"
+						>recipes</span
+					>
+					<span class="section-title">what's inside each phase</span>
+				</div>
+				<p class="section-sub">
+					the verb never changes across repos — only the tool it calls does
+				</p>
+
+				<div class="phase-grid">
+					<div class="phase-card" style="--phase-color:var(--mauve);">
+						<h3>dev</h3>
+						<div class="role">loop · human, tight</div>
+						<ul>
+							<li><b>prune</b> — nuke caches & lockfiles</li>
+							<li><b>prepare</b> — reinstall, resync</li>
+							<li><b>run &lt;T&gt;</b> — execute a target</li>
+						</ul>
+					</div>
+
+					<div class="phase-card" style="--phase-color:var(--red);">
+						<h3>test</h3>
+						<div class="role">prove · reads only</div>
+						<ul>
+							<li><b>test</b> — full suite</li>
+							<li><b>test &lt;T&gt;</b> — one target</li>
+							<li><b>coverage</b> — report</li>
+						</ul>
+					</div>
+
+					<div class="phase-card" style="--phase-color:var(--green);">
+						<h3>check</h3>
+						<div class="role">fix · writes</div>
+						<ul>
+							<li>
+								<b>fmt</b>
+								—
+								<span style="color:var(--surface1);"
+									>ruff / cargo fmt / alejandra / biome</span
+								>
+							</li>
+							<li>
+								<b>lint</b>
+								—
+								<span style="color:var(--surface1);"
+									>ruff --fix / clippy / statix</span
+								>
+							</li>
+							<li>
+								<b>types</b>
+								—
+								<span style="color:var(--surface1);"
+									>ty / cargo check / deno check</span
+								>
+							</li>
+						</ul>
+						<div class="compose">check := <code>fmt lint types</code></div>
+					</div>
+
+					<div class="phase-card" style="--phase-color:var(--teal);">
+						<h3>deploy</h3>
+						<div class="role">ship</div>
+						<ul>
+							<li><b>build</b> — artifact</li>
+							<li><b>publish</b> — release it</li>
+							<li><b>preview</b> — ephemeral, per-PR</li>
+						</ul>
+						<div class="compose">publish := <code>ci deploy</code></div>
+					</div>
+				</div>
+
+				<pre
+					class="ladder"
+				><span class="check v">check</span>   <span class="op">=</span> fmt + lint + types        <span class="note"># the umbrella, not a fourth verb</span>
+<span class="ci v">ci</span>      <span class="op">=</span> check + test              <span class="note"># not a phase — what the phases add up to</span>
+<span class="deploy v">publish</span> <span class="op">=</span> ci + release + deploy     <span class="note"># only ships a green tree</span></pre>
+			</section>
+
+			<!-- SHARED / FRONT DOOR -->
+			<section>
+				<div class="section-head">
+					<span
+						class="tag"
+						style="color:var(--peach); border-color:var(--peach);"
+						>_shared.just</span
+					>
+					<span class="section-title">the front door</span>
+				</div>
+				<p class="section-sub">
+					imported into every layer — settings, metadata, and the two ways in
+				</p>
+
+				<div class="code-block">
+					<pre
+					><span class="c-comment"># _shared.just — vars, private helpers, and the front door. Shared into every</span>
+<span class="c-comment"># layer via `import`; settings and variables live here once.</span>
+
+<span class="c-var">PROJECT</span> := <span class="c-str">"poly-core"</span>
+<span class="c-var">VERSION</span> := `git describe --tags --always --dirty`
+
+<span class="c-attr">[default]</span>
+<span class="c-attr">[group('meta')]</span>
+<span class="c-fn">list</span>:
+    @just --list --unsorted
+
+<span class="c-comment"># Interactive autocomplete over every public recipe — type to fuzzy-filter.</span>
+<span class="c-attr">[group('meta')]</span>
+<span class="c-fn">menu</span>:
+    #!/usr/bin/env nu
+    <span class="c-kw">let</span> recipes = (just --summary | str trim | split row <span class="c-str">' '</span>)
+    <span class="c-kw">let</span> choice = ($recipes | str join <span class="c-str">"\n"</span> | ^gum filter --placeholder <span class="c-str">"poly-core recipe..."</span>) | str trim
+    <span class="c-kw">if</span> ($choice | is-not-empty) { just $choice }
+
+<span class="c-attr">[private]</span>
+<span class="c-attr">[group('meta')]</span>
+<span class="c-fn">_banner</span> msg:
+    #!/usr/bin/env nu
+    ^gum style --foreground 212 --border rounded --padding <span class="c-str">"0 2"</span> <span class="c-str">"{{msg}}"</span></pre>
+				</div>
+
+				<div class="terminal">
+					<div class="term-bar">
+						<span class="term-dot"></span>
+						<span class="term-title"><b>nu</b> — poly-core</span>
+					</div>
+					<div class="term-body">
+						<div class="term-prompt">
+							<span class="chevron">❯</span>just menu
+						</div>
+						<div class="filter-box">
+							poly-core recipe... <span class="typed">tes</span
+							><span class="ph">▏</span>
+						</div>
+						<div class="term-menu-item">fmt</div>
+						<div class="term-menu-item">lint</div>
+						<div class="term-menu-item active">test — full suite</div>
+						<div class="term-menu-item">test &lt;T&gt;</div>
+
+						<div class="term-prompt" style="margin-top:12px;">
+							<span class="chevron">❯</span>just test
+						</div>
+						<div class="term-result">✓ 41 passed in 0.7s</div>
+						<div class="term-idle">
+							<span class="chevron">❯</span><span class="cursor"></span>
+						</div>
+					</div>
+				</div>
+
+				<div class="banner-callout">
+					<span style="color:var(--red);">▶</span>
+					shipping poly-core v0.3.1-a4f9c21-dirty
+					<span class="src">— _banner, called from publish</span>
+				</div>
+			</section>
+
+			<footer>
+				justfile › _shared.just › { dev, test, check, deploy}.just — four
+				phases, one convergence
+			</footer>
+		</main>
+	</body>
+</html>

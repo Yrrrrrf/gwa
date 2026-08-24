@@ -6,7 +6,7 @@ import { layout } from "rune-lab/layout";
 import { observer } from "rune-lab/observer";
 import { palettes } from "rune-lab/palettes";
 import type { Snippet } from "svelte";
-import faviconUrl from "$lib/assets/img/rune.png";
+import faviconUrl from "../lib/assets/img/rune.png";
 import AppLayout from "./AppLayout.svelte";
 
 let { children }: { children: Snippet } = $props();
@@ -14,11 +14,11 @@ let { children }: { children: Snippet } = $props();
 
 <RuneProvider
   plugins={[
-    layout, 
-    palettes, 
-    i18n, 
-    observer
-    ]}
+    layout,
+    palettes,
+    i18n,
+    // observer
+  ]}
   config={{
     app: {
       name: "Rune Lab",
@@ -26,7 +26,7 @@ let { children }: { children: Snippet } = $props();
       description: "Plugin test bench",
       author: "Yrrrrrf",
       icon: faviconUrl,
-    }
+    },
   }}
 >
   <AppLayout>

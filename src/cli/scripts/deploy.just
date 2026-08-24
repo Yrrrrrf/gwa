@@ -1,3 +1,7 @@
+[doc('Run CLI CI pipeline (check + test)')]
+[group('deploy')]
+ci: check test
+
 # Future body: deploy tasks if cli gets package distribution
 [doc('Deploy CLI application')]
 [group('deploy')]

@@ -1,26 +1,26 @@
 <script lang="ts">
-  interface Props {
-    status: string;
-    class?: string;
-  }
+interface Props {
+	status: string;
+	class?: string;
+}
 
-  let { status, class: className = "" }: Props = $props();
+let { status, class: className = "" }: Props = $props();
 
-  const statusMap: Record<string, string> = {
-    active: "badge-success",
-    inactive: "badge-ghost",
-    pending: "badge-warning",
-    error: "badge-error",
-  };
+const statusMap: Record<string, string> = {
+	active: "badge-success",
+	inactive: "badge-ghost",
+	pending: "badge-warning",
+	error: "badge-error",
+};
 
-  const labelMap: Record<string, string> = {
-    active: "Active",
-    inactive: "Inactive",
-    pending: "Pending",
-    error: "Error",
-  };
+const labelMap: Record<string, string> = {
+	active: "Active",
+	inactive: "Inactive",
+	pending: "Pending",
+	error: "Error",
+};
 
-  const label = $derived(labelMap[status] ?? status);
+const label = $derived(labelMap[status] ?? status);
 </script>
 
 <div

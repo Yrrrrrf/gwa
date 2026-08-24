@@ -12,31 +12,31 @@ let lineCount = $state(0);
 let overflow = $state(false);
 
 const longText =
-  "Rune Lab is a plugin test bench. This paragraph is measured and wrapped by " +
-  "pretext with pure arithmetic instead of DOM reflow — resize the window or " +
-  "toggle the side panels and watch the line count update. Clamping is set to " +
-  "three lines, so on narrow widths the overflow flag below flips to true.";
+	"Rune Lab is a plugin test bench. This paragraph is measured and wrapped by " +
+	"pretext with pure arithmetic instead of DOM reflow — resize the window or " +
+	"toggle the side panels and watch the line count update. Clamping is set to " +
+	"three lines, so on narrow widths the overflow flag below flips to true.";
 
 const richItems = [
-  { text: "Rendered by", font: "10px sans-serif" },
-  {
-    text: "pretext",
-    font: "bold 12px sans-serif",
-    break: "never" as const,
-    extraWidth: 16,
-  },
-  {
-    text: "with an atomic pill that never breaks across lines.",
-    font: "24px sans-serif",
-  },
+	{ text: "Rendered by", font: "10px sans-serif" },
+	{
+		text: "pretext",
+		font: "bold 12px sans-serif",
+		break: "never" as const,
+		extraWidth: 16,
+	},
+	{
+		text: "with an atomic pill that never breaks across lines.",
+		font: "24px sans-serif",
+	},
 ];
 
 const shortcuts = [
-  ["alt+1…alt+4", "toggle strip / nav / detail / statusbar"],
-  ["ctrl+space", "command palette (app shortcut)"],
-  ["ctrl+shift+k", "command palette (plugin default)"],
-  ["ctrl+/", "shortcut palette (plugin default)"],
-  ["ctrl+,", "settings modal (plugin default)"],
+	["alt+1…alt+4", "toggle strip / nav / detail / statusbar"],
+	["ctrl+space", "command palette (app shortcut)"],
+	["ctrl+shift+k", "command palette (plugin default)"],
+	["ctrl+/", "shortcut palette (plugin default)"],
+	["ctrl+,", "settings modal (plugin default)"],
 ];
 </script>
 

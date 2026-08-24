@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { ICONS } from "../../icons/mod.ts";
-  import { authStore } from "@sdk/state";
+import { ICONS } from "../../icons/mod.ts";
+import { authStore } from "@sdk/state";
 
-  const auth = authStore;
+const auth = authStore;
 
-  let scrolled = $state(false);
+let scrolled = $state(false);
 
-  // Svelte 5 window event listener via rune-based logical block wouldn't be purely reactive
-  // Need to use svelte:window
+// Svelte 5 window event listener via rune-based logical block wouldn't be purely reactive
+// Need to use svelte:window
 </script>
 
 <svelte:window on:scroll={() => (scrolled = window.scrollY > 20)} />

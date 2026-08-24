@@ -9,3 +9,8 @@ run:
 [group('dev')]
 build:
     @echo "build: cli crate not implemented; skipping"
+
+[doc('Placeholder — nothing to purge/reinstall here yet')]
+[group('dev')]
+prepare:
+    @print "prepare: not implemented on cli side yet"
