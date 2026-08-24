@@ -2,7 +2,8 @@
 import { LanguageSelector } from "rune-lab/i18n";
 import { getLayoutStore, RichText, Text, ThemeSelector } from "rune-lab/layout";
 import { getRegistryStore, getToastStore } from "rune-lab/palettes";
-import PretextPlayground from "../lib/PretextPlayground.svelte";
+
+import ShortcutsCard from "./ShortcutsCard.svelte";
 
 const layout = getLayoutStore();
 const registry = getRegistryStore();
@@ -30,14 +31,6 @@ const richItems = [
 		font: "24px sans-serif",
 	},
 ];
-
-const shortcuts = [
-	["alt+1…alt+4", "toggle strip / nav / detail / statusbar"],
-	["ctrl+space", "command palette (app shortcut)"],
-	["ctrl+shift+k", "command palette (plugin default)"],
-	["ctrl+/", "shortcut palette (plugin default)"],
-	["ctrl+,", "settings modal (plugin default)"],
-];
 </script>
 
 <ThemeSelector />
@@ -52,22 +45,7 @@ const shortcuts = [
     </a>
   </div>
 
-  <div class="card bg-base-200 card-sm">
-    <div class="card-body">
-      <h2 class="card-title text-sm">Shortcuts</h2>
-      <table class="table table-xs font-mono">
-        <tbody>
-          {#each shortcuts as [keys, what]}
-            <tr
-              ><td class="w-40"><kbd class="kbd kbd-sm">{keys}</kbd></td><td
-                >{what}</td
-              ></tr
-            >
-          {/each}
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <ShortcutsCard />
 
   <div class="card bg-base-200 card-sm">
     <div class="card-body">
@@ -95,10 +73,6 @@ const shortcuts = [
 
   <div class="card bg-base-200 card-sm">
     <div class="card-body">
-      <h2 class="card-title text-sm">
-        pretext playground · lines: {lineCount} · overflow: {overflow}
-      </h2>
-      <PretextPlayground />
       <div class="divider my-1 text-xs opacity-50">
         clamped Text + rich pill
       </div>
