@@ -1,0 +1,5 @@
+{
+	"name": "gwa-client",
+	"private": true,
+	"type": "module"
+}

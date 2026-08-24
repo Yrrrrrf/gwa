@@ -3,21 +3,22 @@
 
 PROJECT := "gwa-client"
 VERSION := `open deno.json | get version`
+JUSTFILE := parent_directory(source_directory()) / "client.just"
 
 [default]
 [doc('List all available client recipes')]
 [group('meta')]
 list:
-    @just --list --unsorted
+    @just --justfile '{{ JUSTFILE }}' --list --unsorted
 
-# Interactive autocomplete over every public recipe — type to fuzzy-filter.
+# Interactive autocomplete over client recipes — type to fuzzy-filter.
 [doc('Interactive recipe picker (fuzzy-filtered via gum)')]
 [group('meta')]
 menu:
     #!/usr/bin/env nu
-    let recipes = (just --summary | str trim | split row ' ')
-    let choice = ($recipes | str join "\n" | ^gum filter --placeholder ($"($PROJECT) recipe...")) | str trim
-    if ($choice | is-not-empty) { just $choice }
+    let recipes = (just --justfile '{{ JUSTFILE }}' --summary | str trim | split row ' ')
+    let choice = ($recipes | str join "\n" | ^gum filter --placeholder "{{ PROJECT }} recipe...") | str trim
+    if ($choice | is-not-empty) { just --justfile '{{ JUSTFILE }}' $choice }
 
 [private]
 [group('meta')]

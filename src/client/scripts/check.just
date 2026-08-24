@@ -12,7 +12,7 @@ lint:
 [group('check')]
 types:
     deno check sdk/core/src/mod.ts sdk/api/src/mod.ts sdk/state/src/mod.ts sdk/ui/src/mod.ts
-    cd apps/vision; deno run -A npm:@sveltejs/kit@next/svelte-kit sync; deno run -A npm:svelte-check@^4.7.5 --tsconfig ./tsconfig.json
+    cd apps/vision; deno run -A npm:@sveltejs/kit@next/svelte-kit sync; deno run -A npm:svelte-check@^4.7.5 --tsconfig ./tsconfig.json --config ./vite.config.ts
 
 [doc('Audit all code namespaces')]
 [group('check')]

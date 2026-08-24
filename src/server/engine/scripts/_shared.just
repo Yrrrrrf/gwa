@@ -3,20 +3,21 @@
 
 PROJECT := "gwa-server-engine"
 VERSION := `open ../../client/deno.json | get version`
+JUSTFILE := parent_directory(source_directory()) / "engine.just"
 
 [default]
 [doc('Show Engine help menu')]
 [group('meta')]
 list:
-    @just --list --unsorted
+    @just --justfile '{{ JUSTFILE }}' --list --unsorted
 
 [doc('Interactive recipe picker (fuzzy-filtered via gum)')]
 [group('meta')]
 menu:
     #!/usr/bin/env nu
-    let recipes = (just --summary | str trim | split row ' ')
-    let choice = ($recipes | str join "\n" | ^gum filter --placeholder ($"($PROJECT) recipe...")) | str trim
-    if ($choice | is-not-empty) { just $choice }
+    let recipes = (just --justfile '{{ JUSTFILE }}' --summary | str trim | split row ' ')
+    let choice = ($recipes | str join "\n" | ^gum filter --placeholder "{{ PROJECT }} recipe...") | str trim
+    if ($choice | is-not-empty) { just --justfile '{{ JUSTFILE }}' $choice }
 
 [private]
 [group('meta')]

@@ -1,0 +1,10 @@
+[package]
+name = "gwa-cli"
+version = "0.0.0"
+description = "Command-line interface for GWA"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"
