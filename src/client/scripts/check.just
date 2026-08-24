@@ -19,7 +19,7 @@ types:
 [doc('Audit all code namespaces')]
 [group('check')]
 audit:
-    deno run -A npm:fallow
+    deno run -A npm:fallow -c config/fallowrc.json
 
 [doc('Run all check quality gates')]
 [group('check')]

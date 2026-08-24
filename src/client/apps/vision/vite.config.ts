@@ -1,3 +1,3 @@
-import { defineGwaApp } from "../../config/vite/app.config.ts";
+import { defineGwaApp } from "../../config/app.config.ts";
 
 export default defineGwaApp();
