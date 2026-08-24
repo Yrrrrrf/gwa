@@ -21,6 +21,11 @@ types:
 audit:
     deno run -A npm:fallow -c config/fallowrc.json
 
+[doc('Check code health')]
+[group('check')]
+health:
+    deno run -A npm:fallow health --score -c config/fallowrc.json
+
 [doc('Run all check quality gates')]
 [group('check')]
 check: fmt lint types
