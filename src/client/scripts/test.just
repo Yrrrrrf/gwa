@@ -1,7 +1,7 @@
 [doc('Run workspace tests via vite-plus')]
 [group('test')]
 test-vp:
-    deno run -A npm:vite-plus test --config ./config/test.config.ts
+    deno run -A npm:vite-plus test --config ./config/vitest.config.ts
 
 [doc('Run the test suite across sdk and workspace')]
 [group('test')]
