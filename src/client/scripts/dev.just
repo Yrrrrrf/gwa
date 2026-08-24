@@ -1,7 +1,7 @@
 [doc('Run an app on the dev server')]
 [group('dev')]
 run app='vision':
-    cd apps/{{ app }}; deno run -A npm:vite-plus/vp dev --host
+    cd apps/{{ app }}; deno run -A npm:vite dev --host
 
 [doc('Purge caches & lockfiles, reinstall deps, resync generated code')]
 [group('dev')]

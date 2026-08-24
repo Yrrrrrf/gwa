@@ -9,7 +9,7 @@
 		"./sdk/api",
 		"./sdk/state",
 		"./sdk/ui",
-		"./apps/vision"
+		"./apps/**"
 	],
 	"imports": {
 		"vite-plus": "npm:vite-plus",

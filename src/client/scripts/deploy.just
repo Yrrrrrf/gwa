@@ -4,15 +4,17 @@ ci: check test
 
 [doc('Build the application: deno.json -> build/')]
 [group('deploy')]
+[working-directory('apps')]
 build app='vision':
-    rm -rf build
-    cd apps/{{ app }}; deno run -A npm:vite-plus/vp build
+    cd {{ app }}; rm -rf build
+    cd {{ app }}; deno run -A npm:vite build
     @echo "✓ build done"
 
 [doc('Preview production build')]
 [group('deploy')]
-preview app='vision':
-    cd apps/{{ app }}; deno run -A npm:vite-plus/vp preview
+[working-directory('apps')]
+preview app='vision': (build app)
+    cd {{ app }}; deno run -A npm:vite preview
 
 [doc('Publish build release')]
 [group('deploy')]
