@@ -40,10 +40,19 @@ def parse-test-stats [output: string]: nothing -> record<p: int, f: int, s: int>
     { p: $p, f: $f, s: $s }
 }
 
+# --- Workspace discovery helpers ---
+export def sdk-packages []: nothing -> list<string> {
+    glob "sdk/*" | path basename
+}
+
+export def app-packages []: nothing -> list<string> {
+    glob "apps/*" | path basename
+}
+
 # --- Dashboard Runners ---
 export def run-tests-dashboard [is_verbose: bool = false]: nothing -> nothing {
     print ""
-    ^gum style --foreground 212 --bold "🧪 TESTS DASHBOARD"
+    ^gum style --foreground 212 --bold "🧪 TEST"
 
     let run_section = {|cat, dirs, engine_fn, run_fn|
         print $"(ansi purple_bold)[($cat)](ansi reset)"
@@ -91,7 +100,7 @@ export def run-tests-dashboard [is_verbose: bool = false]: nothing -> nothing {
 
 export def run-types-dashboard [is_verbose: bool = false]: nothing -> nothing {
     print ""
-    ^gum style --foreground 212 --bold "🛡️ QUALITY & TYPE GATES"
+    ^gum style --foreground 212 --bold "🛡️ TYPES"
 
     let check_section = {|cat, dirs, is_app|
         print $"(ansi purple_bold)[($cat)](ansi reset)"
