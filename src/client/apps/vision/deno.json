@@ -1,8 +1,10 @@
 {
+	"name": "@apps/vision",
 	"version": "0.1.0",
 	"description": "Vision lab app for GWA",
 	"license": "MIT",
 	"authors": ["Yrrrrrf <fer.rezac@outlook.com>"],
+	"exports": "./src/lib/mod.ts",
 	"imports": {
 		"#lib/*": "./src/lib/*",
 		"@sdk/core": "workspace:*",
