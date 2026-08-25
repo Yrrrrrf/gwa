@@ -5,10 +5,7 @@
 	"nodeModulesDir": "auto",
 	"minimumDependencyAge": "0",
 	"workspace": [
-		"./sdk/core",
-		"./sdk/api",
-		"./sdk/state",
-		"./sdk/ui",
+		"./sdk/**",
 		"./apps/**"
 	],
 	"imports": {

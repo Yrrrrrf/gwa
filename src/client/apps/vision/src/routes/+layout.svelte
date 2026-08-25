@@ -1,12 +1,13 @@
 <script lang="ts">
 import "./layout.css";
-import { RuneProvider, version } from "rune-lab";
+import { RuneProvider } from "rune-lab";
+import {default as pkg} from "../../deno.json"
 import { i18n } from "rune-lab/i18n";
 import { layout } from "rune-lab/layout";
 import { observer } from "rune-lab/observer";
 import { palettes } from "rune-lab/palettes";
 import type { Snippet } from "svelte";
-import faviconUrl from "../lib/assets/img/rune.png";
+// import faviconUrl from "#lib/assets/img/rune.png";
 import AppLayout from "./AppLayout.svelte";
 
 let { children }: { children: Snippet } = $props();
@@ -21,11 +22,11 @@ let { children }: { children: Snippet } = $props();
   ]}
   config={{
     app: {
-      name: "Rune Lab",
-      version: version(),
-      description: "Plugin test bench",
-      author: "Yrrrrrf",
-      icon: faviconUrl,
+      name: "GWA",
+      version: pkg.version,
+      description: pkg.description,
+      author: pkg.authors[0],
+      // icon: faviconUrl,
     },
   }}
 >

@@ -1,5 +1,5 @@
 {
-	"extends": "$app/tsconfig",
+	"extends": ["$app/tsconfig", "../../config/tsconfig.json"],
 	"include": [
 		"src/**/*",
 		".svelte-kit/ambient.d.ts",
