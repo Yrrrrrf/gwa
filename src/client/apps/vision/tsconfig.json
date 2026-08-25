@@ -1,9 +1,9 @@
 {
-  "extends": "$app/tsconfig",
-  "include": [
-    "src/**/*",
-    ".svelte-kit/ambient.d.ts",
-    ".svelte-kit/types/**/$types.d.ts",
-    "vite.config.ts"
-  ]
+	"extends": "$app/tsconfig",
+	"include": [
+		"src/**/*",
+		".svelte-kit/ambient.d.ts",
+		".svelte-kit/types/**/$types.d.ts",
+		"vite.config.ts"
+	]
 }

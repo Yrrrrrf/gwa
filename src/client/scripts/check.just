@@ -1,3 +1,5 @@
+# check.just — fix · writes & type/quality gates
+
 [doc('Format workspace')]
 [group('check')]
 fmt:
@@ -9,12 +11,16 @@ lint:
     deno lint .
     -biome lint --config-path=config/biome.json .
 
-[doc('Type-check workspace')]
+[doc('Type-check workspace (SDK modules + SvelteKit apps) (pass -v for detailed logs)')]
 [group('check')]
-types:
-    deno check sdk/core/src/mod.ts sdk/api/src/mod.ts sdk/state/src/mod.ts sdk/ui/src/mod.ts
-    cd apps/vision; deno run -A npm:@sveltejs/kit@next/svelte-kit sync; deno run -A npm:svelte-check@^4.7.5 --tsconfig ./tsconfig.json --config ./vite.config.ts
-    # -biome check --config-path=config/biome.json --fix .
+[positional-arguments]
+types *args:
+    #!/usr/bin/env nu
+    use {{ HARNESS_NU }} *
+
+    def --wrapped main [...raw_args: string] {
+        run-types-dashboard ($raw_args | any { $in in ["-v" "--verbose"] })
+    }
 
 [doc('Audit all code namespaces')]
 [group('check')]
@@ -26,6 +32,7 @@ audit:
 health:
     deno run -A npm:fallow health --score -c config/fallowrc.json
 
-[doc('Run all check quality gates')]
+[doc('Run all check quality gates (pass -v for detailed logs)')]
 [group('check')]
-check: fmt lint types
+[positional-arguments]
+check *args: fmt lint (types args)

@@ -1,14 +1,22 @@
-[doc('Run workspace tests via vite-plus')]
+# test.just — prove · dynamic categorized test suite
+
+[doc('Run workspace tests via vitest')]
 [group('test')]
 test-vp:
-    deno run -A npm:vite-plus test --config ./config/vitest.config.ts
+    deno run -A npm:vitest run --config ./config/vitest.config.ts
 
-[doc('Run the test suite across sdk and workspace')]
+[doc('Run dynamic categorized test dashboard across SDK and Apps (pass -v for detailed logs)')]
 [group('test')]
-test:
-    deno test --allow-all sdk/
+[positional-arguments]
+test *args:
+    #!/usr/bin/env nu
+    use {{ HARNESS_NU }} *
+
+    def --wrapped main [...raw_args: string] {
+        run-tests-dashboard ($raw_args | any { $in in ["-v" "--verbose"] })
+    }
 
 [doc('Test coverage')]
-[group('check')]
+[group('test')]
 coverage:
-    deno test --coverage
+    deno run -A npm:vitest run --coverage --config ./config/vitest.config.ts

@@ -3,7 +3,9 @@
 
 PROJECT := "gwa-client"
 VERSION := `open deno.json | get version`
-JUSTFILE := parent_directory(source_directory()) / "client.just"
+CLIENT_DIR := parent_directory(source_directory())
+HARNESS_NU := source_directory() / "harness.nu"
+JUSTFILE := CLIENT_DIR / "client.just"
 
 [default]
 [doc('List all available client recipes')]

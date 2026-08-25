@@ -7,7 +7,7 @@ run app='vision':
 [group('dev')]
 prepare: prune
     deno install
-    cd apps/vision; deno run -A npm:@sveltejs/kit@next/svelte-kit sync
+    deno run -A npm:@sveltejs/kit@next/svelte-kit sync
 
 [doc('Prune all node_modules, .svelte-kit, .vite, deno.lock')]
 [group('dev')]

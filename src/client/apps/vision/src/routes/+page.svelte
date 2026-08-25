@@ -51,17 +51,19 @@ const richItems = [
     <div class="card-body">
       <h2 class="card-title text-sm">Triggers</h2>
       <div class="flex flex-wrap gap-2">
-        <button class="btn btn-sm" onclick={() => registry.open("commands")}
+        <button type="button" class="btn btn-sm" onclick={() => registry.open("commands")}
         >Commands</button>
-        <button class="btn btn-sm" onclick={() => registry.open("settings")}
+        <button type="button" class="btn btn-sm" onclick={() => registry.open("settings")}
         >Settings</button>
         <button
+          type="button"
           class="btn btn-sm btn-outline"
           onclick={() => layout.applyPreset("page")}
         >
           Preset: page
         </button>
         <button
+          type="button"
           class="btn btn-sm btn-outline"
           onclick={() => layout.applyPreset("workspace")}
         >

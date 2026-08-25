@@ -24,6 +24,7 @@ onMount(() => {
     actually running, not a static snapshot.
   </p>
   <button
+    type="button"
     class="btn btn-sm btn-primary"
     onclick={() => toasts.success(`Ping from /showcase at ${ticks}s`)}
   >
