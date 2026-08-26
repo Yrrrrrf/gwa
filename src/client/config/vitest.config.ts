@@ -22,7 +22,6 @@ const svelteProject = (
 	],
 	test: {
 		name,
-		environment: "node",
 		globals: true,
 		exclude: [
 			"**/node_modules/**",
@@ -40,12 +39,12 @@ export default defineConfig({
 			compilerOptions: {
 				runes: true,
 			},
-		}),
-	] as PluginOption[],
+		}) as unknown as PluginOption,
+	],
 	test: {
 		projects: [
 			...discoverDirs("./sdk").map((name) => svelteProject(name, "./sdk")),
 			...discoverDirs("./apps").map((name) => svelteProject(name, "./apps")),
-		],
+		] as unknown as string[],
 	},
 });
