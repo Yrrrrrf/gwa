@@ -3,8 +3,6 @@ import { LanguageSelector } from "rune-lab/i18n";
 import { getLayoutStore, RichText, Text, ThemeSelector } from "rune-lab/layout";
 import { getRegistryStore, getToastStore } from "rune-lab/palettes";
 
-import ShortcutsCard from "./ShortcutsCard.svelte";
-
 const layout = getLayoutStore();
 const registry = getRegistryStore();
 const toasts = getToastStore();
@@ -44,8 +42,6 @@ const richItems = [
       🎪 /showcase — simple page for testing Observer
     </a>
   </div>
-
-  <ShortcutsCard />
 
   <div class="card bg-base-200 card-sm">
     <div class="card-body">
