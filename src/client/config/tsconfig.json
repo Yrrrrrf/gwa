@@ -14,8 +14,8 @@
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
 		"paths": {
-			"@sdk/*": ["../sdk/*/src/mod.ts"],
-			"@sdk/*/*": ["../sdk/*/src/*"],
+			"$sdk": ["../sdk/mod.ts"],
+			"$sdk/*": ["../sdk/*/src/mod.ts", "../sdk/*"],
 			"#lib": ["./src/lib/mod.ts"],
 			"#lib/*": ["./src/lib/*"]
 		}

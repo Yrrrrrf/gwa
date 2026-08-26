@@ -3,6 +3,9 @@ import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, type PluginOption, type UserConfig } from "vite-plus";
 
+const SDK_ROOT = new URL("../sdk", import.meta.url).pathname;
+const SDK_ENTRY = new URL("../sdk/mod.ts", import.meta.url).pathname;
+
 export interface GwaConfig {
 	fallback?: string;
 	extraPlugins?: PluginOption[];
@@ -16,25 +19,26 @@ export function defineGWA(options: GwaConfig = {}) {
 		overrides = {},
 	} = options;
 
-	return defineConfig(async () => {
-		const tw = tailwindcss() as PluginOption;
-		const sk = (await sveltekit({
-			adapter: adapter({
-				fallback,
-				strict: true,
-			}),
-		})) as PluginOption[];
-
-		return {
-			resolve: {
-				alias: [
-					{ find: /^#lib\/(.*)/, replacement: "/src/lib/$1" },
-					{ find: "#lib", replacement: "/src/lib/mod.ts" },
-				],
-			},
-			plugins: [tw, ...sk, ...extraPlugins],
-			...overrides,
-		};
+	return defineConfig({
+		resolve: {
+			alias: [
+				{ find: "$sdk", replacement: SDK_ENTRY },
+				{ find: /^\$sdk\/(.*)/, replacement: `${SDK_ROOT}/$1` },
+				{ find: /^#lib\/(.*)/, replacement: "/src/lib/$1" },
+				{ find: "#lib", replacement: "/src/lib/mod.ts" },
+			],
+		},
+		plugins: [
+			tailwindcss() as PluginOption,
+			sveltekit({
+				adapter: adapter({
+					fallback,
+					strict: true,
+				}),
+			}) as unknown as PluginOption,
+			...extraPlugins,
+		],
+		...overrides,
 	});
 }
 

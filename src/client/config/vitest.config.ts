@@ -12,7 +12,7 @@ export default defineConfig({
 	],
 	test: {
 		globals: true,
-		projects: ["./sdk/*", "./apps/*"],
+		projects: ["./sdk/*/vite.config.ts", "./apps/*/vite.config.*"],
 		exclude: [
 			"**/node_modules/**",
 			"**/.git/**",

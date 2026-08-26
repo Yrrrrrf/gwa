@@ -73,10 +73,10 @@ def exec-cmd [title: string, cmd_args: list<string>, is_verbose: bool = false]: 
 
 # --- Workspace discovery helpers ---
 export def sdk-packages []: nothing -> list<string> {
-    glob "sdk/*" | each {|p| $p | str replace --all '\' '/' | path basename }
+    glob "sdk/*" | where { ($in | path type) == "dir" } | each {|p| $p | str replace --all '\' '/' | path basename }
 }
 export def app-packages []: nothing -> list<string> {
-    glob "apps/*" | each {|p| $p | str replace --all '\' '/' | path basename }
+    glob "apps/*" | where { ($in | path type) == "dir" } | each {|p| $p | str replace --all '\' '/' | path basename }
 }
 
 # --- Workspace Maintenance Runners ---
@@ -213,7 +213,7 @@ export def run-tests-dashboard [is_verbose: bool = false]: nothing -> nothing {
         $fail_count
     }
 
-    let sdk_fails = (do $run_section "SDK" (glob "sdk/*") {|d, n|
+    let sdk_fails = (do $run_section "SDK" (glob "sdk/*" | where { ($in | path type) == "dir" }) {|d, n|
         if $n in ["state", "ui"] {
             { engine: "vitest", cmd: ["deno", "run", "-A", "npm:vitest", "run", "--config", "./config/vitest.config.ts", "--project", $n] }
         } else {
@@ -222,7 +222,7 @@ export def run-tests-dashboard [is_verbose: bool = false]: nothing -> nothing {
     })
 
     print ""
-    let app_fails = (do $run_section "APP" (glob "apps/*") {|d, n|
+    let app_fails = (do $run_section "APP" (glob "apps/*" | where { ($in | path type) == "dir" }) {|d, n|
         { engine: "vitest", cmd: ["deno", "run", "-A", "npm:vitest", "run", "--config", "./config/vitest.config.ts", "--project", $n] }
     })
 
@@ -258,7 +258,11 @@ export def run-types-dashboard [is_verbose: bool = false]: nothing -> nothing {
 
             let cmd_args = if $is_svelte {
                 let vcfg = if ("vite.config.mts" | path exists) { "./vite.config.mts" } else { "./vite.config.ts" }
-                let cfg_flags = if ($is_app and ("tsconfig.json" | path exists)) { ["--tsconfig", "./tsconfig.json", "--config", $vcfg] } else { [] }
+                let cfg_flags = if $is_app {
+                    if ("tsconfig.json" | path exists) { ["--tsconfig", "./tsconfig.json", "--config", $vcfg] } else { [] }
+                } else {
+                    if ("tsconfig.json" | path exists) { ["--tsconfig", "./tsconfig.json"] } else { [] }
+                }
                 ["deno", "run", "-A", "npm:svelte-check@^4.7.5", ...$cfg_flags]
             } else {
                 ["deno", "check", "src/mod.ts"]
@@ -279,9 +283,9 @@ export def run-types-dashboard [is_verbose: bool = false]: nothing -> nothing {
         $err_count
     }
 
-    let sdk_errs = (do $check_section "SDK" (glob "sdk/*") false)
+    let sdk_errs = (do $check_section "SDK" (glob "sdk/*" | where { ($in | path type) == "dir" }) false)
     print ""
-    let app_errs = (do $check_section "APP" (glob "apps/*") true)
+    let app_errs = (do $check_section "APP" (glob "apps/*" | where { ($in | path type) == "dir" }) true)
 
     let total_errors = ($sdk_errs + $app_errs)
     print ""
