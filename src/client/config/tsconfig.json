@@ -14,10 +14,10 @@
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
 		"paths": {
-			"@sdk/core": ["../sdk/core/src/mod.ts"],
-			"@sdk/api": ["../sdk/api/src/mod.ts"],
-			"@sdk/state": ["../sdk/state/src/mod.ts"],
-			"@sdk/ui": ["../sdk/ui/src/mod.ts"]
+			"@sdk/*": ["../sdk/*/src/mod.ts"],
+			"@sdk/*/*": ["../sdk/*/src/*"],
+			"#lib": ["./src/lib/mod.ts"],
+			"#lib/*": ["./src/lib/*"]
 		}
 	},
 	"exclude": [".*", "dist/**", "**/*.test.ts", "node_modules"]

@@ -1,3 +1,3 @@
-import { defineGwaApp } from "../../config/app.config.ts";
+import { defineGWA } from "../../config/app.config.ts";
 
-export default defineGwaApp();
+export default defineGWA();

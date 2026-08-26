@@ -7,13 +7,14 @@ export interface GwaPkg {
 	overrides?: UserConfig;
 }
 
-export function defineGwaPkg(options: GwaPkg = {}) {
+export function defineSveltePkg(options: GwaPkg = {}) {
 	const { extraPlugins = [], overrides = {} } = options;
 
 	return defineConfig({
 		plugins: [
 			tailwindcss() as PluginOption,
 			svelte({
+				configFile: false,
 				compilerOptions: {
 					runes: true,
 				},

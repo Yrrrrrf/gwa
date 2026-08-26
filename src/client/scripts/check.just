@@ -3,6 +3,7 @@
 [doc('Format workspace')]
 [group('check')]
 fmt:
+    # ^deno fmt .
     ^biome format --config-path=config/biome.json --write .
 
 [doc('Lint workspace')]
