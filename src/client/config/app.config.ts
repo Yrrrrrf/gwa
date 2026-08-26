@@ -2,6 +2,7 @@ import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, type PluginOption, type UserConfig } from "vite-plus";
+import { createLibAliases } from "./_shared.ts";
 
 export interface GwaApp {
 	fallback?: string;
@@ -29,16 +30,9 @@ export function defineGwaApp(options: GwaApp = {}) {
 			}),
 		})) as PluginOption[];
 
-		const appRoot =
-			(
-				globalThis as unknown as { process?: { cwd?: () => string } }
-			).process?.cwd?.() ?? ".";
-
 		return {
 			resolve: {
-				alias: {
-					"#lib": `${appRoot}/src/lib`,
-				},
+				alias: createLibAliases(),
 			},
 			plugins: [tw, ...sk, ...extraPlugins],
 			...overrides,

@@ -1,6 +1,6 @@
-import { existsSync, readdirSync } from "node:fs";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig, type PluginOption } from "vite-plus";
+import { createLibAliases, discoverDirs } from "./_shared.ts";
 
 const svelteProject = (
 	name: string,
@@ -9,9 +9,7 @@ const svelteProject = (
 ) => ({
 	root: `${root}/${name}`,
 	resolve: {
-		alias: {
-			"#lib": `${process.cwd()}/${root}/${name}/src/lib`,
-		},
+		alias: createLibAliases(`${root}/${name}`),
 	},
 	plugins: [
 		svelte({
@@ -36,13 +34,6 @@ const svelteProject = (
 	},
 });
 
-function discoverProjects(dirPath: string) {
-	if (!existsSync(dirPath)) return [];
-	return readdirSync(dirPath, { withFileTypes: true })
-		.filter((dirent) => dirent.isDirectory())
-		.map((dirent) => svelteProject(dirent.name, dirPath));
-}
-
 export default defineConfig({
 	plugins: [
 		svelte({
@@ -52,6 +43,9 @@ export default defineConfig({
 		}),
 	] as PluginOption[],
 	test: {
-		projects: [...discoverProjects("./sdk"), ...discoverProjects("./apps")],
+		projects: [
+			...discoverDirs("./sdk").map((name) => svelteProject(name, "./sdk")),
+			...discoverDirs("./apps").map((name) => svelteProject(name, "./apps")),
+		],
 	},
 });

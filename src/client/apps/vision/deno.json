@@ -6,7 +6,6 @@
 	"authors": ["Yrrrrrf <fer.rezac@outlook.com>"],
 	"exports": "./src/lib/mod.ts",
 	"imports": {
-		"#lib/*": "./src/lib/*",
 		"@sdk/core": "workspace:*",
 		"@sdk/api": "workspace:*",
 		"@sdk/state": "workspace:*",
