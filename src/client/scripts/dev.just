@@ -32,64 +32,11 @@ run app='' *args:
 [script]
 prepare: prune
     use {{ HARNESS_NU }} *
-
-    print ""
-    ^gum style --foreground 212 --bold "📦 PREPARING WORKSPACE"
-
-    print $"(ansi cyan_bold)»(ansi reset) Installing dependencies..."
-    ^deno install
-
-    for $app in (glob "apps/*") {
-        let clean_app = ($app | str replace --all '\' '/')
-        let name = ($clean_app | path basename)
-        print $"(ansi cyan_bold)»(ansi reset) Syncing SvelteKit for ($name)..."
-        cd $clean_app
-        ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync
-        cd ../..
-    }
-
-    print ""
-    ^gum style --foreground 48 --bold "✓ Workspace dependencies & types prepared"
+    run-prepare-workspace
 
 [doc('Prune all node_modules, .svelte-kit, .vite, deno.lock')]
 [group('dev')]
 [script]
 prune:
     use {{ HARNESS_NU }} *
-
-    let ch = (chevron)
-    print $"(ansi purple_bold)🧹 Pruning caches & temporary artifacts...(ansi reset)"
-
-    # Root caches
-    for $p in ["node_modules" ".svelte-kit" ".vite" "deno.lock" "dist" "build"] {
-        if ($p | path exists) {
-            rm -r -f $p
-            print $"  ($ch) (ansi grey)Removed ($p)(ansi reset)"
-        }
-    }
-
-    # Apps caches
-    for $app in (glob "apps/*") {
-        let clean_app = ($app | str replace --all '\' '/')
-        for $p in [$"($clean_app)/node_modules" $"($clean_app)/.svelte-kit" $"($clean_app)/.vite" $"($clean_app)/build"] {
-            if ($p | path exists) {
-                rm -r -f $p
-                let rel = ($p | path relative-to $env.PWD | str replace --all '\' '/')
-                print $"  ($ch) (ansi grey)Removed ($rel)(ansi reset)"
-            }
-        }
-    }
-
-    # SDK caches
-    for $sdk in (glob "sdk/*") {
-        let clean_sdk = ($sdk | str replace --all '\' '/')
-        for $p in [$"($clean_sdk)/node_modules" $"($clean_sdk)/.vite" $"($clean_sdk)/dist"] {
-            if ($p | path exists) {
-                rm -r -f $p
-                let rel = ($p | path relative-to $env.PWD | str replace --all '\' '/')
-                print $"  ($ch) (ansi grey)Removed ($rel)(ansi reset)"
-            }
-        }
-    }
-
-    print $"(ansi green_bold)✓ Workspace clean(ansi reset)"
+    run-prune-workspace

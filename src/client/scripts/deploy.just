@@ -1,62 +1,22 @@
 # deploy.just — ship · build, preview, publish, and release
 
-[doc('Run quality gate (check + test)')]
+[doc('Run quality gate (check + test) (pass -v for detailed logs)')]
 [group('ci')]
-ci: check test
+[positional-arguments]
+ci *args: (check args) (test args)
 
-[doc('Build applications: deno.json -> build/ (builds all apps or specified app)')]
+[doc('Build applications: deno.json -> build/ (builds all apps or specified app) (pass -v for detailed logs)')]
 [group('deploy')]
 [positional-arguments]
 [script]
-build app='':
+build app='' *args:
     use {{ HARNESS_NU }} *
 
-    let target_apps = if ("{{ app }}" | is-empty) {
-        (app-packages)
-    } else {
-        ["{{ app }}"]
-    }
-
-    if ($target_apps | is-empty) {
-        ^gum log --level warn "No applications found in apps/"
-        exit 1
-    }
-
-    print ""
-    ^gum style --foreground 212 --bold "📦 BUILDING APPLICATIONS"
-    mut build_failed = 0
-
-    for $app in $target_apps {
-        let app_path = $"apps/($app)"
-        if not ($app_path | path exists) {
-            ^gum log --level error $"Application not found: ($app_path)"
-            exit 1
-        }
-
-        cd $app_path
-        rm -r -f build
-        do { ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync } | complete
-
-        let start = (date now)
-        let res = (do { ^deno run -A npm:vite build } | complete)
-        let elapsed = ((date now) - $start)
-        cd ../..
-
-        if ($res.exit_code == 0) {
-            print $"  (chevron) (ansi grey)vite build     (ansi reset)(ansi default_bold)($app | fill -w 8)(ansi reset) (ansi green)✓ success(ansi reset) (ansi grey)\(($elapsed)\)(ansi reset)"
-        } else {
-            $build_failed = ($build_failed + 1)
-            print $"  (chevron) (ansi grey)vite build     (ansi reset)(ansi default_bold)($app | fill -w 8)(ansi reset) (ansi red_bold)✗ failed(ansi reset)"
-            print-stream $res true true
-        }
-    }
-
-    print ""
-    if $build_failed > 0 {
-        ^gum style --foreground 196 --bold $"✗ ($build_failed) build failed"
-        exit 1
-    } else {
-        ^gum style --foreground 48 --bold "✓ All applications built successfully"
+    def --wrapped main [app = '', ...raw_args: string] {
+        let all_args = ([$app] ++ $raw_args | where { $in | is-not-empty })
+        let is_verbose = ($all_args | any { $in in ["-v", "--verbose"] })
+        let target_app = ($all_args | where { not ($in in ["-v", "--verbose"]) } | get 0? | default "")
+        run-build-dashboard $target_app $is_verbose
     }
 
 [doc('Preview production build (prompts app picker if not specified)')]
