@@ -3,8 +3,8 @@
 [doc('Run an app on the dev server (prompts app picker if not specified)')]
 [group('dev')]
 [positional-arguments]
+[script]
 run app='' *args:
-    #!/usr/bin/env nu
     use {{ HARNESS_NU }} *
 
     let target_app = if ("{{ app }}" | is-empty) {
@@ -24,26 +24,27 @@ run app='' *args:
     if ($target_app | is-not-empty) {
         ^gum style --foreground 212 --bold $"🚀 Starting dev server: apps/($target_app)"
         cd $"apps/($target_app)"
-        deno run -A npm:vite dev --host {{ args }}
+        ^deno run -A npm:vite dev --host {{ args }}
     }
 
 [doc('Purge caches & lockfiles, reinstall deps, resync generated code')]
 [group('dev')]
+[script]
 prepare: prune
-    #!/usr/bin/env nu
     use {{ HARNESS_NU }} *
 
     print ""
     ^gum style --foreground 212 --bold "📦 PREPARING WORKSPACE"
 
     print $"(ansi cyan_bold)»(ansi reset) Installing dependencies..."
-    deno install
+    ^deno install
 
     for $app in (glob "apps/*") {
-        let name = ($app | path basename)
+        let clean_app = ($app | str replace --all '\' '/')
+        let name = ($clean_app | path basename)
         print $"(ansi cyan_bold)»(ansi reset) Syncing SvelteKit for ($name)..."
-        cd $app
-        deno run -A npm:@sveltejs/kit@next/svelte-kit sync
+        cd $clean_app
+        ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync
         cd ../..
     }
 
@@ -52,8 +53,8 @@ prepare: prune
 
 [doc('Prune all node_modules, .svelte-kit, .vite, deno.lock')]
 [group('dev')]
+[script]
 prune:
-    #!/usr/bin/env nu
     use {{ HARNESS_NU }} *
 
     let ch = (chevron)
@@ -69,10 +70,11 @@ prune:
 
     # Apps caches
     for $app in (glob "apps/*") {
-        for $p in [$"($app)/node_modules" $"($app)/.svelte-kit" $"($app)/.vite" $"($app)/build"] {
+        let clean_app = ($app | str replace --all '\' '/')
+        for $p in [$"($clean_app)/node_modules" $"($clean_app)/.svelte-kit" $"($clean_app)/.vite" $"($clean_app)/build"] {
             if ($p | path exists) {
                 rm -r -f $p
-                let rel = ($p | path relative-to $env.PWD)
+                let rel = ($p | path relative-to $env.PWD | str replace --all '\' '/')
                 print $"  ($ch) (ansi grey)Removed ($rel)(ansi reset)"
             }
         }
@@ -80,10 +82,11 @@ prune:
 
     # SDK caches
     for $sdk in (glob "sdk/*") {
-        for $p in [$"($sdk)/node_modules" $"($sdk)/.vite" $"($sdk)/dist"] {
+        let clean_sdk = ($sdk | str replace --all '\' '/')
+        for $p in [$"($clean_sdk)/node_modules" $"($clean_sdk)/.vite" $"($clean_sdk)/dist"] {
             if ($p | path exists) {
                 rm -r -f $p
-                let rel = ($p | path relative-to $env.PWD)
+                let rel = ($p | path relative-to $env.PWD | str replace --all '\' '/')
                 print $"  ($ch) (ansi grey)Removed ($rel)(ansi reset)"
             }
         }

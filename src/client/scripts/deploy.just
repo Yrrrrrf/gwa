@@ -7,8 +7,8 @@ ci: check test
 [doc('Build applications: deno.json -> build/ (builds all apps or specified app)')]
 [group('deploy')]
 [positional-arguments]
+[script]
 build app='':
-    #!/usr/bin/env nu
     use {{ HARNESS_NU }} *
 
     let target_apps = if ("{{ app }}" | is-empty) {
@@ -34,11 +34,11 @@ build app='':
         }
 
         cd $app_path
-        rm -rf build
-        do { deno run -A npm:@sveltejs/kit@next/svelte-kit sync } | complete
+        rm -r -f build
+        do { ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync } | complete
 
         let start = (date now)
-        let res = (do { deno run -A npm:vite build } | complete)
+        let res = (do { ^deno run -A npm:vite build } | complete)
         let elapsed = ((date now) - $start)
         cd ../..
 
@@ -62,8 +62,8 @@ build app='':
 [doc('Preview production build (prompts app picker if not specified)')]
 [group('deploy')]
 [positional-arguments]
+[script]
 preview app='': (build app)
-    #!/usr/bin/env nu
     use {{ HARNESS_NU }} *
 
     let target_app = if ("{{ app }}" | is-empty) {
@@ -80,10 +80,10 @@ preview app='': (build app)
     if ($target_app | is-not-empty) {
         ^gum style --foreground 212 --bold $"🎪 Previewing production build: apps/($target_app)"
         cd $"apps/($target_app)"
-        deno run -A npm:vite preview
+        ^deno run -A npm:vite preview
     }
 
 [doc('Publish build release')]
 [group('deploy')]
 publish: ci build
-    @echo "✓ publish done"
+    @print "✓ publish done"

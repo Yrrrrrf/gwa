@@ -3,13 +3,13 @@
 [doc('Run workspace tests via vitest')]
 [group('test')]
 test-vp:
-    deno run -A npm:vitest run --config ./config/vitest.config.ts
+    ^deno run -A npm:vitest run --config ./config/vitest.config.ts
 
 [doc('Run dynamic categorized test dashboard across SDK and Apps (pass -v for detailed logs)')]
 [group('test')]
 [positional-arguments]
+[script]
 test *args:
-    #!/usr/bin/env nu
     use {{ HARNESS_NU }} *
 
     def --wrapped main [...raw_args: string] {
@@ -19,4 +19,4 @@ test *args:
 [doc('Test coverage')]
 [group('test')]
 coverage:
-    deno run -A npm:vitest run --coverage --config ./config/vitest.config.ts
+    ^deno run -A npm:vitest run --coverage --config ./config/vitest.config.ts

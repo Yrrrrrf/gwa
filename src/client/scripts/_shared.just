@@ -16,8 +16,8 @@ list:
 # Interactive autocomplete over client recipes with syntax-highlighted previews.
 [doc('Interactive recipe picker (fuzzy-filtered via gum with syntax-highlighted previews)')]
 [group('meta')]
+[script]
 menu:
-    #!/usr/bin/env nu
     let data = (^just --justfile '{{ JUSTFILE }}' --dump --dump-format json | from json)
     let recipes = ($data.recipes | transpose name info 
         | where { not ($in.info.private? | default false) }
@@ -59,17 +59,17 @@ menu:
 
 [private]
 [group('meta')]
+[script]
 _banner msg:
-    #!/usr/bin/env nu
     ^gum style --foreground 212 --border rounded --padding "0 2" "{{msg}}"
 
 [private]
 [group('meta')]
+[script]
 _clean-tree:
-    #!/usr/bin/env nu
-    if (git status --porcelain | is-not-empty) { error make {msg: "working tree dirty"} }
+    if (^git status --porcelain | is-not-empty) { error make {msg: "working tree dirty"} }
 
 [doc('Compile an inlang project into a paraglide runtime')]
 [group('build')]
 _paraglide project outdir:
-    deno run -A npm:@inlang/paraglide-js compile --project "{{ project }}" --outdir "{{ outdir }}" --emit-ts-declarations
+    ^deno run -A npm:@inlang/paraglide-js compile --project "{{ project }}" --outdir "{{ outdir }}" --emit-ts-declarations
