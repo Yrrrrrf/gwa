@@ -8,9 +8,9 @@ Dense reference for `config/` tooling, module resolution rules, and environmenta
 
 - **No per-package `package.json`**: The workspace relies exclusively on root `deno.json` (`"workspace": ["./sdk/**", "./apps/**"]`), `config/tsconfig.json`, and Vite resolver aliases.
 - **Dual module resolution**:
-  - Deno runtime: Resolves imports via root `deno.json` (`"$sdk": "./sdk/mod.ts"`, `"$sdk/*": "./sdk/*"`).
+  - Deno runtime: Resolves imports via root `deno.json` (`"@sdk": "./sdk/mod.ts"`, `"@sdk/*": "./sdk/*"`).
   - Bundler / IDE: Resolves imports via `config/app.config.ts` (`resolve.alias`) and `config/tsconfig.json` (`compilerOptions.paths`).
-- **Canonical SDK specifier**: Standardized on `$sdk` (root `sdk/mod.ts`) and `$sdk/*` (submodules: `$sdk/ui`, `$sdk/state`, `$sdk/core`, `$sdk/api`).
+- **Canonical SDK specifier**: Standardized on `@sdk` (root `sdk/mod.ts`) and `@sdk/*` (submodules: `@sdk/ui`, `@sdk/state`, `@sdk/core`, `@sdk/api`).
 
 ---
 
@@ -19,7 +19,7 @@ Dense reference for `config/` tooling, module resolution rules, and environmenta
 ### 1. `app.config.ts`
 - **What**: Reusable Vite configuration factory (`defineGWA`) for SvelteKit applications (e.g., `apps/vision`).
 - **How**:
-  - Anchors `$sdk` and `$sdk/*` using `new URL("../sdk", import.meta.url).pathname` (stable Web API, immune to `process.cwd()` drift).
+  - Anchors `@sdk` and `@sdk/*` using `new URL("../sdk", import.meta.url).pathname` (stable Web API, immune to `process.cwd()` drift).
   - Returns `defineConfig({ ... })` synchronously with `tailwindcss()` and `sveltekit({ adapter })`.
 - **Why**:
   - **IDE Constraint**: VS Code Svelte extension (`@sveltejs/load-config`) inspects `vite.config.mts` directly in the absence of `svelte.config.js`. Wrapping `defineConfig(async () => ...)` causes the language server to fail to extract `vite-plugin-sveltekit-setup` options, triggering:
@@ -44,21 +44,20 @@ Dense reference for `config/` tooling, module resolution rules, and environmenta
   - Declares single-wildcard paths:
     ```json
     "paths": {
-      "$sdk": ["../sdk/mod.ts"],
-      "$sdk/*": ["../sdk/*/src/mod.ts", "../sdk/*"],
-      "@sdk/*": ["../sdk/*/src/mod.ts"],
+      "@sdk": ["../sdk/mod.ts"],
+      "@sdk/*": ["../sdk/*/src/mod.ts", "../sdk/*"],
       "#lib": ["./src/lib/mod.ts"],
       "#lib/*": ["./src/lib/*"]
     }
     ```
   - Omits `"include"` to allow extending packages (`apps/vision`, `sdk/ui`, `sdk/state`) to define their own scope.
 - **Why**:
-  - **TS Invariant**: TypeScript syntax prohibits multiple asterisks (e.g. `"@sdk/*/*"`), warning: `Pattern can have at most one * character`.
+  - **TS Invariant**: TypeScript syntax prohibits multiple asterisks (e.g. `"@sdk/*/*"`), warning: `Pattern can have at most one '*' character`.
   - **Path Anchor Rule**: Paths in `tsconfig.json` resolve relative to the directory containing the config (`config/`). Therefore, `../sdk/mod.ts` correctly navigates from `config/` to `sdk/`.
 - **Evolution**:
   - *Phase 1*: Hardcoded per-SDK paths (`@sdk/core`, `@sdk/api`, `@sdk/state`, `@sdk/ui`).
   - *Phase 2 (broken)*: Invalid double-asterisk wildcard `"@sdk/*/*"`.
-  - *Phase 3 (current)*: Declarative `$sdk` and dual-target single-wildcard `$sdk/*`.
+  - *Phase 3 (current)*: Declarative `@sdk` and dual-target single-wildcard `@sdk/*`.
 
 ### 4. `vitest.config.ts`
 - **What**: Root Vitest test runner configuration for poly-runner test suite.

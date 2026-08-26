@@ -2,7 +2,7 @@
 import { LanguageSelector } from "rune-lab/i18n";
 import { getLayoutStore, RichText, Text, ThemeSelector } from "rune-lab/layout";
 import { getRegistryStore, getToastStore } from "rune-lab/palettes";
-import { Showcase } from "$sdk";
+import { Showcase } from "@sdk";
 
 const layout = getLayoutStore();
 const registry = getRegistryStore();

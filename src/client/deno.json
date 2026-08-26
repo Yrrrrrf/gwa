@@ -9,8 +9,8 @@
     "./apps/**"
   ],
   "imports": {
-    "$sdk": "./sdk/mod.ts",
-    "$sdk/*": "./sdk/*",
+    "@sdk": "./sdk/mod.ts",
+    "@sdk/*": "./sdk/*",
     "vite-plus": "npm:vite-plus",
     "svelte": "npm:svelte",
     "@sveltejs/kit": "npm:@sveltejs/kit@next",

@@ -1,4 +1,4 @@
-// Entrypoint for $sdk
+// Entrypoint for @sdk
 export * from "./api/src/mod.ts";
 export * from "./core/src/mod.ts";
 export * from "./state/src/mod.ts";
