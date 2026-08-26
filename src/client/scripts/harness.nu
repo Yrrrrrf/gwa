@@ -116,7 +116,8 @@ export def run-types-dashboard [is_verbose: bool = false]: nothing -> nothing {
             if $is_app { do { deno run -A npm:@sveltejs/kit@next/svelte-kit sync } | complete }
 
             let res = if $is_svelte {
-                let cfg_flags = if ($is_app and ("tsconfig.json" | path exists)) { ["--tsconfig" "./tsconfig.json" "--config" "./vite.config.ts"] } else { [] }
+                let vcfg = if ("vite.config.mts" | path exists) { "./vite.config.mts" } else { "./vite.config.ts" }
+                let cfg_flags = if ($is_app and ("tsconfig.json" | path exists)) { ["--tsconfig" "./tsconfig.json" "--config" $vcfg] } else { [] }
                 do { deno run -A npm:svelte-check@^4.7.5 ...$cfg_flags } | complete
             } else {
                 do { deno check src/mod.ts } | complete

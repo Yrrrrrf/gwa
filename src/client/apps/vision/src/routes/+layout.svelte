@@ -7,7 +7,7 @@ import { layout } from "rune-lab/layout";
 import { observer } from "rune-lab/observer";
 import { palettes } from "rune-lab/palettes";
 import type { Snippet } from "svelte";
-import { faviconUrl } from "../lib/mod.ts";
+import faviconUrl from "#lib/assets/img/rune.png";
 import AppLayout from "./AppLayout.svelte";
 
 let { children }: { children: Snippet } = $props();

@@ -29,7 +29,17 @@ export function defineGwaApp(options: GwaApp = {}) {
 			}),
 		})) as PluginOption[];
 
+		const appRoot =
+			(
+				globalThis as unknown as { process?: { cwd?: () => string } }
+			).process?.cwd?.() ?? ".";
+
 		return {
+			resolve: {
+				alias: {
+					"#lib": `${appRoot}/src/lib`,
+				},
+			},
 			plugins: [tw, ...sk, ...extraPlugins],
 			...overrides,
 		};
