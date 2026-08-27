@@ -34,6 +34,7 @@ def build-table-lines [
     records: list<record>
     is_bench: bool
     frame: string = ""
+    running_elapsed: duration = 0ns
 ]: nothing -> list<string> {
     mut lines = []
     mut last_cat = ""
@@ -50,7 +51,10 @@ def build-table-lines [
         let status_str = if $rec.status == "pending" {
             $"(ansi grey)\(pending\)(ansi reset)"
         } else if $rec.status == "running" {
-            $"(ansi cyan)($frame)(ansi reset) (ansi grey)running...(ansi reset)"
+            let live_clock = if ($running_elapsed > 0ns) {
+                $" (ansi grey)\((format-duration $running_elapsed)\)(ansi reset)"
+            } else { "" }
+            $"(ansi cyan)($frame)(ansi reset) (ansi grey)running...(ansi reset)($live_clock)"
         } else if $rec.status == "skipped" {
             $rec.badge
         } else {
@@ -168,7 +172,7 @@ export def run-suite [
             )
             print -n $"\e[($table_height)A\e[0J\r\e[2K"
             print $"  ($cmd_styled)"
-            let cur_tbl = (build-table-lines $state_records $is_bench "⠋")
+            let cur_tbl = (build-table-lines $state_records $is_bench "⠋" 0ns)
             print ($cur_tbl | str join "\n")
             $table_height = ($cur_tbl | length)
         }
@@ -199,6 +203,7 @@ export def run-suite [
         while (job list | where id == $jid | is-not-empty) {
             let frame = ($frames | get ($f_idx mod $frames_len))
             $f_idx = ($f_idx + 1)
+            let cur_elapsed = ((date now) - $start)
 
             if $is_tty {
                 if $is_verbose {
@@ -211,20 +216,20 @@ export def run-suite [
                         for l in $new_logs {
                             print $"    (ansi grey)│(ansi reset) ($l)"
                         }
-                        let cur_tbl = (build-table-lines $state_records $is_bench $frame)
+                        let cur_tbl = (build-table-lines $state_records $is_bench $frame $cur_elapsed)
                         print ($cur_tbl | str join "\n")
                         $table_height = ($cur_tbl | length)
                         $last_line_count = ($all_logs | length)
                     } else {
-                        # Update spinner in table
+                        # Update spinner and live clock in table
                         print -n $"\e[($table_height)A\r\e[0J"
-                        let cur_tbl = (build-table-lines $state_records $is_bench $frame)
+                        let cur_tbl = (build-table-lines $state_records $is_bench $frame $cur_elapsed)
                         print ($cur_tbl | str join "\n")
                     }
                 } else {
-                    # Standard mode: update spinner in table
+                    # Standard mode: update spinner and live clock in table
                     print -n $"\e[($table_height)A\r\e[0J"
-                    let cur_tbl = (build-table-lines $state_records $is_bench $frame)
+                    let cur_tbl = (build-table-lines $state_records $is_bench $frame $cur_elapsed)
                     print ($cur_tbl | str join "\n")
                 }
             }

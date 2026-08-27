@@ -159,6 +159,10 @@ In `-v` mode, each concrete command is printed, and its detailed output streams 
   - Updated application build command from pseudo-syntax `(in apps/vision)` to standard runnable shell syntax: `cd <apps/vision> && deno run -A npm:vite build` (with `<apps/*>` in cyan bold in template, and concrete paths in bold).
   - Fixed `apps/-v` bug in `preview` by decoupling target app from flags using `parse-cli-flags` and adding typed `def --wrapped main` signatures per `.skills/ci/nushell`.
   - Updated `run` in `dev.just` with flag-aware app selection and native `banner` formatting.
+- [x] **Phase 8: Real-Time Live Ticking Clock in Dashboard Table (`scripts/cli/runner.nu`)**
+  - Added `running_elapsed: duration = 0ns` to `build-table-lines` in `runner.nu`.
+  - Continuously calculated elapsed time `((date now) - $start)` on every animation frame (60ms), dynamically rendering live progress `⠙ running... (840ms)`.
+  - On task completion, the clock instantly stops and freezes at the final measured time `(1.28s)`.
 
 ---
 
@@ -178,6 +182,8 @@ In `-v` mode, each concrete command is printed, and its detailed output streams 
 | **App Target & Flags** | `just build vision -vb` | Extracts `vision` target app and enables both verbose and bench modes cleanly. | ✅ PASS |
 | **Runnable Build Command** | `just build -b` | Template displays `cd <apps/*> && deno run -A npm:vite build` and concrete commands display `cd apps/vision && deno run -A npm:vite build`. | ✅ PASS |
 | **Flag-Aware Preview** | `just preview -vb` | Resolves target app cleanly without attempting `cd apps/-v`; inherits build flags. | ✅ PASS |
+| **Real-Time Live Clock** | `just types -b`<br>`just test -b` | Clock counts up live on every 60ms animation tick (`(840ms)` -> `(1.28s)`) and freezes on completion. | ✅ PASS |
+
 
 
 
