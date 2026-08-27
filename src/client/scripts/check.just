@@ -19,7 +19,7 @@ lint:
 types *args:
     use {{ HARNESS_NU }} [parse-cli-flags run-types-dashboard]
 
-    def --wrapped main [...raw: string] {
+    def --wrapped main [...raw: string]: nothing -> nothing {
         let f = (parse-cli-flags $raw)
         run-types-dashboard $f.v $f.b
     }

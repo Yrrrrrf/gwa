@@ -155,6 +155,10 @@ In `-v` mode, each concrete command is printed, and its detailed output streams 
   - Fixed Just string packing bug where dependency recipes (`check`, `types`, `test`) received packed string arguments (e.g. `"-v -b"`) causing flags to be silently ignored.
   - Replaced duplicate parsing boilerplate in `check.just`, `test.just`, and `deploy.just` with clean single-line calls to `parse-cli-flags`.
   - Added safe path expansion in `gates.nu` (`path expand | path relative-to $env.PWD`) to ensure both relative and absolute paths convert reliably.
+- [x] **Phase 7: Build Command Normalization & Flag-Aware Preview / Dev (`scripts/cli/gates.nu`, `scripts/deploy.just`, `scripts/dev.just`)**
+  - Updated application build command from pseudo-syntax `(in apps/vision)` to standard runnable shell syntax: `cd <apps/vision> && deno run -A npm:vite build` (with `<apps/*>` in cyan bold in template, and concrete paths in bold).
+  - Fixed `apps/-v` bug in `preview` by decoupling target app from flags using `parse-cli-flags` and adding typed `def --wrapped main` signatures per `.skills/ci/nushell`.
+  - Updated `run` in `dev.just` with flag-aware app selection and native `banner` formatting.
 
 ---
 
@@ -172,5 +176,8 @@ In `-v` mode, each concrete command is printed, and its detailed output streams 
 | **Combined Flags** | `just ci -v -b` | Both verbose logs and benchmark durations display across `types` and `test`. | ✅ PASS |
 | **Grouped Flags** | `just ci -vb` | Grouped shorthand `-vb` works identically to `-v -b`. | ✅ PASS |
 | **App Target & Flags** | `just build vision -vb` | Extracts `vision` target app and enables both verbose and bench modes cleanly. | ✅ PASS |
+| **Runnable Build Command** | `just build -b` | Template displays `cd <apps/*> && deno run -A npm:vite build` and concrete commands display `cd apps/vision && deno run -A npm:vite build`. | ✅ PASS |
+| **Flag-Aware Preview** | `just preview -vb` | Resolves target app cleanly without attempting `cd apps/-v`; inherits build flags. | ✅ PASS |
+
 
 

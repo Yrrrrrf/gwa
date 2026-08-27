@@ -24,7 +24,7 @@
 	},
 	"overrides": [
 		{
-			"includes": ["**/paraglide/**", "apps/vision/src/app.html"],
+			"includes": ["**/paraglide/**", "apps/**/src/app.html"],
 			"linter": {
 				"enabled": false
 			}

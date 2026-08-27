@@ -5,7 +5,7 @@
 test *args:
     use {{ HARNESS_NU }} [parse-cli-flags run-tests-dashboard]
 
-    def --wrapped main [...raw: string] {
+    def --wrapped main [...raw: string]: nothing -> nothing {
         let f = (parse-cli-flags $raw)
         run-tests-dashboard $f.v $f.b
     }

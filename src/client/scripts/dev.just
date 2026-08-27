@@ -4,27 +4,30 @@
 [group('dev')]
 [positional-arguments]
 [script]
-run app='' *args:
+run *args:
     use {{ HARNESS_NU }} *
 
-    let target_app = if ("{{ app }}" | is-empty) {
+    def --wrapped main [...raw: string]: nothing -> nothing {
+        let f = (parse-cli-flags $raw)
         let apps = (app-packages)
-        if ($apps | length) == 1 {
+
+        let target_app = if ($f.target | is-not-empty) {
+            $f.target | str replace "apps/" ""
+        } else if ($apps | length) == 1 {
             $apps | first
         } else if ($apps | is-empty) {
             ^gum log --level warn "No applications found in apps/"
-            exit 1
+            return
         } else {
             $apps | str join "\n" | ^gum choose --header "Select app to run"
         }
-    } else {
-        "{{ app }}"
-    }
 
-    if ($target_app | is-not-empty) {
-        ^gum style --foreground 212 --bold $"🚀 Starting dev server: apps/($target_app)"
-        cd $"apps/($target_app)"
-        ^deno run -A npm:vite dev --host {{ args }}
+        if ($target_app | is-not-empty) {
+            banner $"🚀 Starting dev server: apps/($target_app)" "212"
+            cd $"apps/($target_app)"
+            let extra = ($f.rest | default [])
+            ^deno run -A npm:vite dev --host ...$extra
+        }
     }
 
 [doc('Purge caches & lockfiles, reinstall deps, resync generated code')]

@@ -12,33 +12,39 @@ ci *args: (check args) (test args)
 build *args:
     use {{ HARNESS_NU }} [parse-cli-flags run-build-dashboard]
 
-    def --wrapped main [...raw: string] {
+    def --wrapped main [...raw: string]: nothing -> nothing {
         let f = (parse-cli-flags $raw)
         run-build-dashboard $f.target $f.v $f.b
     }
 
-[doc('Preview production build (prompts app picker if not specified)')]
+[doc('Preview production build (prompts app picker if not specified) (pass -v for detailed build logs, -b for timing)')]
 [group('deploy')]
 [positional-arguments]
 [script]
-preview app='': (build app)
+preview *args:
     use {{ HARNESS_NU }} *
 
-    let target_app = if ("{{ app }}" | is-empty) {
+    def --wrapped main [...raw: string]: nothing -> nothing {
+        let f = (parse-cli-flags $raw)
         let apps = (app-packages)
-        if ($apps | length) == 1 {
+
+        let target_app = if ($f.target | is-not-empty) {
+            $f.target | str replace "apps/" ""
+        } else if ($apps | length) == 1 {
             $apps | first
+        } else if ($apps | is-empty) {
+            ^gum log --level warn "No applications found in apps/"
+            return
         } else {
             $apps | str join "\n" | ^gum choose --header "Select app to preview"
         }
-    } else {
-        "{{ app }}"
-    }
 
-    if ($target_app | is-not-empty) {
-        ^gum style --foreground 212 --bold $"🎪 Previewing production build: apps/($target_app)"
-        cd $"apps/($target_app)"
-        ^deno run -A npm:vite preview
+        if ($target_app | is-not-empty) {
+            run-build-dashboard $target_app $f.v $f.b
+            banner $"🎪 Previewing production build: apps/($target_app)" "212"
+            cd $"apps/($target_app)"
+            ^deno run -A npm:vite preview
+        }
     }
 
 [doc('Publish build release')]
