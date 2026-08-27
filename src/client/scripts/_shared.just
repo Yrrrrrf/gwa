@@ -4,7 +4,7 @@
 PROJECT := "gwa-client"
 VERSION := `open deno.json | get version`
 CLIENT_DIR := parent_directory(source_directory())
-HARNESS_NU := source_directory() / "harness.nu"
+HARNESS_NU := source_directory() / "cli"
 JUSTFILE := CLIENT_DIR / "client.just"
 
 [default]
