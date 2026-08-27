@@ -7,7 +7,7 @@ test *args:
 
     def --wrapped main [...raw: string]: nothing -> nothing {
         let f = (parse-cli-flags $raw)
-        run-tests-dashboard $f.v
+        run-tests-dashboard $f.v $f.p
     }
 
 [doc('Test coverage')]

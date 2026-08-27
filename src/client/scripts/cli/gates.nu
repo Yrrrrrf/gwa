@@ -3,7 +3,7 @@ use ui.nu [badge format-duration]
 use workspace.nu [workspace-categories app-targets ensure-node-compat]
 use runner.nu [run-suite parse-count parse-test-stats]
 
-export def run-types-dashboard [is_verbose: bool = false]: nothing -> nothing {
+export def run-types-dashboard [is_verbose: bool = false, is_parallel: bool = false]: nothing -> nothing {
     ensure-node-compat
 
     let resolver = {|pkg|
@@ -82,10 +82,10 @@ export def run-types-dashboard [is_verbose: bool = false]: nothing -> nothing {
         }
     }
 
-    run-suite "TYPES" (workspace-categories) $is_verbose --cmd-preview "deno run -A npm:svelte-check --tsconfig <tsconfig.json> --config <vite.config>" --resolver $resolver --evaluator $evaluator --success-msg "✓ 0 type errors across all workspaces" --fail-msg {|n| $"✗ ($n) type checking errors found" }
+    run-suite "TYPES" (workspace-categories) $is_verbose $is_parallel --cmd-preview "deno run -A npm:svelte-check --tsconfig <tsconfig.json> --config <vite.config>" --resolver $resolver --evaluator $evaluator --success-msg "✓ 0 type errors across all workspaces" --fail-msg {|n| $"✗ ($n) type checking errors found" }
 }
 
-export def run-tests-dashboard [is_verbose: bool = false]: nothing -> nothing {
+export def run-tests-dashboard [is_verbose: bool = false, is_parallel: bool = false]: nothing -> nothing {
     let resolver = {|pkg|
         let rel_pkg = ($pkg.path | path expand | path relative-to $env.PWD)
         let engine = if $pkg.is_svelte { "vitest" } else { "deno" }
@@ -121,7 +121,7 @@ export def run-tests-dashboard [is_verbose: bool = false]: nothing -> nothing {
         }
     }
 
-    run-suite "TEST" (workspace-categories) $is_verbose --cmd-preview "deno run -A npm:vitest run --config ./config/vitest.config.ts --project <sdk/*>" --resolver $resolver --evaluator $evaluator --success-msg "✓ All test suites passed cleanly" --fail-msg {|n| $"✗ ($n) test suites failed" }
+    run-suite "TEST" (workspace-categories) $is_verbose $is_parallel --cmd-preview "deno run -A npm:vitest run --config ./config/vitest.config.ts --project <sdk/*>" --resolver $resolver --evaluator $evaluator --success-msg "✓ All test suites passed cleanly" --fail-msg {|n| $"✗ ($n) test suites failed" }
 }
 
 export def run-build-dashboard [app: string = "", is_verbose: bool = false]: nothing -> nothing {
@@ -162,5 +162,5 @@ export def run-build-dashboard [app: string = "", is_verbose: bool = false]: not
         }
     }
 
-    run-suite "BUILDING" [{ targets: $targets }] $is_verbose --cmd-preview "cd <apps/*> ;; deno run -A npm:vite build" --resolver $resolver --evaluator $evaluator --success-msg "✓ All applications built successfully" --fail-msg {|n| $"✗ ($n) build failed" }
+    run-suite "BUILDING" [{ targets: $targets }] $is_verbose false --cmd-preview "cd <apps/*> ;; deno run -A npm:vite build" --resolver $resolver --evaluator $evaluator --success-msg "✓ All applications built successfully" --fail-msg {|n| $"✗ ($n) build failed" }
 }

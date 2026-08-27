@@ -21,7 +21,7 @@ types *args:
 
     def --wrapped main [...raw: string]: nothing -> nothing {
         let f = (parse-cli-flags $raw)
-        run-types-dashboard $f.v
+        run-types-dashboard $f.v $f.p
     }
 
 [doc('Audit all code namespaces')]

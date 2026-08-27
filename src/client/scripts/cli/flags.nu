@@ -1,6 +1,6 @@
 # flags.nu — centralized CLI flag parser for the harness
 
-export def parse-cli-flags [...raw: any]: nothing -> record<v: bool, b: bool, target: string, rest: list<string>> {
+export def parse-cli-flags [...raw: any]: nothing -> record<v: bool, p: bool, b: bool, target: string, rest: list<string>> {
     let tokens = (
         $raw
         | flatten
@@ -11,6 +11,7 @@ export def parse-cli-flags [...raw: any]: nothing -> record<v: bool, b: bool, ta
     )
 
     let is_v = ($tokens | any { $in in ["-v", "--verbose"] or ($in =~ "^-[a-zA-Z]*v[a-zA-Z]*$") })
+    let is_p = ($tokens | any { $in in ["-p", "--parallel", "-j"] or ($in =~ "^-[a-zA-Z]*p[a-zA-Z]*$") })
     let is_b = ($tokens | any { $in in ["-b", "--bench", "-d", "--duration"] or ($in =~ "^-[a-zA-Z]*[bd][a-zA-Z]*$") })
     let non_flags = ($tokens | where { not ($in starts-with "-") })
     let target = ($non_flags | get 0? | default "")
@@ -18,6 +19,7 @@ export def parse-cli-flags [...raw: any]: nothing -> record<v: bool, b: bool, ta
 
     {
         v: $is_v
+        p: $is_p
         b: $is_b
         target: $target
         rest: $rest
