@@ -28,6 +28,16 @@ export def badge [
     $"\(($sa), ($sb), ($sc)\)"
 }
 
+export def format-duration [d: duration]: nothing -> string {
+    let ms = ($d | into int) / 1_000_000
+    if $ms < 1000 {
+        $"($ms | math round)ms"
+    } else {
+        let sec = ($ms / 1000)
+        $"($sec | math round -p 2)s"
+    }
+}
+
 export def banner [text: string, color: string = "212"]: nothing -> nothing {
     print ""
     ^gum style --foreground $color --bold $text

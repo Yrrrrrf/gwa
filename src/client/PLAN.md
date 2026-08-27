@@ -91,6 +91,11 @@ scripts/cli/
 - [x] **Phase 4: Live Verification & Testing**
   - Verified `just check`, `just test`, `just build`, `just ci`, `just types -v`, and `just test -v`.
   - Confirmed live rolling viewport, clean wipeout upon completion, and post-noise verbose dashboard.
+- [x] **Phase 5: Benchmark Timing Telemetry (`-b` / `-d`)**
+  - Added `format-duration` in `scripts/cli/ui.nu`.
+  - Added `is_bench` row timing, overview telemetry header, and suite banner duration in `scripts/cli/runner.nu`.
+  - Added `-b` / `-d` argument forwarding across `check.just`, `test.just`, and `deploy.just`.
+  - Verified `just test -b`, `just types -b`, `just build -b`, `just ci -b`, and `just test -v -b`.
 
 ---
 
@@ -103,4 +108,6 @@ scripts/cli/
 | **Clean Wipeout on Success** | All gates | Upon command success, the 8 dim lines vanish completely; the final row displays only the permanent badge `(passed, failed, skipped)` or `(files, errors, warnings)`. | ✅ PASS |
 | **Diagnostic Pin on Failure** | Simulated failure | If a task fails, the output logs are NOT erased; they remain pinned with red error bars for debugging. | ✅ PASS |
 | **Post-Noise Verbose Overview** | `just test -v`<br>`just types -v` | Streams full noisy logs during execution, then renders the consolidated clean summary overview dashboard at the bottom before the banner. | ✅ PASS |
+| **Benchmark Timing Telemetry** | `just test -b`<br>`just ci -b` | Displays per-target execution duration tags, overview elapsed telemetry, and total suite execution time. | ✅ PASS |
+
 

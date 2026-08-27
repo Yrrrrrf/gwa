@@ -12,7 +12,7 @@ lint:
     ^deno lint .
     -^biome lint --config-path=config/biome.json .
 
-[doc('Type-check workspace (SDK modules + SvelteKit apps) (pass -v for detailed logs)')]
+[doc('Type-check workspace (SDK modules + SvelteKit apps) (pass -v for detailed logs, -b for timing)')]
 [group('check')]
 [positional-arguments]
 [script]
@@ -20,7 +20,9 @@ types *args:
     use {{ HARNESS_NU }} *
 
     def --wrapped main [...raw_args: string] {
-        run-types-dashboard ($raw_args | any { $in in ["-v" "--verbose"] })
+        let is_v = ($raw_args | any { $in in ["-v", "--verbose"] })
+        let is_b = ($raw_args | any { $in in ["-b", "--bench", "-d", "--duration"] })
+        run-types-dashboard $is_v $is_b
     }
 
 [doc('Audit all code namespaces')]

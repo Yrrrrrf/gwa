@@ -1,5 +1,5 @@
 # runner.nu — generic execution step, suite coordinator, output parsers, and live viewport
-use ui.nu [chevron badge banner render-cmd-preview clear-viewport print-stream SPINNER_FRAMES]
+use ui.nu [chevron badge banner render-cmd-preview clear-viewport print-stream format-duration SPINNER_FRAMES]
 
 # --- Output Parsers ---
 
@@ -151,12 +151,14 @@ export def run-suite [
     title: string
     categories: list<record>
     is_verbose: bool = false
+    is_bench: bool = false
     --cmd-preview: string = ""
     --resolver: closure
     --evaluator: closure
     --success-msg: string
     --fail-msg: closure
 ]: nothing -> nothing {
+    let suite_start = (date now)
     banner $title "212"
     if ($cmd_preview | is-not-empty) {
         render-cmd-preview $cmd_preview
@@ -204,8 +206,9 @@ export def run-suite [
             let eval = (do $evaluator $res $pkg)
             $total_errors = ($total_errors + $eval.err_count)
 
-            # 5. Format and print status row
-            print $"  (chevron) (ansi grey)($plan.engine | fill -w 14)(ansi reset)(ansi default_bold)($pkg.name | fill -w 8)(ansi reset)($eval.badge)"
+            # 5. Format and print status row (with optional benchmark duration)
+            let dur_tag = if $is_bench { $" (ansi grey)\((format-duration $res.elapsed)\)(ansi reset)" } else { "" }
+            print $"  (chevron) (ansi grey)($plan.engine | fill -w 14)(ansi reset)(ansi default_bold)($pkg.name | fill -w 8)(ansi reset)($eval.badge)($dur_tag)"
 
             # 6. Stream logs if verbose or on error
             print-stream $res $is_verbose $eval.is_err
@@ -215,7 +218,7 @@ export def run-suite [
                     cat: ($cat.name? | default "")
                     engine: $plan.engine
                     name: $pkg.name
-                    badge: $eval.badge
+                    badge: $"($eval.badge)($dur_tag)"
                     is_err: $eval.is_err
                 })
             }
@@ -223,9 +226,12 @@ export def run-suite [
         print ""
     }
 
+    let suite_elapsed = ((date now) - $suite_start)
+
     # 7. Post-Noise Consolidated Overview in Verbose Mode
     if $is_verbose and ($summary_rows | is-not-empty) {
-        print $"(ansi purple_bold)📊 OVERVIEW(ansi reset)"
+        let ov_dur = if $is_bench { $" (ansi grey)\(⏱️ (format-duration $suite_elapsed)\)(ansi reset)" } else { "" }
+        print $"(ansi purple_bold)📊 OVERVIEW(ansi reset)($ov_dur)"
         mut last_cat = ""
         for $row in $summary_rows {
             let cat_name = ($row.cat | default "")
@@ -239,10 +245,11 @@ export def run-suite [
     }
 
     # 8. Final Banner
+    let total_dur_suffix = if $is_bench { $" (ansi grey)\(total: (format-duration $suite_elapsed)\)(ansi reset)" } else { "" }
     if $total_errors > 0 {
-        banner (do $fail_msg $total_errors) "196"
+        banner $"((do $fail_msg $total_errors))($total_dur_suffix)" "196"
         exit 1
     } else {
-        banner $success_msg "48"
+        banner $"($success_msg)($total_dur_suffix)" "48"
     }
 }

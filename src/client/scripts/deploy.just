@@ -5,7 +5,7 @@
 [positional-arguments]
 ci *args: (check args) (test args)
 
-[doc('Build applications: deno.json -> build/ (builds all apps or specified app) (pass -v for detailed logs)')]
+[doc('Build applications: deno.json -> build/ (builds all apps or specified app) (pass -v for detailed logs, -b for timing)')]
 [group('deploy')]
 [positional-arguments]
 [script]
@@ -15,8 +15,9 @@ build app='' *args:
     def --wrapped main [app = '', ...raw_args: string] {
         let all_args = ([$app] ++ $raw_args | where { $in | is-not-empty })
         let is_verbose = ($all_args | any { $in in ["-v", "--verbose"] })
-        let target_app = ($all_args | where { not ($in in ["-v", "--verbose"]) } | get 0? | default "")
-        run-build-dashboard $target_app $is_verbose
+        let is_bench = ($all_args | any { $in in ["-b", "--bench", "-d", "--duration"] })
+        let target_app = ($all_args | where { not ($in in ["-v", "--verbose", "-b", "--bench", "-d", "--duration"]) } | get 0? | default "")
+        run-build-dashboard $target_app $is_verbose $is_bench
     }
 
 [doc('Preview production build (prompts app picker if not specified)')]
