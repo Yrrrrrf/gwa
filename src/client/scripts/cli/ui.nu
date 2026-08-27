@@ -1,4 +1,6 @@
-# ui.nu — terminal styling, badges, banners, and streaming log formatters
+# ui.nu — terminal styling, badges, banners, command preview, and streaming log formatters
+
+export const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
 export def chevron []: nothing -> string {
     $"(ansi cyan_bold)❯❯(ansi reset)"
@@ -29,6 +31,20 @@ export def badge [
 export def banner [text: string, color: string = "212"]: nothing -> nothing {
     print ""
     ^gum style --foreground $color --bold $text
+}
+
+export def render-cmd-preview [text: string]: nothing -> nothing {
+    let styled = ($text | str replace --all --regex "<([^>]+)>" $"(ansi rst)(ansi cyan_bold)<$1>(ansi reset)(ansi i)(ansi grey)")
+    print $"  (ansi i)(ansi grey)($styled)(ansi reset)"
+    print ""
+}
+
+export def clear-viewport [n: int]: nothing -> nothing {
+    if $n > 0 {
+        print -n $"\e[($n)A\e[0J\r\e[2K"
+    } else {
+        print -n "\r\e[2K"
+    }
 }
 
 export def print-stream [res: record, is_verbose: bool, is_err: bool]: nothing -> nothing {

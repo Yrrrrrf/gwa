@@ -1,73 +1,106 @@
-# Harness Refactoring Plan: Modular `scripts/cli/*` Architecture
+# Ephemeral Output & Styled Command Preview Plan
 
-This plan defines the architectural decomposition and implementation roadmap to refactor [`scripts/harness.nu`](scripts/harness.nu) into a modular, decoupled CLI suite under `scripts/cli/*`.
+This plan outlines the design and implementation to upgrade [`scripts/cli/*`](scripts/cli) with:
+1. **Styled Command Previews** (bare commands in italics with dynamic targets in bold `<item>`).
+2. **Ephemeral Rolling Viewport** (Docker BuildKit / Podman style live tail of ~8–10 dim lines that cleanly vanishes upon completion).
 
 ---
 
 ## 🎯 Objectives & Invariants
 
-1. **Eliminate Duplicated Runner Boilerplate**: Replace repetitive loops in `types`, `tests`, and `build` dashboards with a single, generalized higher-order runner ([`run-suite`](scripts/cli/runner.nu)) and execution step ([`exec-step`](scripts/cli/runner.nu)).
-2. **Zero Hardcoded Package Names**: Remove static package routing (e.g. `["state", "ui"]`). Detect package capabilities (Svelte vs Deno, Vitest vs Deno test) declaratively via filesystem introspection (`vite.config.*`, `tsconfig.json`, `.svelte`).
-3. **Directory Isolation**: Eliminate stateful `cd $dir ... cd ../..` mutations in the parent shell by executing in isolated subshell contexts with explicit `--cwd`.
-4. **Enhanced Verbose (`-v`) Mode**: Provide clear execution command traces (`[EXEC] <cmd> in <cwd>`), precise timing breakdowns, and indented stream markers (`│`).
-5. **Zero Breaking Changes**: Retain [`scripts/harness.nu`](scripts/harness.nu) as a thin façade (`export use cli *`) so all recipes in [`justfile`](justfile), [`scripts/check.just`](scripts/check.just), [`scripts/test.just`](scripts/test.just), [`scripts/dev.just`](scripts/dev.just), and [`scripts/deploy.just`](scripts/deploy.just) continue working seamlessly.
+1. **Styled Command Preview**:
+   - Print the exact command template under each suite header (`🧪 TEST`, `🛡️ TYPES`, `📦 BUILDING APPLICATIONS`).
+   - Pure command syntax only (no conversational prose like *"Running tests with..."*).
+   - Fixed executable & flags in `(ansi italic)(ansi grey)`.
+   - Dynamic target arguments in bold cyan `<...>` (e.g. `<sdk/*>`, `<tsconfig.json>`, `<apps/*>`).
+
+2. **Ephemeral Rolling Output Viewport (Docker/Podman Build Style)**:
+   - While a task is in flight:
+     - Display the step line with a cyan spinner (`⠋`, `⠙`, `⠹`, `⠸`, `⠼`, `⠴`, `⠦`, `⠧`, `⠇`, `⠏`).
+     - Display a live rolling tail of the last 8–10 lines of child process output in `(ansi d)(ansi grey)    │ <line>(ansi reset)`.
+   - When the task completes:
+     - Rewind and erase the temporary viewport using ANSI cursor codes (`\e[<N>A\e[0J\r\e[K`).
+     - Overwrite the spinner line with the permanent badge row:
+       `  ❯❯ vitest        state   (3 passed, 0 failed, 0 skipped)`
+     - If the command fails (`exit_code != 0` or errors > 0): preserve the diagnostic logs with red vertical bars so failures are immediately visible.
+
+3. **Post-Noise Consolidated Overview in Verbose (`-v`) Mode**:
+   - In `-v` mode, full step command traces and stdout/stderr streams are displayed in real-time as they run.
+   - At the end of the suite, after all the verbose log output, a consolidated **Summary / Overview Dashboard** is rendered with all package badges grouped by category before the final banner.
+   - Developers get both the deep diagnostic logs *and* a clean, unified summary without scrolling back through hundreds of lines of terminal noise.
+
+4. **Performance & Reliability Invariants**:
+   - Use Nushell native background job management ([`job spawn`](https://www.nushell.sh)) and streaming file buffers.
+   - Zero terminal corruption: ensure cursor coordinates and line counts are strictly tracked.
+   - Maintain clean fallback handling for non-TTY / CI execution.
 
 ---
 
-## 🏛️ Target Architecture & File Matrix
+## 📐 Architecture Updates
 
 ```text
-scripts/
-├── harness.nu               # Backwards-compatible façade: `export use cli *`
-└── cli/
-    ├── mod.nu               # Root module re-exporting the CLI surface
-    ├── ui.nu                # Visuals: chevron, metric, badge, banners (gum), print-stream
-    ├── workspace.nu         # Declarative package inspection & maintenance (prune, prepare, node compat)
-    ├── runner.nu            # Core engine: exec-step, run-suite, parsers (parse-count, parse-test-stats)
-    └── gates.nu             # Declarative gates: run-types-dashboard, run-tests-dashboard, run-build-dashboard
+scripts/cli/
+├── ui.nu            <-- Added: render-cmd-preview, clear-viewport, spinner-frames
+├── runner.nu        <-- Updated: exec-step with live tailing buffer + ANSI rollback
+└── gates.nu         <-- Updated: pass styled command templates into run-suite
 ```
 
-### Module Responsibilities
+### 1. `scripts/cli/ui.nu` Additions
+* `render-cmd-preview [base: string, target_tag: string, trailing: string = ""]`:
+  Renders styled command line: `(ansi i)(ansi grey)($base) (ansi cyan_bold)<($target_tag)>(ansi reset) (ansi i)(ansi grey)($trailing)(ansi reset)`
+* `clear-viewport [lines_count: int]`:
+  Emits `\e[($lines_count)A\e[0J\r\e[K` to wipe the temporary trailing lines and current line.
+* Spinner character generator: `["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]`.
 
-| Module | Responsibilities | Key Functions |
-| :--- | :--- | :--- |
-| **`ui.nu`** | ANSI colors, metrics formatting, standardized status badges, styled banners, and indented log streams. | `chevron`, `metric`, `badge`, `print-stream`, `banner` |
-| **`workspace.nu`** | Dynamic filesystem introspection, package metadata derivation (zero hardcoding), cache pruning, dependency installation, and SvelteKit syncing. | `inspect-package`, `workspace-categories`, `app-packages`, `sdk-packages`, `run-prune-workspace`, `run-prepare-workspace` |
-| **`runner.nu`** | Isolated process execution with spinner / verbose logging, output parsers, and the generalized category suite orchestrator. | `exec-step`, `run-suite`, `parse-count`, `parse-test-stats` |
-| **`gates.nu`** | Declarative wrappers connecting workspace targets and runner logic for types, tests, and build. | `run-types-dashboard`, `run-tests-dashboard`, `run-build-dashboard` |
-| **`mod.nu`** | Re-exports all public API functions from `ui`, `workspace`, `runner`, and `gates`. | `export use ...` |
-| **`harness.nu`** | Thin single-line wrapper: `export use cli *`. | Root entry point for `just` |
+### 2. `scripts/cli/runner.nu` Updates
+* `exec-step`:
+  - Spawns command in background via `job spawn` while redirecting `o+e>` to a temporary stream file.
+  - In a tight refresh loop (~60–80ms):
+    - Updates spinner frame on the step header.
+    - Reads the last 8 lines of the stream file and prints them prefixed with `(ansi grey)│ (ansi d)...`.
+    - Rewinds cursor for the next frame.
+  - On exit:
+    - Erases ephemeral lines cleanly via `clear-viewport`.
+    - Returns full `{ stdout, stderr, exit_code, elapsed }` record for parser badge evaluation.
+* `run-suite`:
+  - Receives an optional `--cmd-preview: string` parameter and renders it under the main title.
+  - If a step fails, prints the captured failure stream with red bars.
+  - In `-v` mode, collects all formatted badge status rows and renders a consolidated **Post-Noise Summary / Overview Dashboard** after all verbose streams complete, right before the final banner.
+
+### 3. `scripts/cli/gates.nu` Updates
+* `run-types-dashboard`:
+  Configures preview: `deno run -A npm:svelte-check --tsconfig <tsconfig.json> --config <vite.config>` / `deno check <src/mod.ts>`.
+* `run-tests-dashboard`:
+  Configures preview: `deno run -A npm:vitest run --config ./config/vitest.config.ts --project <sdk/*>` / `deno test --allow-all <dir>`.
+* `run-build-dashboard`:
+  Configures preview: `deno run -A npm:vite build (in <apps/*>)`.
 
 ---
 
-## 🛠️ Implementation Phases — ✅ COMPLETE
+## 🛠️ Implementation Phases — ✅ ALL COMPLETE
 
-- [x] **Phase 1: Visual & Streaming Foundation (`scripts/cli/ui.nu`)**
-  - Implemented `chevron`, `metric`, `badge`, `banner`, and `print-stream`.
-- [x] **Phase 2: Dynamic Workspace Introspection (`scripts/cli/workspace.nu`)**
-  - Implemented `inspect-package` (zero hardcoded package names, detects Svelte/Vite vs Deno, and test files).
-  - Implemented `workspace-categories`, `app-targets`, `run-prune-workspace`, and `run-prepare-workspace`.
-- [x] **Phase 3: Generic Execution & Suite Runner (`scripts/cli/runner.nu`)**
-  - Implemented `exec-step` with directory isolation (`--cwd`), timing, `gum spin`, and command tracing.
-  - Implemented `run-suite` generalized coordinator and regex parsers (`parse-count`, `parse-test-stats`).
-- [x] **Phase 4: Declarative Dashboards (`scripts/cli/gates.nu`)**
-  - Implemented `run-types-dashboard`, `run-tests-dashboard`, and `run-build-dashboard` on top of `run-suite`.
-- [x] **Phase 5: Facade & Module Wiring (`scripts/cli/mod.nu`, `scripts/harness.nu`)**
-  - Created `scripts/cli/mod.nu` re-exporting all submodules.
-  - Updated `scripts/harness.nu` to a thin façade (`export use cli *`).
-- [x] **Phase 6: Live Verification & Testing**
-  - Verified `just prepare`, `just check`, `just test`, `just build`, `just ci`, `just types -v`, and `just test -v`.
+- [x] **Phase 1: Terminal Visuals & Cursor Mechanics (`scripts/cli/ui.nu`)**
+  - Implemented `render-cmd-preview` with italics + bold cyan `<target>` tags.
+  - Implemented `clear-viewport` and `SPINNER_FRAMES`.
+- [x] **Phase 2: Live Viewport Runner & Verbose Overview (`scripts/cli/runner.nu`)**
+  - Enhanced `exec-step` with `job spawn` background execution, rolling buffer reader (last 8 lines), and cursor rewind loop.
+  - Diagnostic logs remain pinned with red bars on error.
+  - Implemented consolidated `📊 OVERVIEW` summary table printed after all verbose stream noise in `-v` mode.
+- [x] **Phase 3: Quality Gates Preview Wiring (`scripts/cli/gates.nu`)**
+  - Wired command preview strings into `run-types-dashboard`, `run-tests-dashboard`, and `run-build-dashboard`.
+- [x] **Phase 4: Live Verification & Testing**
+  - Verified `just check`, `just test`, `just build`, `just ci`, `just types -v`, and `just test -v`.
+  - Confirmed live rolling viewport, clean wipeout upon completion, and post-noise verbose dashboard.
 
 ---
 
 ## 🏁 Exit Criteria & Verification Matrix — ✅ ALL PASSED
 
-| Gate | Execution Command | Verification / Expected Result | Status |
+| Step | Command | Verification Check | Status |
 | :--- | :--- | :--- | :---: |
-| **Workspace Hygiene** | `just prepare` | Successfully pruned caches, installed Deno packages, created Vite symlink, and synced SvelteKit. | ✅ PASS |
-| **Type Check Gate** | `just check` | Runs `fmt`, `lint`, and `types`. Verified SDK + APP with 0 errors across 48 files. | ✅ PASS |
-| **Test Suite Gate** | `just test` | Dispatched Vitest for Svelte packages and `deno test` for pure Deno packages. Accurately flagged `[no tests]`. | ✅ PASS |
-| **Build Gate** | `just build` | Pre-synced SvelteKit and compiled `apps/vision` to `apps/vision/build` in ~2.5s. | ✅ PASS |
-| **CI Convergence** | `just ci` | Executed `check` + `test` sequentially without errors. | ✅ PASS |
-| **Verbose Tracing** | `just types -v`<br>`just test -v` | Emitted explicit `[EXEC]` command traces and structured stream indentation markers (`│`). | ✅ PASS |
-| **Code Modularity** | Code Review | `scripts/harness.nu` is reduced to 2 lines; zero hardcoded package names in `scripts/cli/*`. | ✅ PASS |
+| **Command Preview** | `just test`<br>`just check`<br>`just build` | Under the suite header, the styled command template displays with italics and `<bold-target>`. No conversational filler text. | ✅ PASS |
+| **Live Ephemeral Output** | Interactive terminal | While tasks run, an ephemeral window of up to 8 dim lines streams with `│` vertical bars. | ✅ PASS |
+| **Clean Wipeout on Success** | All gates | Upon command success, the 8 dim lines vanish completely; the final row displays only the permanent badge `(passed, failed, skipped)` or `(files, errors, warnings)`. | ✅ PASS |
+| **Diagnostic Pin on Failure** | Simulated failure | If a task fails, the output logs are NOT erased; they remain pinned with red error bars for debugging. | ✅ PASS |
+| **Post-Noise Verbose Overview** | `just test -v`<br>`just types -v` | Streams full noisy logs during execution, then renders the consolidated clean summary overview dashboard at the bottom before the banner. | ✅ PASS |
+
