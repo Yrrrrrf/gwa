@@ -1,7 +1,7 @@
 // process.ts — In-memory Web Streams process runner
 // Zero /tmp disk writes, pipe deadlock prevention, and unbuffered RAM streaming
 
-import { TextLineStream } from "@std/streams";
+import { TextLineStream } from "jsr:@std/streams@1.0.8";
 import type { ProcessResult } from "./types.ts";
 
 export interface SpawnStreamingOptions {

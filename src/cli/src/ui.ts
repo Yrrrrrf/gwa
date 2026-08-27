@@ -1,8 +1,8 @@
 // ui.ts — Terminal styling, badges, banners, command templates, and Cliffy Table layout
 // Zero escape leaks, mathematically immune column alignment, and native ANSI formatting
 
-import { colors } from "@cliffy/ansi/colors";
-import { Cell, Row, Table } from "@cliffy/table";
+import { colors } from "jsr:@cliffy/ansi@1.2.1/colors";
+import { Cell, Row, Table } from "jsr:@cliffy/table@1.2.1";
 import type { BaseTarget, TaskState } from "./types.ts";
 
 export const SPINNER_FRAMES = [

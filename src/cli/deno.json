@@ -6,6 +6,11 @@
     "test": "deno test -A tests/",
     "check": "deno check src/mod.ts tests/*.ts"
   },
+  "lint": {
+    "rules": {
+      "exclude": ["no-import-prefix"]
+    }
+  },
   "imports": {
     "@cliffy/command": "jsr:@cliffy/command@1.2.1",
     "@cliffy/command/help": "jsr:@cliffy/command@1.2.1/help",

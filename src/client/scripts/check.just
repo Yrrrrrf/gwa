@@ -2,39 +2,30 @@
 
 [doc('Format workspace')]
 [group('check')]
-fmt:
-    # ^deno fmt .
-    ^biome format --config-path=config/biome.json --write .
+fmt *flags:
+    {{ CLI }} fmt {{ flags }}
 
 [doc('Lint workspace')]
 [group('check')]
-lint:
-    # ^deno lint .
-    -^biome lint --config-path=config/biome.json .
+lint *flags:
+    {{ CLI }} lint {{ flags }}
 
 [doc('Type-check workspace (SDK modules + SvelteKit apps) (pass -v for detailed logs)')]
 [group('check')]
-[positional-arguments]
-[script]
-types *args:
-    use {{ HARNESS_NU }} [parse-cli-flags run-types-dashboard]
-
-    def --wrapped main [...raw: string]: nothing -> nothing {
-        let f = (parse-cli-flags $raw)
-        run-types-dashboard $f.v $f.p
-    }
+types *flags:
+    {{ CLI }} types {{ flags }}
 
 [doc('Audit all code namespaces')]
 [group('check')]
-audit:
-    ^deno run -A npm:fallow -c config/fallowrc.json
+audit *flags:
+    {{ CLI }} audit {{ flags }}
 
 [doc('Check code health')]
 [group('check')]
-health:
-    ^deno run -A npm:fallow health --score -c config/fallowrc.json
+health *flags:
+    {{ CLI }} health {{ flags }}
 
 [doc('Run all check quality gates (pass -v for detailed logs, -b for timing)')]
 [group('check')]
-[positional-arguments]
-check *args: fmt lint (types args)
+check *flags:
+    {{ CLI }} check {{ flags }}

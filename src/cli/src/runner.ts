@@ -1,7 +1,7 @@
 // runner.ts — Generic suite runner & concurrency scheduler
 // Supports sequential and parallel execution, 60 FPS live clock ticker, and CI fallback
 
-import { colors } from "@cliffy/ansi/colors";
+import { colors } from "jsr:@cliffy/ansi@1.2.1/colors";
 import {
   clampLine,
   cursorUp,

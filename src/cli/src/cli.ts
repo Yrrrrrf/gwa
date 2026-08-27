@@ -4,9 +4,9 @@
 import { Command } from "@cliffy/command";
 import { HelpCommand } from "@cliffy/command/help";
 import { CompletionsCommand } from "@cliffy/command/completions";
-import { stripAnsiCode } from "@std/fmt/colors";
 import { runSuite } from "./runner.ts";
 import { badge } from "./ui.ts";
+import { parseDenoCheck, parseTestStats } from "./parsers.ts";
 import type { BaseTarget, ProcessResult, TargetCategory } from "./types.ts";
 
 interface CliTarget extends BaseTarget {
@@ -57,36 +57,6 @@ const testCategories: TargetCategory<CliTarget>[] = [
     ],
   },
 ];
-
-function parseDenoCheck(text: string, exitCode: number) {
-  const matches = text.match(/TS\d+\s+\[ERROR\]/g);
-  const count = matches ? matches.length : 0;
-  const isErr = exitCode !== 0 || count > 0;
-  return {
-    isErr,
-    errCount: isErr ? Math.max(count, 1) : 0,
-  };
-}
-
-function parseTestStats(output: string, exitCode: number) {
-  const clean = stripAnsiCode(output);
-  const lines = clean.split("\n");
-  const summaryLines = lines.filter(
-    (l) => /ok\s+\|/i.test(l) || /FAILED\s+\|/i.test(l) || /passed/i.test(l),
-  );
-  const summary = summaryLines[summaryLines.length - 1] ?? clean;
-
-  const pMatch = summary.match(/(\d+)\s+passed/);
-  const fMatch = summary.match(/(\d+)\s+failed/);
-  const sMatch = summary.match(/(\d+)\s+skipped/);
-
-  const passed = pMatch ? parseInt(pMatch[1], 10) : 0;
-  let failed = fMatch ? parseInt(fMatch[1], 10) : 0;
-  const skipped = sMatch ? parseInt(sMatch[1], 10) : 0;
-  if (exitCode !== 0 && failed === 0) failed = 1;
-
-  return { passed, failed, skipped, isErr: exitCode !== 0 || failed > 0 };
-}
 
 // ── CLI Command Scaffold ───────────────────────────────────────────────
 

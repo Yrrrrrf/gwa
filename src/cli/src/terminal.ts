@@ -1,8 +1,8 @@
 // terminal.ts — Virtual Viewport, ANSI Screen Navigation & Cursor Hygiene
 // Guarantees zero escape leaks, safe cursor restore, and headless CI mode
 
-import { ansi } from "@cliffy/ansi";
-import { stripAnsiCode } from "@std/fmt/colors";
+import { ansi } from "jsr:@cliffy/ansi@1.2.1";
+import { stripAnsiCode } from "jsr:@std/fmt@1.0.10/colors";
 
 export function isTTY(): boolean {
   try {
