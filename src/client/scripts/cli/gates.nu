@@ -7,7 +7,7 @@ export def run-types-dashboard [is_verbose: bool = false, is_bench: bool = false
     ensure-node-compat
 
     let resolver = {|pkg|
-        let rel_pkg = ($pkg.path | path relative-to $env.PWD)
+        let rel_pkg = ($pkg.path | path expand | path relative-to $env.PWD)
 
         if $pkg.is_svelte {
             let vcfg = if ($"($pkg.path)/vite.config.mts" | path exists) {
@@ -87,7 +87,7 @@ export def run-types-dashboard [is_verbose: bool = false, is_bench: bool = false
 
 export def run-tests-dashboard [is_verbose: bool = false, is_bench: bool = false]: nothing -> nothing {
     let resolver = {|pkg|
-        let rel_pkg = ($pkg.path | path relative-to $env.PWD)
+        let rel_pkg = ($pkg.path | path expand | path relative-to $env.PWD)
         let engine = if $pkg.is_svelte { "vitest" } else { "deno" }
         if not $pkg.has_tests {
             {
@@ -132,7 +132,7 @@ export def run-build-dashboard [app: string = "", is_verbose: bool = false, is_b
     }
 
     let resolver = {|pkg|
-        let rel_pkg = ($pkg.path | path relative-to $env.PWD)
+        let rel_pkg = ($pkg.path | path expand | path relative-to $env.PWD)
         {
             engine: "vite build"
             cwd: $pkg.path

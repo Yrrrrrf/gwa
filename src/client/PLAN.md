@@ -150,6 +150,11 @@ In `-v` mode, each concrete command is printed, and its detailed output streams 
   - Replaced external `^gum style` in `banner` with native Nushell ANSI formatting (`(ansi -e { fg: $color, attr: b })`) to completely eliminate OSC 11 (`\e]11;?`) background color queries that were leaking `^[]11;rgb:...` into stdout/stdin.
   - Eliminated `(term size)` polling within runner loops, eradicating DSR cursor report leaks (`^[[...R`).
   - Redesigned verbose (`-v`) execution so the dashboard table is permanently rendered at the bottom from the start, live-streaming command logs above it while keeping spinners and completed states synchronized.
+- [x] **Phase 6: Centralized CLI Flag Parser & Inheritance Fix (`scripts/cli/flags.nu`, `scripts/check.just`, `scripts/test.just`, `scripts/deploy.just`)**
+  - Created centralized `parse-cli-flags` in `scripts/cli/flags.nu` to tokenize inputs by whitespace and support grouped shorthand flags (`-vb`, `-bv`, `-vd`, `-bd`).
+  - Fixed Just string packing bug where dependency recipes (`check`, `types`, `test`) received packed string arguments (e.g. `"-v -b"`) causing flags to be silently ignored.
+  - Replaced duplicate parsing boilerplate in `check.just`, `test.just`, and `deploy.just` with clean single-line calls to `parse-cli-flags`.
+  - Added safe path expansion in `gates.nu` (`path expand | path relative-to $env.PWD`) to ensure both relative and absolute paths convert reliably.
 
 ---
 
@@ -164,4 +169,8 @@ In `-v` mode, each concrete command is printed, and its detailed output streams 
 | **Unified Overview** | `just test -v` | No separate duplicate `OVERVIEW` block; bottom table contains all final stats and durations. | ✅ PASS |
 | **Zero Escape Leaks** | `just ci -v` | No `^[]11;rgb:...` or `^[[...R` escape codes leak into output or prompt. | ✅ PASS |
 | **Live Verbose Table** | `just ci -v` | In `-v` mode, the dashboard table is visible at the bottom throughout the entire execution. | ✅ PASS |
+| **Combined Flags** | `just ci -v -b` | Both verbose logs and benchmark durations display across `types` and `test`. | ✅ PASS |
+| **Grouped Flags** | `just ci -vb` | Grouped shorthand `-vb` works identically to `-v -b`. | ✅ PASS |
+| **App Target & Flags** | `just build vision -vb` | Extracts `vision` target app and enables both verbose and bench modes cleanly. | ✅ PASS |
+
 

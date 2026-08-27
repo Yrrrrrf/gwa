@@ -1,6 +1,6 @@
 # deploy.just — ship · build, preview, publish, and release
 
-[doc('Run quality gate (check + test) (pass -v for detailed logs)')]
+[doc('Run quality gate (check + test) (pass -v for detailed logs, -b for timing)')]
 [group('ci')]
 [positional-arguments]
 ci *args: (check args) (test args)
@@ -9,15 +9,12 @@ ci *args: (check args) (test args)
 [group('deploy')]
 [positional-arguments]
 [script]
-build app='' *args:
-    use {{ HARNESS_NU }} *
+build *args:
+    use {{ HARNESS_NU }} [parse-cli-flags run-build-dashboard]
 
-    def --wrapped main [app = '', ...raw_args: string] {
-        let all_args = ([$app] ++ $raw_args | where { $in | is-not-empty })
-        let is_verbose = ($all_args | any { $in in ["-v", "--verbose"] })
-        let is_bench = ($all_args | any { $in in ["-b", "--bench", "-d", "--duration"] })
-        let target_app = ($all_args | where { not ($in in ["-v", "--verbose", "-b", "--bench", "-d", "--duration"]) } | get 0? | default "")
-        run-build-dashboard $target_app $is_verbose $is_bench
+    def --wrapped main [...raw: string] {
+        let f = (parse-cli-flags $raw)
+        run-build-dashboard $f.target $f.v $f.b
     }
 
 [doc('Preview production build (prompts app picker if not specified)')]

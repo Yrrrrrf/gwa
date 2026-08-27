@@ -17,12 +17,11 @@ lint:
 [positional-arguments]
 [script]
 types *args:
-    use {{ HARNESS_NU }} *
+    use {{ HARNESS_NU }} [parse-cli-flags run-types-dashboard]
 
-    def --wrapped main [...raw_args: string] {
-        let is_v = ($raw_args | any { $in in ["-v", "--verbose"] })
-        let is_b = ($raw_args | any { $in in ["-b", "--bench", "-d", "--duration"] })
-        run-types-dashboard $is_v $is_b
+    def --wrapped main [...raw: string] {
+        let f = (parse-cli-flags $raw)
+        run-types-dashboard $f.v $f.b
     }
 
 [doc('Audit all code namespaces')]
@@ -35,7 +34,7 @@ audit:
 health:
     ^deno run -A npm:fallow health --score -c config/fallowrc.json
 
-[doc('Run all check quality gates (pass -v for detailed logs)')]
+[doc('Run all check quality gates (pass -v for detailed logs, -b for timing)')]
 [group('check')]
 [positional-arguments]
 check *args: fmt lint (types args)
