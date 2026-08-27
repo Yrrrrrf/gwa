@@ -84,7 +84,6 @@ export def run-suite [
     --fail-msg: closure
 ]: nothing -> nothing {
     let suite_start = (date now)
-    banner $title "212"
 
     # 1. Render Template Preview (crisp non-dim italic, bold cyan <placeholders>)
     if ($cmd_preview | is-not-empty) {

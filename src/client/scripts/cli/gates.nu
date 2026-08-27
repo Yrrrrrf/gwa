@@ -144,7 +144,7 @@ export def run-build-dashboard [app: string = "", is_verbose: bool = false, is_b
                 } | complete | ignore
             }
             cmd: ["deno", "run", "-A", "npm:vite", "build"]
-            display_cmd: $"cd <($rel_pkg)> && deno run -A npm:vite build"
+            display_cmd: $"cd <($rel_pkg)> ;; deno run -A npm:vite build"
         }
     }
 
@@ -166,5 +166,5 @@ export def run-build-dashboard [app: string = "", is_verbose: bool = false, is_b
         }
     }
 
-    run-suite "📦 BUILDING APPLICATIONS" [{ targets: $targets }] $is_verbose $is_bench --cmd-preview "cd <apps/*> && deno run -A npm:vite build" --resolver $resolver --evaluator $evaluator --success-msg "✓ All applications built successfully" --fail-msg {|n| $"✗ ($n) build failed" }
+    run-suite "📦 BUILDING APPLICATIONS" [{ targets: $targets }] $is_verbose $is_bench --cmd-preview "cd <apps/*> ;; deno run -A npm:vite build" --resolver $resolver --evaluator $evaluator --success-msg "✓ All applications built successfully" --fail-msg {|n| $"✗ ($n) build failed" }
 }

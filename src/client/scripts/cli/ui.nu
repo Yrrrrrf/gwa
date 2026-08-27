@@ -47,7 +47,9 @@ export def banner [text: string, color: string = "212"]: nothing -> nothing {
 # Template command: crisp distinct style (not dim) with <placeholders> in bold cyan
 export def render-cmd-template [text: string]: nothing -> nothing {
     let styled = ($text | str replace --all --regex "<([^>]+)>" $"(ansi reset)(ansi cyan_bold)<$1>(ansi reset)(ansi default_italic)")
+    print ""
     print $"  (ansi default_italic)($styled)(ansi reset)"
+    print ""
 }
 
 # Concrete commands manifest: bold text at 0 tabs (no leading indent)
