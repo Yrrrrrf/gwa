@@ -1,16 +1,16 @@
-# Future body: cargo run
-[doc('Run CLI application')]
-[group('dev')]
-run:
-    @echo "run: cli crate not implemented; skipping"
+# dev.just — development, watch mode, and workspace lifecycle
 
-# Future body: cargo build
-[doc('Build CLI application')]
+[doc('Run CLI in watch mode')]
 [group('dev')]
-build:
-    @echo "build: cli crate not implemented; skipping"
+dev *flags:
+    {{ CLI }} dev {{ flags }}
 
-[doc('Placeholder — nothing to purge/reinstall here yet')]
+[doc('Prepare CLI dependencies')]
 [group('dev')]
 prepare:
-    @print "prepare: not implemented on cli side yet"
+    {{ CLI }} prepare
+
+[doc('Prune CLI caches')]
+[group('dev')]
+prune:
+    {{ CLI }} prune

@@ -1,5 +1,6 @@
-# Future body: cargo test
-[doc('Run CLI test suite')]
+# test.just — automated test runner
+
+[doc('Run dynamic categorized test dashboard across CLI engine')]
 [group('test')]
-test:
-    @echo "test: cli crate not implemented; skipping"
+test *flags:
+    {{ CLI }} test {{ flags }}

@@ -1,9 +1,11 @@
-[doc('Run CLI CI pipeline (check + test)')]
-[group('deploy')]
-ci: check test
+# deploy.just — ci and verification
 
-# Future body: deploy tasks if cli gets package distribution
-[doc('Deploy CLI application')]
+[doc('Run quality gate (check + test)')]
+[group('ci')]
+ci *flags:
+    {{ CLI }} ci {{ flags }}
+
+[doc('Build and verify CLI distribution')]
 [group('deploy')]
-deploy:
-    @echo "deploy: cli crate not implemented; skipping"
+build *flags:
+    {{ CLI }} build {{ flags }}

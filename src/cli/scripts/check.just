@@ -1,21 +1,21 @@
-# Future body: cargo fmt --all
-[doc('Format CLI code')]
-[group('check')]
-fmt:
-    @echo "fmt: cli crate not implemented; skipping"
+# check.just — formatting, linting, and type checking quality gates
 
-# Future body: cargo clippy --all-targets --all-features
-[doc('Lint CLI code')]
+[doc('Format CLI engine')]
 [group('check')]
-lint:
-    @echo "lint: cli crate not implemented; skipping"
+fmt *flags:
+    {{ CLI }} fmt {{ flags }}
 
-# Future body: cargo check --all-targets
-[doc('Type-check CLI code')]
+[doc('Lint CLI engine')]
 [group('check')]
-types:
-    @echo "types: cli crate not implemented; skipping"
+lint *flags:
+    {{ CLI }} lint {{ flags }}
 
-[doc('Run all CLI quality gates')]
+[doc('Type-check CLI engine modules')]
 [group('check')]
-check: fmt lint types
+types *flags:
+    {{ CLI }} types {{ flags }}
+
+[doc('Run all check quality gates')]
+[group('check')]
+check *flags:
+    {{ CLI }} check {{ flags }}
