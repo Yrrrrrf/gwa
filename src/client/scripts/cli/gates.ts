@@ -7,18 +7,18 @@ import {
   join,
   parseSvelteCheck,
   parseTestStats,
+  type ProcessResult,
   runSuite,
   Select,
-  walkSync,
-  type ProcessResult,
   type SuiteResult,
+  walkSync,
 } from "../../../cli/src/mod.ts";
 import {
+  type ClientPackage,
   discoverPackages,
   ensureNodeCompat,
   getAppTargets,
   getWorkspaceCategories,
-  type ClientPackage,
 } from "./workspace.ts";
 
 export interface GateOptions {
@@ -45,13 +45,16 @@ function countSourceFiles(pkgPath: string): number {
 
 // ── TYPES GATE ─────────────────────────────────────────────────────────
 
-export async function runTypesGate(options: GateOptions = {}): Promise<SuiteResult<ClientPackage>> {
+export async function runTypesGate(
+  options: GateOptions = {},
+): Promise<SuiteResult<ClientPackage>> {
   ensureNodeCompat();
 
   return await runSuite<ClientPackage>({
     title: "TYPES",
     categories: getWorkspaceCategories(),
-    cmdPreview: "deno run -A npm:svelte-check --tsconfig <tsconfig.json> --config <vite.config>",
+    cmdPreview:
+      "deno run -A npm:svelte-check --tsconfig <tsconfig.json> --config <vite.config>",
     isVerbose: Boolean(options.verbose),
     isParallel: Boolean(options.parallel),
     isBench: Boolean(options.bench),
@@ -69,7 +72,9 @@ export async function runTypesGate(options: GateOptions = {}): Promise<SuiteResu
           ? "./tsconfig.json"
           : "../../config/tsconfig.json";
 
-        const cfgFlags = vcfg ? ["--tsconfig", tsc, "--config", vcfg] : ["--tsconfig", tsc];
+        const cfgFlags = vcfg
+          ? ["--tsconfig", tsc, "--config", vcfg]
+          : ["--tsconfig", tsc];
 
         const displayTsc = existsSync(join(pkg.path, "tsconfig.json"))
           ? `${pkg.path}/tsconfig.json`
@@ -84,7 +89,12 @@ export async function runTypesGate(options: GateOptions = {}): Promise<SuiteResu
           ? async () => {
             try {
               const syncCmd = new Deno.Command("deno", {
-                args: ["run", "-A", "npm:@sveltejs/kit@next/svelte-kit", "sync"],
+                args: [
+                  "run",
+                  "-A",
+                  "npm:@sveltejs/kit@next/svelte-kit",
+                  "sync",
+                ],
                 cwd: pkg.path,
                 stdout: "null",
                 stderr: "null",
@@ -117,7 +127,14 @@ export async function runTypesGate(options: GateOptions = {}): Promise<SuiteResu
       const filesCount = countSourceFiles(pkg.path);
 
       return {
-        badge: badge(filesCount, "files", stats.errCount, "errors", stats.warnCount, "warnings"),
+        badge: badge(
+          filesCount,
+          "files",
+          stats.errCount,
+          "errors",
+          stats.warnCount,
+          "warnings",
+        ),
         isErr: stats.isErr,
         errCount: stats.errCount,
       };
@@ -129,11 +146,14 @@ export async function runTypesGate(options: GateOptions = {}): Promise<SuiteResu
 
 // ── TEST GATE ──────────────────────────────────────────────────────────
 
-export async function runTestsGate(options: GateOptions = {}): Promise<SuiteResult<ClientPackage>> {
+export async function runTestsGate(
+  options: GateOptions = {},
+): Promise<SuiteResult<ClientPackage>> {
   return await runSuite<ClientPackage>({
     title: "TEST",
     categories: getWorkspaceCategories(),
-    cmdPreview: "deno run -A npm:vitest run --config ./config/vitest.config.ts --project <sdk/*>",
+    cmdPreview:
+      "deno run -A npm:vitest run --config ./config/vitest.config.ts --project <sdk/*>",
     isVerbose: Boolean(options.verbose),
     isParallel: Boolean(options.parallel),
     isBench: Boolean(options.bench),
@@ -179,7 +199,14 @@ export async function runTestsGate(options: GateOptions = {}): Promise<SuiteResu
     evaluator: (res: ProcessResult) => {
       const stats = parseTestStats(res.combined, res.exitCode);
       return {
-        badge: badge(stats.passed, "passed", stats.failed, "failed", stats.skipped, "skipped"),
+        badge: badge(
+          stats.passed,
+          "passed",
+          stats.failed,
+          "failed",
+          stats.skipped,
+          "skipped",
+        ),
         isErr: stats.isErr,
         errCount: stats.failed,
       };
@@ -246,7 +273,10 @@ export async function runBuildGate(
 
 // ── DEV SERVER ─────────────────────────────────────────────────────────
 
-export async function runDev(targetApp?: string, extraArgs: string[] = []): Promise<void> {
+export async function runDev(
+  targetApp?: string,
+  extraArgs: string[] = [],
+): Promise<void> {
   const apps = discoverPackages("apps");
   if (apps.length === 0) {
     console.warn(colors.yellow("No applications found in apps/"));

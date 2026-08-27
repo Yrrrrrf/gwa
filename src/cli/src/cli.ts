@@ -76,8 +76,8 @@ const cli = new Command()
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
   // ── TYPES COMMAND ──────────────────────────────────────────────────
-  .command("types", "Type-check all engine and test modules")
-  .action(async (options: GlobalOptions) => {
+  .command("types [target:string]", "Type-check all engine and test modules")
+  .action(async (options: GlobalOptions, target?: string) => {
     const result = await runSuite({
       title: "TYPES",
       categories: typeCategories,
@@ -86,7 +86,7 @@ const cli = new Command()
       isParallel: Boolean(options.parallel),
       isBench: Boolean(options.bench),
       failFast: Boolean(options.failFast),
-      filter: options.filter,
+      filter: target ?? options.filter,
       resolver: (target) => ({
         engine: "deno",
         cmd: ["deno", "check", target.path],
@@ -109,8 +109,8 @@ const cli = new Command()
     }
   })
   // ── TEST COMMAND ───────────────────────────────────────────────────
-  .command("test", "Run test suites across the CLI engine")
-  .action(async (options: GlobalOptions) => {
+  .command("test [target:string]", "Run test suites across the CLI engine")
+  .action(async (options: GlobalOptions, target?: string) => {
     const result = await runSuite({
       title: "TEST",
       categories: testCategories,
@@ -119,7 +119,7 @@ const cli = new Command()
       isParallel: Boolean(options.parallel),
       isBench: Boolean(options.bench),
       failFast: Boolean(options.failFast),
-      filter: options.filter,
+      filter: target ?? options.filter,
       resolver: (target) => ({
         engine: "deno",
         cmd: ["deno", "test", "-A", target.path],

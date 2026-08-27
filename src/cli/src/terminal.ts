@@ -20,6 +20,48 @@ export function isHeadlessCI(): boolean {
 }
 
 /**
+ * Checks whether the terminal has sufficient vertical space for in-place table redraws.
+ * If the required rows exceed terminal height minus safety margins, degrades to clean linear append-only mode.
+ */
+export function shouldDegradeToLinear(requiredRows: number): boolean {
+  if (isHeadlessCI()) return true;
+  const consoleRows = getConsoleSize().rows;
+  return requiredRows >= consoleRows - 2;
+}
+
+/**
+ * Creates an OSC 8 terminal hyperlink for clickable file/line navigation.
+ * Terminals supporting OSC 8 (VS Code, iTerm, WezTerm, Alacritty, GNOME, foot)
+ * will make the text clickable, while others gracefully display the visible text.
+ */
+export function terminalLink(text: string, url: string): string {
+  return `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\`;
+}
+
+/**
+ * Scans a text line for file paths with line/column numbers (e.g. `src/mod.ts:12:5`)
+ * and enriches them with clickable OSC 8 file:// links.
+ */
+export function linkifyErrors(
+  line: string,
+  rootDir: string = Deno.cwd(),
+): string {
+  const fileRegex = /([a-zA-Z0-9_\-\.\/]+\.[a-zA-Z0-9]+):(\d+)(?::(\d+))?/g;
+  return line.replace(fileRegex, (match, filePath, lineNum) => {
+    try {
+      const cleanPath = filePath.replace(/^\.\//, "");
+      const fullPath = cleanPath.startsWith("/")
+        ? cleanPath
+        : `${rootDir}/${cleanPath}`;
+      const url = `file://${fullPath}#L${lineNum}`;
+      return terminalLink(match, url);
+    } catch {
+      return match;
+    }
+  });
+}
+
+/**
  * Moves cursor up N lines.
  * Guards against the ANSI VT100 / ECMA-48 zero-height bug where `\e[0A` erroneously moves up 1 line.
  */

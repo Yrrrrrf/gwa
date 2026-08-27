@@ -11,6 +11,8 @@ import {
   installSignalTraps,
   isHeadlessCI,
   isTTY,
+  linkifyErrors,
+  shouldDegradeToLinear,
   showCursor,
 } from "./terminal.ts";
 import {
@@ -40,8 +42,6 @@ export async function runSuite<
 ): Promise<SuiteResult<TTarget, TResult, TContext>> {
   installSignalTraps();
   const suiteStartMs = Date.now();
-  const headless = isHeadlessCI();
-  const tty = isTTY() && !headless;
 
   // 1. Render Template Preview if provided
   if (options.cmdPreview) {
@@ -88,10 +88,17 @@ export async function runSuite<
   }
 
   // Initial table render
-  console.log("");
   const initialLines = buildTableLines(stateRecords, "", options.isBench);
-  console.log(initialLines.join("\n"));
   let tableHeight = initialLines.length;
+
+  const tooSmall = shouldDegradeToLinear(tableHeight);
+  const headless = isHeadlessCI() || tooSmall;
+  const tty = isTTY() && !headless;
+
+  if (tty) {
+    console.log("");
+    console.log(initialLines.join("\n"));
+  }
 
   let totalErrors = 0;
   const abortController = new AbortController();
@@ -284,7 +291,9 @@ export async function runSuite<
               .split("\n")
               .filter((l) => l.trim().length > 0)
               .slice(-15)
-              .map((l) => `    ${colors.red("│")} ${clampLine(l)}`);
+              .map((l) =>
+                `    ${colors.red("│")} ${linkifyErrors(clampLine(l))}`
+              );
 
             if (errLines.length > 0) {
               console.log("");
@@ -356,6 +365,9 @@ export async function runSuite<
         }
 
         const unbufferedLines: string[] = [];
+        const liveTailLines: string[] = [];
+        const MAX_LIVE_TAIL = 5;
+        let lastTailHeight = 0;
         let runningProcessDone = false;
 
         // Background ticker for sequential row
@@ -367,7 +379,9 @@ export async function runSuite<
             frameIdx++;
 
             const consoleRows = getConsoleSize().rows;
-            if (tableHeight < consoleRows - 2) {
+            const requiredRows = tableHeight +
+              (options.isVerbose ? 0 : lastTailHeight);
+            if (requiredRows < consoleRows - 2) {
               if (options.isVerbose && unbufferedLines.length > 0) {
                 // Flush new lines above table and redraw table below
                 Deno.stdout.writeSync(
@@ -386,12 +400,35 @@ export async function runSuite<
                 );
                 console.log(curTbl.join("\n"));
                 tableHeight = curTbl.length;
+              } else if (!options.isVerbose && liveTailLines.length > 0) {
+                // Standard mode: render clamped live tail window above table
+                Deno.stdout.writeSync(
+                  new TextEncoder().encode(
+                    `${cursorUp(tableHeight + lastTailHeight)}${eraseDown}\r`,
+                  ),
+                );
+                for (const l of liveTailLines) {
+                  console.log(`    ${colors.gray("│")} ${colors.gray(l)}`);
+                }
+                lastTailHeight = liveTailLines.length;
+                const curTbl = buildTableLines(
+                  stateRecords,
+                  frame,
+                  options.isBench,
+                );
+                console.log(curTbl.join("\n"));
+                tableHeight = curTbl.length;
               } else {
                 Deno.stdout.writeSync(
                   new TextEncoder().encode(
-                    `${cursorUp(tableHeight)}\r${eraseDown}`,
+                    `${cursorUp(tableHeight + lastTailHeight)}\r${eraseDown}`,
                   ),
                 );
+                if (lastTailHeight > 0) {
+                  for (const l of liveTailLines) {
+                    console.log(`    ${colors.gray("│")} ${colors.gray(l)}`);
+                  }
+                }
                 const curTbl = buildTableLines(
                   stateRecords,
                   frame,
@@ -418,12 +455,33 @@ export async function runSuite<
               } else {
                 console.log(`    ${colors.gray("│")} ${line}`);
               }
+            } else if (tty) {
+              const trimmed = line.trim();
+              if (trimmed.length > 0) {
+                liveTailLines.push(clampLine(trimmed));
+                if (liveTailLines.length > MAX_LIVE_TAIL) {
+                  liveTailLines.shift();
+                }
+              }
             }
           },
         });
 
         runningProcessDone = true;
         await tickerPromise;
+
+        // Clean up temporary live tail window in standard mode
+        if (!options.isVerbose && tty && lastTailHeight > 0) {
+          Deno.stdout.writeSync(
+            new TextEncoder().encode(
+              `${cursorUp(tableHeight + lastTailHeight)}${eraseDown}\r`,
+            ),
+          );
+          lastTailHeight = 0;
+          const curTbl = buildTableLines(stateRecords, "", options.isBench);
+          console.log(curTbl.join("\n"));
+          tableHeight = curTbl.length;
+        }
 
         const elapsedMs = Date.now() - (rec.startMs ?? Date.now());
         rec.elapsedMs = elapsedMs;
@@ -458,13 +516,15 @@ export async function runSuite<
           tableHeight = curTbl.length;
         }
 
-        // If failed in standard mode, print error trace above table
+        // If failed in standard mode, print error trace above table with clickable links
         if (!options.isVerbose && evaluation.isErr && rec.output) {
           const errLines = rec.output
             .split("\n")
             .filter((l) => l.trim().length > 0)
             .slice(-15)
-            .map((l) => `    ${colors.red("│")} ${clampLine(l)}`);
+            .map((l) =>
+              `    ${colors.red("│")} ${linkifyErrors(clampLine(l))}`
+            );
 
           if (errLines.length > 0) {
             if (tty) {
@@ -518,9 +578,15 @@ export async function runSuite<
   }`;
 
   if (totalErrors > 0) {
-    console.log(`\n${banner(`${options.failMsg(totalErrors)}${totalDurSuffix}`, "196")}\n`);
+    console.log(
+      `\n${
+        banner(`${options.failMsg(totalErrors)}${totalDurSuffix}`, "196")
+      }\n`,
+    );
   } else {
-    console.log(`\n${banner(`${options.successMsg}${totalDurSuffix}`, "48")}\n`);
+    console.log(
+      `\n${banner(`${options.successMsg}${totalDurSuffix}`, "48")}\n`,
+    );
   }
 
   return {

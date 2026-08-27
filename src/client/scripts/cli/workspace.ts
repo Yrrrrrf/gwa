@@ -1,14 +1,14 @@
 // workspace.ts — Dynamic workspace discovery and lifecycle maintenance for GWA Client
 import {
   banner,
+  type BaseTarget,
   chevron,
   colors,
   existsSync,
   join,
   relative,
-  walkSync,
-  type BaseTarget,
   type TargetCategory,
+  walkSync,
 } from "../../../cli/src/mod.ts";
 
 export interface ClientPackage extends BaseTarget {
@@ -42,7 +42,10 @@ export function inspectPackage(pkgDir: string): ClientPackage {
     existsSync(join(clean, "vite.config.mts")) ||
     existsSync(join(clean, "vite.config.js"));
 
-  const hasSvelteFiles = hasPattern(join(clean, "src"), /\.(svelte|svelte\.ts)$/);
+  const hasSvelteFiles = hasPattern(
+    join(clean, "src"),
+    /\.(svelte|svelte\.ts)$/,
+  );
   const isSvelte = isApp || hasVite || hasSvelteFiles;
 
   const hasTests = hasPattern(clean, /\.(test|spec)\.ts$/);
@@ -136,10 +139,19 @@ export function ensureNodeCompat(): void {
  */
 export async function pruneWorkspace(): Promise<void> {
   const ch = chevron();
-  console.log(colors.bold.magenta("🧹 Pruning caches & temporary artifacts..."));
+  console.log(
+    colors.bold.magenta("🧹 Pruning caches & temporary artifacts..."),
+  );
 
   const root = Deno.cwd();
-  const artifactNames = ["node_modules", ".svelte-kit", ".vite", "deno.lock", "dist", "build"];
+  const artifactNames = [
+    "node_modules",
+    ".svelte-kit",
+    ".vite",
+    "deno.lock",
+    "dist",
+    "build",
+  ];
   const targetPaths: string[] = [...artifactNames.map((a) => join(root, a))];
 
   for (const group of ["apps", "sdk"]) {
@@ -194,7 +206,9 @@ export async function prepareWorkspace(): Promise<void> {
 
   const apps = discoverPackages("apps");
   for (const app of apps) {
-    console.log(`${colors.bold.cyan("»")} Syncing SvelteKit for ${app.name}...`);
+    console.log(
+      `${colors.bold.cyan("»")} Syncing SvelteKit for ${app.name}...`,
+    );
     try {
       const syncCmd = new Deno.Command("deno", {
         args: ["run", "-A", "npm:@sveltejs/kit@next/svelte-kit", "sync"],
