@@ -292,7 +292,7 @@ export async function runSuite<
               .filter((l) => l.trim().length > 0)
               .slice(-15)
               .map((l) =>
-                `    ${colors.red("│")} ${linkifyErrors(clampLine(l))}`
+                `    ${colors.red("│")} ${clampLine(linkifyErrors(l))}`
               );
 
             if (errLines.length > 0) {
@@ -451,14 +451,14 @@ export async function runSuite<
           onLine: (line) => {
             if (options.isVerbose) {
               if (tty) {
-                unbufferedLines.push(line);
+                unbufferedLines.push(linkifyErrors(line));
               } else {
-                console.log(`    ${colors.gray("│")} ${line}`);
+                console.log(`    ${colors.gray("│")} ${linkifyErrors(line)}`);
               }
             } else if (tty) {
               const trimmed = line.trim();
               if (trimmed.length > 0) {
-                liveTailLines.push(clampLine(trimmed));
+                liveTailLines.push(clampLine(linkifyErrors(trimmed)));
                 if (liveTailLines.length > MAX_LIVE_TAIL) {
                   liveTailLines.shift();
                 }
@@ -516,6 +516,12 @@ export async function runSuite<
           tableHeight = curTbl.length;
         }
 
+        if (tty) {
+          Deno.stdout.writeSync(
+            new TextEncoder().encode(`${cursorUp(tableHeight)}${eraseDown}\r`),
+          );
+        }
+
         // If failed in standard mode, print error trace above table with clickable links
         if (!options.isVerbose && evaluation.isErr && rec.output) {
           const errLines = rec.output
@@ -523,22 +529,12 @@ export async function runSuite<
             .filter((l) => l.trim().length > 0)
             .slice(-15)
             .map((l) =>
-              `    ${colors.red("│")} ${linkifyErrors(clampLine(l))}`
+              `    ${colors.red("│")} ${clampLine(linkifyErrors(l))}`
             );
 
           if (errLines.length > 0) {
-            if (tty) {
-              Deno.stdout.writeSync(
-                new TextEncoder().encode(
-                  `${cursorUp(tableHeight)}${eraseDown}\r`,
-                ),
-              );
-            }
             console.log(errLines.join("\n"));
             console.log("");
-            const curTbl = buildTableLines(stateRecords, "", options.isBench);
-            console.log(curTbl.join("\n"));
-            tableHeight = curTbl.length;
           }
         }
 
@@ -552,9 +548,6 @@ export async function runSuite<
 
         // Redraw updated table
         if (tty) {
-          Deno.stdout.writeSync(
-            new TextEncoder().encode(`${cursorUp(tableHeight)}${eraseDown}\r`),
-          );
           const updatedTbl = buildTableLines(stateRecords, "", options.isBench);
           console.log(updatedTbl.join("\n"));
           tableHeight = updatedTbl.length;

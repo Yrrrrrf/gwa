@@ -3,6 +3,7 @@
 
 import { ansi } from "jsr:@cliffy/ansi@1.2.1";
 import { stripAnsiCode } from "jsr:@std/fmt@1.0.10/colors";
+import { relative } from "jsr:@std/path@1.0.8";
 
 export function isTTY(): boolean {
   try {
@@ -39,22 +40,28 @@ export function terminalLink(text: string, url: string): string {
 }
 
 /**
- * Scans a text line for file paths with line/column numbers (e.g. `src/mod.ts:12:5`)
- * and enriches them with clickable OSC 8 file:// links.
+ * Scans a text line for file paths with line/column numbers (e.g. `src/mod.ts:12:5`
+ * or `file:///abs/path/file.ts:10:4`), renders clean relative path text in the terminal,
+ * and enriches them with clickable OSC 8 file:// links pointing to the exact line.
  */
 export function linkifyErrors(
   line: string,
   rootDir: string = Deno.cwd(),
 ): string {
-  const fileRegex = /([a-zA-Z0-9_\-\.\/]+\.[a-zA-Z0-9]+):(\d+)(?::(\d+))?/g;
-  return line.replace(fileRegex, (match, filePath, lineNum) => {
+  const fileRegex =
+    /(?:file:\/\/)?([a-zA-Z0-9_\-\.\/]+\.[a-zA-Z0-9]+):(\d+)(?::(\d+))?/g;
+  return line.replace(fileRegex, (match, filePath, lineNum, colNum) => {
     try {
-      const cleanPath = filePath.replace(/^\.\//, "");
+      const cleanPath = filePath.replace(/^\/+/, "/").replace(/^\.\//, "");
       const fullPath = cleanPath.startsWith("/")
         ? cleanPath
         : `${rootDir}/${cleanPath}`;
+      const relPath = relative(rootDir, fullPath) || cleanPath;
       const url = `file://${fullPath}#L${lineNum}`;
-      return terminalLink(match, url);
+      const display = colNum
+        ? `${relPath}:${lineNum}:${colNum}`
+        : `${relPath}:${lineNum}`;
+      return terminalLink(display, url);
     } catch {
       return match;
     }
@@ -142,13 +149,24 @@ export function getConsoleSize(): { columns: number; rows: number } {
 }
 
 /**
+ * Strips both ANSI CSI sequences (\x1b[...m) and OSC 8 hyperlink sequences (\x1b]8;;...\x1b\).
+ * Used for mathematically accurate visible column measurements.
+ */
+export function stripAllAnsi(str: string): string {
+  // deno-lint-ignore no-control-regex
+  return str
+    .replace(/\x1b\]8;;[^\x1b]*\x1b\\/g, "")
+    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "");
+}
+
+/**
  * Clamps a line to prevent terminal line-wrapping glitches.
- * Preserves ANSI escape integrity if string exceeds width.
+ * Preserves ANSI escape and OSC 8 hyperlink integrity if string exceeds width.
  */
 export function clampLine(line: string, maxVisibleWidth?: number): string {
   const maxWidth = maxVisibleWidth ??
     Math.max(getConsoleSize().columns - 8, 20);
-  const visibleLen = stripAnsiCode(line).length;
+  const visibleLen = stripAllAnsi(line).length;
   if (visibleLen <= maxWidth) {
     return line;
   }
@@ -161,20 +179,22 @@ export function clampLine(line: string, maxVisibleWidth?: number): string {
   // Walk through tokens and truncate at visible boundary
   let curVisible = 0;
   let result = "";
-  // Match ANSI escape or single character
+  // Match ANSI CSI escape, OSC 8 escape, or single character
   // deno-lint-ignore no-control-regex
-  const regex = /(\x1b\[[0-9;]*[a-zA-Z])|([^\x1b])/g;
+  const regex = /(\x1b\[[0-9;]*[a-zA-Z])|(\x1b\]8;;[^\x1b]*\x1b\\)|([^\x1b])/g;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(line)) !== null) {
     if (match[1]) {
       result += match[1]; // Keep ANSI escape sequence
     } else if (match[2]) {
+      result += match[2]; // Keep OSC 8 hyperlink sequence
+    } else if (match[3]) {
       if (curVisible < maxWidth - 1) {
-        result += match[2];
+        result += match[3];
         curVisible++;
       } else {
-        result += "…\x1b[0m";
+        result += "…\x1b]8;;\x1b\\\x1b[0m";
         break;
       }
     }
