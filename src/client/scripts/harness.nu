@@ -274,13 +274,12 @@ export def run-types-dashboard [is_verbose: bool = false]: nothing -> nothing {
 
             let cmd_args = if $is_svelte {
                 let vcfg = if ("vite.config.mts" | path exists) { "./vite.config.mts" } else if ("vite.config.ts" | path exists) { "./vite.config.ts" } else { "" }
-                let cfg_flags = if ("tsconfig.json" | path exists) {
-                    if ($vcfg | is-not-empty) {
-                        ["--tsconfig", "./tsconfig.json", "--config", $vcfg]
-                    } else {
-                        ["--tsconfig", "./tsconfig.json"]
-                    }
-                } else { [] }
+                let tsc = if ("tsconfig.json" | path exists) { "./tsconfig.json" } else { "../../config/tsconfig.json" }
+                let cfg_flags = if ($vcfg | is-not-empty) {
+                    ["--tsconfig", $tsc, "--config", $vcfg]
+                } else {
+                    ["--tsconfig", $tsc]
+                }
                 ["deno", "run", "-A", "npm:svelte-check@^4.7.5", ...$cfg_flags]
             } else {
                 ["deno", "check", "src/mod.ts"]

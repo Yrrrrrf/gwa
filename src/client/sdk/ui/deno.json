@@ -1,9 +1,5 @@
 {
 	"name": "@sdk/ui",
 	"version": "0.0.1",
-	"exports": "./src/mod.ts",
-	"imports": {
-		"@sdk/core": "workspace:*",
-		"@sdk/state": "workspace:*"
-	}
+	"exports": "./src/mod.ts"
 }

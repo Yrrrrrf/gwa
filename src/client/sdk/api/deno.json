@@ -1,8 +1,5 @@
 {
 	"name": "@sdk/api",
 	"version": "0.0.1",
-	"exports": "./src/mod.ts",
-	"imports": {
-		"@sdk/core": "workspace:*"
-	}
+	"exports": "./src/mod.ts"
 }

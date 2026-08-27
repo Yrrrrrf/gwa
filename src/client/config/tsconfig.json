@@ -20,5 +20,12 @@
 			"#lib/*": ["./src/lib/*"]
 		}
 	},
-	"exclude": [".*", "dist/**", "**/*.test.ts", "node_modules"]
+	"exclude": [
+		".*",
+		"dist/**",
+		"**/*.test.ts",
+		"node_modules",
+		"../sdk/**/*.test.ts"
+	],
+	"include": ["../sdk/**/*.ts", "../sdk/**/*.svelte"]
 }
