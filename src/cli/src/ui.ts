@@ -66,14 +66,13 @@ export function formatDuration(ms: number): string {
 export function banner(
   text: string,
   colorCode: "212" | "48" | "196" | string = "212",
-): void {
-  console.log("");
-  if (colorCode === "48") {
-    console.log(colors.bold.green(text));
-  } else if (colorCode === "196") {
-    console.log(colors.bold.red(text));
+): string {
+  if (colorCode === "48" || colorCode === "green") {
+    return colors.bold.green(text);
+  } else if (colorCode === "196" || colorCode === "red") {
+    return colors.bold.red(text);
   } else {
-    console.log(colors.bold.magenta(text));
+    return colors.bold.magenta(text);
   }
 }
 

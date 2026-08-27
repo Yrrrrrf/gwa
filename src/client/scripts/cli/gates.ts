@@ -8,6 +8,7 @@ import {
   parseSvelteCheck,
   parseTestStats,
   runSuite,
+  Select,
   walkSync,
   type ProcessResult,
   type SuiteResult,
@@ -254,7 +255,15 @@ export async function runDev(targetApp?: string, extraArgs: string[] = []): Prom
 
   let selectedApp = targetApp?.replace(/^apps\//, "");
   if (!selectedApp) {
-    selectedApp = apps[0].name;
+    if (apps.length === 1) {
+      selectedApp = apps[0].name;
+    } else {
+      console.log("");
+      selectedApp = await Select.prompt({
+        message: "Select app to run",
+        options: apps.map((a) => ({ name: a.name, value: a.name })),
+      });
+    }
   }
 
   const appPath = `apps/${selectedApp}`;
@@ -288,19 +297,33 @@ export async function runPreview(
   }
 
   let selectedApp = targetApp?.replace(/^apps\//, "");
-  if (!selectedApp) {
-    selectedApp = apps[0].name;
+
+  if (selectedApp) {
+    // Specific app targeted
+    const appPath = `apps/${selectedApp}`;
+    if (!existsSync(appPath)) {
+      console.error(colors.red(`Application not found: ${appPath}`));
+      Deno.exit(1);
+    }
+    const buildResult = await runBuildGate(options, selectedApp);
+    if (!buildResult.success) Deno.exit(1);
+  } else {
+    // No specific app targeted: build all apps first ("create them and then let me select")
+    const buildResult = await runBuildGate(options);
+    if (!buildResult.success) Deno.exit(1);
+
+    if (apps.length === 1) {
+      selectedApp = apps[0].name;
+    } else {
+      console.log("");
+      selectedApp = await Select.prompt({
+        message: "Select app to preview",
+        options: apps.map((a) => ({ name: a.name, value: a.name })),
+      });
+    }
   }
 
   const appPath = `apps/${selectedApp}`;
-  if (!existsSync(appPath)) {
-    console.error(colors.red(`Application not found: ${appPath}`));
-    Deno.exit(1);
-  }
-
-  const buildResult = await runBuildGate(options, selectedApp);
-  if (!buildResult.success) Deno.exit(1);
-
   console.log(banner(`🎪 Previewing production build: ${appPath}`, "magenta"));
 
   const cmd = new Deno.Command("deno", {

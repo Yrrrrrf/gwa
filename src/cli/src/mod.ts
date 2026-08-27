@@ -17,3 +17,4 @@ export { ansi } from "jsr:@cliffy/ansi@1.2.1";
 export { colors } from "jsr:@cliffy/ansi@1.2.1/colors";
 export { Cell, Row, Table } from "jsr:@cliffy/table@1.2.1";
 export { stripAnsiCode } from "jsr:@std/fmt@1.0.10/colors";
+export { Select } from "jsr:@cliffy/prompt@1.2.1/select";

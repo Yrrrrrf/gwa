@@ -518,9 +518,9 @@ export async function runSuite<
   }`;
 
   if (totalErrors > 0) {
-    banner(`${options.failMsg(totalErrors)}${totalDurSuffix}`, "196");
+    console.log(`\n${banner(`${options.failMsg(totalErrors)}${totalDurSuffix}`, "196")}\n`);
   } else {
-    banner(`${options.successMsg}${totalDurSuffix}`, "48");
+    console.log(`\n${banner(`${options.successMsg}${totalDurSuffix}`, "48")}\n`);
   }
 
   return {
