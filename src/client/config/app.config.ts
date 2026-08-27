@@ -22,11 +22,11 @@ export function defineGWA(options: GwaConfig = {}) {
 	return defineConfig({
 		resolve: {
 			alias: [
-				{ find: "@sdk", replacement: SDK_ENTRY },
 				{ find: /^@sdk\/([^/]+)$/, replacement: `${SDK_ROOT}/$1/src/mod.ts` },
 				{ find: /^@sdk\/(.*)/, replacement: `${SDK_ROOT}/$1` },
+				{ find: /^@sdk$/, replacement: SDK_ENTRY },
 				{ find: /^#lib\/(.*)/, replacement: "/src/lib/$1" },
-				{ find: "#lib", replacement: "/src/lib/mod.ts" },
+				{ find: /^#lib$/, replacement: "/src/lib/mod.ts" },
 			],
 		},
 		plugins: [

@@ -4,11 +4,5 @@
 	"description": "Vision lab app for GWA",
 	"license": "MIT",
 	"authors": ["Yrrrrrf <fer.rezac@outlook.com>"],
-	"exports": "./src/lib/mod.ts",
-	"imports": {
-		"@sdk/core": "workspace:*",
-		"@sdk/api": "workspace:*",
-		"@sdk/state": "workspace:*",
-		"@sdk/ui": "workspace:*"
-	}
+	"exports": "./src/lib/mod.ts"
 }
