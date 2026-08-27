@@ -169,9 +169,8 @@ export def run-suite [
                 | default ($plan.cmd | str join ' ')
             )
             let cmd_clean = ($raw_cmd | str replace --all "<" "" | str replace --all ">" "")
-            let cmd_styled = $"(ansi default_bold)($cmd_clean)(ansi reset)"
             print -n $"\e[($table_height)A\e[0J\r\e[2K"
-            print $"($cmd_styled)"
+            print $"($cmd_clean)"
             let cur_tbl = (build-table-lines $state_records $is_bench "⠋" 0ns)
             print ($cur_tbl | str join "\n")
             $table_height = ($cur_tbl | length)

@@ -44,19 +44,19 @@ export def banner [text: string, color: string = "212"]: nothing -> nothing {
     print $"(ansi -e { fg: $color, attr: b })($text)(ansi reset)"
 }
 
-# Template command: crisp distinct style (not dim) with <placeholders> in bold cyan
+# Template command: bold italic style with <placeholders> in bold cyan
 export def render-cmd-template [text: string]: nothing -> nothing {
-    let styled = ($text | str replace --all --regex "<([^>]+)>" $"(ansi reset)(ansi cyan_bold)<$1>(ansi reset)(ansi default_italic)")
+    let styled = ($text | str replace --all --regex "<([^>]+)>" $"(ansi reset)(ansi cyan_bold)<$1>(ansi reset)(ansi default_bold)(ansi default_italic)")
     print ""
-    print $"  (ansi default_italic)($styled)(ansi reset)"
+    print $"  (ansi default_bold)(ansi default_italic)($styled)(ansi reset)"
     print ""
 }
 
-# Concrete commands manifest: bold text at 0 tabs (no leading indent)
+# Concrete commands manifest: normal text at 0 tabs (no leading indent)
 export def render-cmd-list [cmds: list<string>]: nothing -> nothing {
     for cmd in $cmds {
         let clean = ($cmd | str replace --all "<" "" | str replace --all ">" "")
-        print $"(ansi default_bold)($clean)(ansi reset)"
+        print $"($clean)"
     }
 }
 
