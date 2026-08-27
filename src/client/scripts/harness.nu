@@ -115,12 +115,27 @@ export def run-prune-workspace []: nothing -> nothing {
     print $"(ansi green_bold)✓ Workspace clean(ansi reset)"
 }
 
+def ensure-node-compat []: nothing -> nothing {
+    let nm = ($env.PWD | path join "node_modules")
+    if ($nm | path exists) and not ($nm | path join "vite" | path exists) {
+        let vite_dirs = (glob "node_modules/.deno/vite@*/node_modules/vite")
+        if not ($vite_dirs | is-empty) {
+            let vite_dir = ($vite_dirs | first)
+            let rel = ($vite_dir | path relative-to $nm)
+            cd $nm
+            ^ln -sf $rel vite
+            cd ../..
+        }
+    }
+}
+
 export def run-prepare-workspace []: nothing -> nothing {
     print ""
     ^gum style --foreground 212 --bold "📦 PREPARING WORKSPACE"
 
     print $"(ansi cyan_bold)»(ansi reset) Installing dependencies..."
     ^deno install
+    ensure-node-compat
 
     for $app in (app-packages) {
         print $"(ansi cyan_bold)»(ansi reset) Syncing SvelteKit for ($app)..."
@@ -237,6 +252,7 @@ export def run-tests-dashboard [is_verbose: bool = false]: nothing -> nothing {
 }
 
 export def run-types-dashboard [is_verbose: bool = false]: nothing -> nothing {
+    ensure-node-compat
     print ""
     ^gum style --foreground 212 --bold "🛡️ TYPES"
 
@@ -257,12 +273,14 @@ export def run-types-dashboard [is_verbose: bool = false]: nothing -> nothing {
             }
 
             let cmd_args = if $is_svelte {
-                let vcfg = if ("vite.config.mts" | path exists) { "./vite.config.mts" } else { "./vite.config.ts" }
-                let cfg_flags = if $is_app {
-                    if ("tsconfig.json" | path exists) { ["--tsconfig", "./tsconfig.json", "--config", $vcfg] } else { [] }
-                } else {
-                    if ("tsconfig.json" | path exists) { ["--tsconfig", "./tsconfig.json"] } else { [] }
-                }
+                let vcfg = if ("vite.config.mts" | path exists) { "./vite.config.mts" } else if ("vite.config.ts" | path exists) { "./vite.config.ts" } else { "" }
+                let cfg_flags = if ("tsconfig.json" | path exists) {
+                    if ($vcfg | is-not-empty) {
+                        ["--tsconfig", "./tsconfig.json", "--config", $vcfg]
+                    } else {
+                        ["--tsconfig", "./tsconfig.json"]
+                    }
+                } else { [] }
                 ["deno", "run", "-A", "npm:svelte-check@^4.7.5", ...$cfg_flags]
             } else {
                 ["deno", "check", "src/mod.ts"]
