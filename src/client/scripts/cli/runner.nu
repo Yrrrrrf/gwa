@@ -165,13 +165,14 @@ export def run-suite [
 
         # In verbose mode, clear table, print the triggering command above table, and redraw table
         if $is_verbose and $is_tty {
-            let cmd_styled = (
+            let raw_cmd = (
                 $plan.display_cmd?
                 | default ($plan.cmd | str join ' ')
-                | str replace --all --regex "<([^>]+)>" $"(ansi reset)(ansi default_bold)$1(ansi reset)"
             )
+            let cmd_clean = ($raw_cmd | str replace --all "<" "" | str replace --all ">" "")
+            let cmd_styled = $"(ansi default_bold)($cmd_clean)(ansi reset)"
             print -n $"\e[($table_height)A\e[0J\r\e[2K"
-            print $"  ($cmd_styled)"
+            print $"($cmd_styled)"
             let cur_tbl = (build-table-lines $state_records $is_bench "⠋" 0ns)
             print ($cur_tbl | str join "\n")
             $table_height = ($cur_tbl | length)
@@ -185,6 +186,9 @@ export def run-suite [
         let start = (date now)
 
         let jid = (job spawn {
+            $env.FORCE_COLOR = "1"
+            $env.CLICOLOR_FORCE = "1"
+            $env.DENO_NO_PROMPT = "1"
             if ($cwd | is-not-empty) {
                 cd $cwd
                 ^$exe ...$args o+e> $log_file
@@ -214,7 +218,7 @@ export def run-suite [
                         # Clear table, stream new logs above table, redraw table below
                         print -n $"\e[($table_height)A\e[0J\r\e[2K"
                         for l in $new_logs {
-                            print $"    (ansi grey)│(ansi reset) ($l)"
+                            print $"    (ansi grey)│(ansi reset) ($l)(ansi reset)"
                         }
                         let cur_tbl = (build-table-lines $state_records $is_bench $frame $cur_elapsed)
                         print ($cur_tbl | str join "\n")
@@ -262,7 +266,7 @@ export def run-suite [
             let all_logs = ($output_text | lines)
             let remaining = ($all_logs | skip $last_line_count)
             for l in $remaining {
-                print $"    (ansi grey)│(ansi reset) ($l)"
+                print $"    (ansi grey)│(ansi reset) ($l)(ansi reset)"
             }
             print ""
         }

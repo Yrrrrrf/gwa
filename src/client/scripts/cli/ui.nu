@@ -50,13 +50,12 @@ export def render-cmd-template [text: string]: nothing -> nothing {
     print $"  (ansi default_italic)($styled)(ansi reset)"
 }
 
-# Concrete commands manifest: normal text with target <files> in bold
+# Concrete commands manifest: bold text at 0 tabs (no leading indent)
 export def render-cmd-list [cmds: list<string>]: nothing -> nothing {
     for cmd in $cmds {
-        let styled = ($cmd | str replace --all --regex "<([^>]+)>" $"(ansi reset)(ansi default_bold)$1(ansi reset)")
-        print $"  ($styled)"
+        let clean = ($cmd | str replace --all "<" "" | str replace --all ">" "")
+        print $"(ansi default_bold)($clean)(ansi reset)"
     }
-    print ""
 }
 
 export def print-stream [res: record, is_verbose: bool, is_err: bool]: nothing -> nothing {
