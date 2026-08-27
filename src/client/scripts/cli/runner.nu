@@ -32,7 +32,6 @@ export def parse-test-stats [output: string]: nothing -> record<p: int, f: int, 
 
 def build-table-lines [
     records: list<record>
-    is_bench: bool
     frame: string = ""
     running_elapsed: duration = 0ns
 ]: nothing -> list<string> {
@@ -58,7 +57,7 @@ def build-table-lines [
         } else if $rec.status == "skipped" {
             $rec.badge
         } else {
-            let dur_tag = if ($is_bench and ($rec.dur | is-not-empty)) {
+            let dur_tag = if ($rec.dur | is-not-empty) {
                 $" (ansi grey)\(($rec.dur)\)(ansi reset)"
             } else { "" }
             $"($rec.badge)($dur_tag)"
@@ -76,7 +75,6 @@ export def run-suite [
     title: string
     categories: list<record>
     is_verbose: bool = false
-    is_bench: bool = false
     --cmd-preview: string = ""
     --resolver: closure
     --evaluator: closure
@@ -134,7 +132,7 @@ export def run-suite [
 
     # Render initial bottom table (visible from the start in both modes)
     print ""
-    let initial_table = (build-table-lines $state_records $is_bench)
+    let initial_table = (build-table-lines $state_records)
     print ($initial_table | str join "\n")
     mut table_height = ($initial_table | length)
 
@@ -171,7 +169,7 @@ export def run-suite [
             let cmd_clean = ($raw_cmd | str replace --all "<" "" | str replace --all ">" "")
             print -n $"\e[($table_height)A\e[0J\r\e[2K"
             print $"($cmd_clean)"
-            let cur_tbl = (build-table-lines $state_records $is_bench "⠋" 0ns)
+            let cur_tbl = (build-table-lines $state_records "⠋" 0ns)
             print ($cur_tbl | str join "\n")
             $table_height = ($cur_tbl | length)
         }
@@ -218,20 +216,20 @@ export def run-suite [
                         for l in $new_logs {
                             print $"    (ansi grey)│(ansi reset) ($l)(ansi reset)"
                         }
-                        let cur_tbl = (build-table-lines $state_records $is_bench $frame $cur_elapsed)
+                        let cur_tbl = (build-table-lines $state_records $frame $cur_elapsed)
                         print ($cur_tbl | str join "\n")
                         $table_height = ($cur_tbl | length)
                         $last_line_count = ($all_logs | length)
                     } else {
                         # Update spinner and live clock in table
                         print -n $"\e[($table_height)A\r\e[0J"
-                        let cur_tbl = (build-table-lines $state_records $is_bench $frame $cur_elapsed)
+                        let cur_tbl = (build-table-lines $state_records $frame $cur_elapsed)
                         print ($cur_tbl | str join "\n")
                     }
                 } else {
                     # Standard mode: update spinner and live clock in table
                     print -n $"\e[($table_height)A\r\e[0J"
-                    let cur_tbl = (build-table-lines $state_records $is_bench $frame $cur_elapsed)
+                    let cur_tbl = (build-table-lines $state_records $frame $cur_elapsed)
                     print ($cur_tbl | str join "\n")
                 }
             }
@@ -299,14 +297,14 @@ export def run-suite [
         })
 
         # Redraw table cleanly below
-        let updated_table = (build-table-lines $state_records $is_bench)
+        let updated_table = (build-table-lines $state_records)
         print ($updated_table | str join "\n")
         $table_height = ($updated_table | length)
     }
 
     # Final Banner
     let suite_elapsed = ((date now) - $suite_start)
-    let total_dur_suffix = if $is_bench { $" (ansi grey)\(total: (format-duration $suite_elapsed)\)(ansi reset)" } else { "" }
+    let total_dur_suffix = $" (ansi grey)\(total: (format-duration $suite_elapsed)\)(ansi reset)"
     if $total_errors > 0 {
         banner $"((do $fail_msg $total_errors))($total_dur_suffix)" "196"
         exit 1

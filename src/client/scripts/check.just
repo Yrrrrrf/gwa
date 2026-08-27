@@ -12,7 +12,7 @@ lint:
     # ^deno lint .
     -^biome lint --config-path=config/biome.json .
 
-[doc('Type-check workspace (SDK modules + SvelteKit apps) (pass -v for detailed logs, -b for timing)')]
+[doc('Type-check workspace (SDK modules + SvelteKit apps) (pass -v for detailed logs)')]
 [group('check')]
 [positional-arguments]
 [script]
@@ -21,7 +21,7 @@ types *args:
 
     def --wrapped main [...raw: string]: nothing -> nothing {
         let f = (parse-cli-flags $raw)
-        run-types-dashboard $f.v $f.b
+        run-types-dashboard $f.v
     }
 
 [doc('Audit all code namespaces')]

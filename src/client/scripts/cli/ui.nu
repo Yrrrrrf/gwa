@@ -49,7 +49,6 @@ export def render-cmd-template [text: string]: nothing -> nothing {
     let styled = ($text | str replace --all --regex "<([^>]+)>" $"(ansi reset)(ansi cyan_bold)<$1>(ansi reset)(ansi default_bold)(ansi default_italic)")
     print ""
     print $"  (ansi default_bold)(ansi default_italic)($styled)(ansi reset)"
-    print ""
 }
 
 # Concrete commands manifest: normal text at 0 tabs (no leading indent)
