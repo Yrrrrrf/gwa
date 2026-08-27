@@ -1,5 +1,5 @@
 # runner.nu — generic execution step, suite coordinator, output parsers, and live viewport
-use ui.nu [chevron badge banner render-cmd-preview clear-viewport print-stream format-duration SPINNER_FRAMES]
+use ui.nu [chevron badge banner render-cmd-template render-cmd-list print-stream format-duration SPINNER_FRAMES]
 
 # --- Output Parsers ---
 
@@ -28,121 +28,42 @@ export def parse-test-stats [output: string]: nothing -> record<p: int, f: int, 
     }
 }
 
-# --- Process Execution with Live Ephemeral Viewport ---
+# --- Table Line Builder ---
 
-export def exec-step [
-    title: string
-    cmd_args: list<string>
-    is_verbose: bool = false
-    --cwd: string = ""
-    --engine: string = ""
-    --name: string = ""
-]: nothing -> record {
-    let start = (date now)
-    let exe = ($cmd_args | first)
-    let args = ($cmd_args | skip 1)
+def build-table-lines [
+    records: list<record>
+    is_bench: bool
+    frame: string = ""
+]: nothing -> list<string> {
+    mut lines = []
+    mut last_cat = ""
+    for rec in $records {
+        let cat_name = ($rec.cat | default "")
+        if ($cat_name | is-not-empty) and ($cat_name != $last_cat) {
+            if ($last_cat | is-not-empty) {
+                $lines = ($lines | append "")
+            }
+            $lines = ($lines | append $"(ansi purple_bold)[($cat_name)](ansi reset)")
+            $last_cat = $cat_name
+        }
 
-    # 1. Verbose Mode: Full command trace & un-buffered live output
-    if $is_verbose {
-        let cwd_label = if ($cwd | is-not-empty) { $" (ansi grey)in(ansi reset) (ansi cyan)($cwd)(ansi reset)" } else { "" }
-        print $"    (ansi grey)┌─ [EXEC](ansi reset) (ansi white_bold)($cmd_args | str join ' ')($cwd_label)(ansi reset)"
-
-        let res = if ($cwd | is-not-empty) {
-            do {
-                cd $cwd
-                ^$exe ...$args
-            } | complete
+        let status_str = if $rec.status == "pending" {
+            $"(ansi grey)\(pending\)(ansi reset)"
+        } else if $rec.status == "running" {
+            $"(ansi cyan)($frame)(ansi reset) (ansi grey)running...(ansi reset)"
+        } else if $rec.status == "skipped" {
+            $rec.badge
         } else {
-            do { ^$exe ...$args } | complete
+            let dur_tag = if ($is_bench and ($rec.dur | is-not-empty)) {
+                $" (ansi grey)\(($rec.dur)\)(ansi reset)"
+            } else { "" }
+            $"($rec.badge)($dur_tag)"
         }
 
-        let elapsed = ((date now) - $start)
-        return {
-            stdout: ($res.stdout? | default "")
-            stderr: ($res.stderr? | default "")
-            exit_code: ($res.exit_code? | default 0)
-            elapsed: $elapsed
-        }
+        let row = $"  (chevron) (ansi grey)($rec.engine | fill -w 14)(ansi reset)(ansi default_bold)($rec.name | fill -w 8)(ansi reset)($status_str)"
+        $lines = ($lines | append $row)
     }
-
-    # 2. Non-interactive fallback (pipes / CI)
-    if not (is-terminal --stdout) {
-        let res = if ($cwd | is-not-empty) {
-            do {
-                cd $cwd
-                ^gum spin --spinner dot --spinner.foreground "212" --title $title -- $exe ...$args
-            } | complete
-        } else {
-            do { ^gum spin --spinner dot --spinner.foreground "212" --title $title -- $exe ...$args } | complete
-        }
-        let elapsed = ((date now) - $start)
-        return {
-            stdout: ($res.stdout? | default "")
-            stderr: ($res.stderr? | default "")
-            exit_code: ($res.exit_code? | default 0)
-            elapsed: $elapsed
-        }
-    }
-
-    # 3. Interactive TTY: Live Ephemeral Rolling Viewport (Docker / Podman style)
-    let log_file = (mktemp -t "gwa-stream-XXXXXX.log")
-    let res_file = (mktemp -t "gwa-res-XXXXXX.nuon")
-
-    let jid = (job spawn {
-        if ($cwd | is-not-empty) {
-            cd $cwd
-            ^$exe ...$args o+e> $log_file
-        } else {
-            ^$exe ...$args o+e> $log_file
-        }
-        let code = $env.LAST_EXIT_CODE
-        { exit_code: $code } | to nuon | save -f $res_file
-    })
-
-    mut f_idx = 0
-    mut lines_shown = 0
-    let frames = $SPINNER_FRAMES
-    let frames_len = ($frames | length)
-
-    # Initial placeholder row
-    print -n $"  (chevron) (ansi grey)($engine | fill -w 14)(ansi reset)(ansi default_bold)($name | fill -w 8)(ansi reset)(ansi cyan)(($frames | first))(ansi reset) (ansi grey)running...(ansi reset)\n"
-
-    while (job list | where id == $jid | is-not-empty) {
-        let frame = ($frames | get ($f_idx mod $frames_len))
-        $f_idx = ($f_idx + 1)
-
-        let raw_lines = if ($log_file | path exists) {
-            open --raw $log_file | lines | where { $in | is-not-empty } | last 8
-        } else { [] }
-
-        # Rewind previous lines + placeholder header
-        let rewind_count = ($lines_shown + 1)
-        print -n $"\e[($rewind_count)A\e[0J\r\e[2K"
-        print $"  (chevron) (ansi grey)($engine | fill -w 14)(ansi reset)(ansi default_bold)($name | fill -w 8)(ansi reset)(ansi cyan)($frame)(ansi reset) (ansi grey)running...(ansi reset)"
-        for l in $raw_lines {
-            let trimmed = ($l | str trim)
-            let line_preview = if ($trimmed | str length) > 100 { ($trimmed | str substring 0..97) + "..." } else { $trimmed }
-            print $"    (ansi grey)│(ansi reset) (ansi d)(ansi grey)($line_preview)(ansi reset)"
-        }
-        $lines_shown = ($raw_lines | length)
-        sleep 70ms
-    }
-
-    # Clean up all ephemeral viewport lines and placeholder row
-    let total_rewind = ($lines_shown + 1)
-    print -n $"\e[($total_rewind)A\e[0J\r\e[2K"
-
-    let elapsed = ((date now) - $start)
-    let output_text = if ($log_file | path exists) { open --raw $log_file } else { "" }
-    let res_data = if ($res_file | path exists) { open $res_file } else { { exit_code: 0 } }
-    rm -f $log_file $res_file
-
-    {
-        stdout: $output_text
-        stderr: ""
-        exit_code: ($res_data.exit_code? | default 0)
-        elapsed: $elapsed
-    }
+    $lines
 }
 
 # --- Generalized Suite Runner ---
@@ -160,91 +81,224 @@ export def run-suite [
 ]: nothing -> nothing {
     let suite_start = (date now)
     banner $title "212"
+
+    # 1. Render Template Preview (crisp non-dim italic, bold cyan <placeholders>)
     if ($cmd_preview | is-not-empty) {
-        render-cmd-preview $cmd_preview
+        render-cmd-template $cmd_preview
+    }
+
+    # 2. Collect Concrete Commands Manifest & Pre-build State Model
+    mut concrete_cmds = []
+    mut state_records = []
+
+    for cat in $categories {
+        let cat_name = ($cat.name? | default "")
+        for pkg in $cat.targets {
+            let plan = (do $resolver $pkg)
+
+            if ($plan.display_cmd? | default "" | is-not-empty) {
+                $concrete_cmds = ($concrete_cmds | append $plan.display_cmd)
+            }
+
+            let is_skipped = ($plan.skip? | default "" | is-not-empty)
+            let skip_badge = if $is_skipped {
+                let sb = ($plan.badge? | default "")
+                $"($sb) (ansi grey)[($plan.skip)](ansi reset)"
+            } else { "" }
+
+            $state_records = ($state_records | append {
+                cat: $cat_name
+                pkg: $pkg
+                plan: $plan
+                engine: $plan.engine
+                name: $pkg.name
+                status: (if $is_skipped { "skipped" } else { "pending" })
+                badge: $skip_badge
+                dur: ""
+                is_err: false
+            })
+        }
     }
 
     mut total_errors = 0
-    mut summary_rows = []
+    let is_tty = (is-terminal --stdout)
 
-    for $cat in $categories {
-        if ($cat.name? | default "" | is-not-empty) {
-            print $"(ansi purple_bold)[($cat.name)](ansi reset)"
+    # In standard mode, render the concrete command list upfront
+    if (not $is_verbose) and ($concrete_cmds | is-not-empty) {
+        print ""
+        render-cmd-list $concrete_cmds
+    }
+
+    # Render initial bottom table (visible from the start in both modes)
+    print ""
+    let initial_table = (build-table-lines $state_records $is_bench)
+    print ($initial_table | str join "\n")
+    mut table_height = ($initial_table | length)
+
+    for i in 0..(($state_records | length) - 1) {
+        let rec = ($state_records | get $i)
+        if $rec.status == "skipped" {
+            continue
         }
 
-        for $pkg in $cat.targets {
-            let plan = (do $resolver $pkg)
+        let plan = $rec.plan
+        if ($plan.pre? != null) {
+            do $plan.pre
+        }
 
-            # 1. Check if skipped (e.g. no tests)
-            if ($plan.skip? | default "" | is-not-empty) {
-                let skip_badge = ($plan.badge? | default "")
-                let full_badge = $"($skip_badge) (ansi grey)[($plan.skip)](ansi reset)"
-                print $"  (chevron) (ansi grey)($plan.engine | fill -w 14)(ansi reset)(ansi default_bold)($pkg.name | fill -w 8)(ansi reset)($full_badge)"
+        # Update state to running
+        $state_records = ($state_records | update $i {
+            cat: $rec.cat
+            pkg: $rec.pkg
+            plan: $rec.plan
+            engine: $rec.engine
+            name: $rec.name
+            status: "running"
+            badge: $rec.badge
+            dur: ""
+            is_err: false
+        })
 
+        # In verbose mode, clear table, print the triggering command above table, and redraw table
+        if $is_verbose and $is_tty {
+            let cmd_styled = (
+                $plan.display_cmd?
+                | default ($plan.cmd | str join ' ')
+                | str replace --all --regex "<([^>]+)>" $"(ansi reset)(ansi default_bold)$1(ansi reset)"
+            )
+            print -n $"\e[($table_height)A\e[0J\r\e[2K"
+            print $"  ($cmd_styled)"
+            let cur_tbl = (build-table-lines $state_records $is_bench "⠋")
+            print ($cur_tbl | str join "\n")
+            $table_height = ($cur_tbl | length)
+        }
+
+        let log_file = (mktemp -t "gwa-stream-XXXXXX.log")
+        let res_file = (mktemp -t "gwa-res-XXXXXX.nuon")
+        let exe = ($plan.cmd | first)
+        let args = ($plan.cmd | skip 1)
+        let cwd = ($plan.cwd? | default "")
+        let start = (date now)
+
+        let jid = (job spawn {
+            if ($cwd | is-not-empty) {
+                cd $cwd
+                ^$exe ...$args o+e> $log_file
+            } else {
+                ^$exe ...$args o+e> $log_file
+            }
+            let code = $env.LAST_EXIT_CODE
+            { exit_code: $code } | to nuon | save -f $res_file
+        })
+
+        mut f_idx = 0
+        mut last_line_count = 0
+        let frames = $SPINNER_FRAMES
+        let frames_len = ($frames | length)
+
+        while (job list | where id == $jid | is-not-empty) {
+            let frame = ($frames | get ($f_idx mod $frames_len))
+            $f_idx = ($f_idx + 1)
+
+            if $is_tty {
                 if $is_verbose {
-                    $summary_rows = ($summary_rows | append {
-                        cat: ($cat.name? | default "")
-                        engine: $plan.engine
-                        name: $pkg.name
-                        badge: $full_badge
-                        is_err: false
-                    })
+                    let all_logs = if ($log_file | path exists) { open --raw $log_file | lines } else { [] }
+                    let new_logs = ($all_logs | skip $last_line_count)
+
+                    if ($new_logs | is-not-empty) {
+                        # Clear table, stream new logs above table, redraw table below
+                        print -n $"\e[($table_height)A\e[0J\r\e[2K"
+                        for l in $new_logs {
+                            print $"    (ansi grey)│(ansi reset) ($l)"
+                        }
+                        let cur_tbl = (build-table-lines $state_records $is_bench $frame)
+                        print ($cur_tbl | str join "\n")
+                        $table_height = ($cur_tbl | length)
+                        $last_line_count = ($all_logs | length)
+                    } else {
+                        # Update spinner in table
+                        print -n $"\e[($table_height)A\r\e[0J"
+                        let cur_tbl = (build-table-lines $state_records $is_bench $frame)
+                        print ($cur_tbl | str join "\n")
+                    }
+                } else {
+                    # Standard mode: update spinner in table
+                    print -n $"\e[($table_height)A\r\e[0J"
+                    let cur_tbl = (build-table-lines $state_records $is_bench $frame)
+                    print ($cur_tbl | str join "\n")
                 }
-                continue
             }
 
-            # 2. Optional pre-flight hook (e.g. svelte-kit sync)
-            if ($plan.pre? != null) {
-                do $plan.pre
+            sleep 60ms
+        }
+
+        # Clear table for final task state transition
+        if $is_tty {
+            print -n $"\e[($table_height)A\e[0J\r\e[2K"
+        }
+
+        let elapsed = ((date now) - $start)
+        let output_text = if ($log_file | path exists) { open --raw $log_file } else { "" }
+        let res_data = if ($res_file | path exists) { open $res_file } else { { exit_code: 0 } }
+        rm -f $log_file $res_file
+
+        let res_record = {
+            stdout: $output_text
+            stderr: ""
+            exit_code: ($res_data.exit_code? | default 0)
+            elapsed: $elapsed
+        }
+
+        let eval = (do $evaluator $res_record $rec.pkg)
+        $total_errors = ($total_errors + $eval.err_count)
+
+        # In verbose mode, flush any remaining log lines and add spacing before the table
+        if $is_verbose and $is_tty {
+            let all_logs = ($output_text | lines)
+            let remaining = ($all_logs | skip $last_line_count)
+            for l in $remaining {
+                print $"    (ansi grey)│(ansi reset) ($l)"
             }
+            print ""
+        }
 
-            # 3. Execute step with live ephemeral viewport
-            let cwd = ($plan.cwd? | default "")
-            let res = (exec-step $"Running ($plan.engine) for ($pkg.name)..." $plan.cmd $is_verbose --cwd $cwd --engine $plan.engine --name $pkg.name)
-
-            # 4. Evaluate and parse outputs
-            let eval = (do $evaluator $res $pkg)
-            $total_errors = ($total_errors + $eval.err_count)
-
-            # 5. Format and print status row (with optional benchmark duration)
-            let dur_tag = if $is_bench { $" (ansi grey)\((format-duration $res.elapsed)\)(ansi reset)" } else { "" }
-            print $"  (chevron) (ansi grey)($plan.engine | fill -w 14)(ansi reset)(ansi default_bold)($pkg.name | fill -w 8)(ansi reset)($eval.badge)($dur_tag)"
-
-            # 6. Stream logs if verbose or on error
-            print-stream $res $is_verbose $eval.is_err
-
-            if $is_verbose {
-                $summary_rows = ($summary_rows | append {
-                    cat: ($cat.name? | default "")
-                    engine: $plan.engine
-                    name: $pkg.name
-                    badge: $"($eval.badge)($dur_tag)"
-                    is_err: $eval.is_err
-                })
+        # If task failed in standard mode, print failure error trace above the table
+        if (not $is_verbose) and $eval.is_err {
+            let err_lines = (
+                $output_text
+                | lines
+                | where { $in | is-not-empty }
+                | last 15
+                | each {|l| $"    (ansi red)│(ansi reset) ($l)" }
+            )
+            if ($err_lines | is-not-empty) {
+                print ($err_lines | str join "\n")
+                print ""
             }
         }
-        print ""
+
+        # Update table record with completed state and duration
+        let dur_val = if ($eval.is_err) { "" } else { (format-duration $elapsed) }
+        $state_records = ($state_records | update $i {
+            cat: $rec.cat
+            pkg: $rec.pkg
+            plan: $rec.plan
+            engine: $rec.engine
+            name: $rec.name
+            status: (if $eval.is_err { "failed" } else { "done" })
+            badge: $eval.badge
+            dur: $dur_val
+            is_err: $eval.is_err
+        })
+
+        # Redraw table cleanly below
+        let updated_table = (build-table-lines $state_records $is_bench)
+        print ($updated_table | str join "\n")
+        $table_height = ($updated_table | length)
     }
 
+    # Final Banner
     let suite_elapsed = ((date now) - $suite_start)
-
-    # 7. Post-Noise Consolidated Overview in Verbose Mode
-    if $is_verbose and ($summary_rows | is-not-empty) {
-        let ov_dur = if $is_bench { $" (ansi grey)\(⏱️ (format-duration $suite_elapsed)\)(ansi reset)" } else { "" }
-        print $"(ansi purple_bold)📊 OVERVIEW(ansi reset)($ov_dur)"
-        mut last_cat = ""
-        for $row in $summary_rows {
-            let cat_name = ($row.cat | default "")
-            if ($cat_name | is-not-empty) and ($cat_name != $last_cat) {
-                print $"(ansi purple_bold)[($cat_name)](ansi reset)"
-                $last_cat = $cat_name
-            }
-            print $"  (chevron) (ansi grey)($row.engine | fill -w 14)(ansi reset)(ansi default_bold)($row.name | fill -w 8)(ansi reset)($row.badge)"
-        }
-        print ""
-    }
-
-    # 8. Final Banner
     let total_dur_suffix = if $is_bench { $" (ansi grey)\(total: (format-duration $suite_elapsed)\)(ansi reset)" } else { "" }
     if $total_errors > 0 {
         banner $"((do $fail_msg $total_errors))($total_dur_suffix)" "196"

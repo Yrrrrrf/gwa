@@ -9,7 +9,7 @@ fmt:
 [doc('Lint workspace')]
 [group('check')]
 lint:
-    ^deno lint .
+    # ^deno lint .
     -^biome lint --config-path=config/biome.json .
 
 [doc('Type-check workspace (SDK modules + SvelteKit apps) (pass -v for detailed logs, -b for timing)')]

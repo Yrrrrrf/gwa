@@ -38,23 +38,25 @@ export def format-duration [d: duration]: nothing -> string {
     }
 }
 
+# Native ANSI banner — zero external process, zero OSC 11 background leaks
 export def banner [text: string, color: string = "212"]: nothing -> nothing {
     print ""
-    ^gum style --foreground $color --bold $text
+    print $"(ansi -e { fg: $color, attr: b })($text)(ansi reset)"
 }
 
-export def render-cmd-preview [text: string]: nothing -> nothing {
-    let styled = ($text | str replace --all --regex "<([^>]+)>" $"(ansi rst)(ansi cyan_bold)<$1>(ansi reset)(ansi i)(ansi grey)")
-    print $"  (ansi i)(ansi grey)($styled)(ansi reset)"
-    print ""
+# Template command: crisp distinct style (not dim) with <placeholders> in bold cyan
+export def render-cmd-template [text: string]: nothing -> nothing {
+    let styled = ($text | str replace --all --regex "<([^>]+)>" $"(ansi reset)(ansi cyan_bold)<$1>(ansi reset)(ansi default_italic)")
+    print $"  (ansi default_italic)($styled)(ansi reset)"
 }
 
-export def clear-viewport [n: int]: nothing -> nothing {
-    if $n > 0 {
-        print -n $"\e[($n)A\e[0J\r\e[2K"
-    } else {
-        print -n "\r\e[2K"
+# Concrete commands manifest: normal text with target <files> in bold
+export def render-cmd-list [cmds: list<string>]: nothing -> nothing {
+    for cmd in $cmds {
+        let styled = ($cmd | str replace --all --regex "<([^>]+)>" $"(ansi reset)(ansi default_bold)$1(ansi reset)")
+        print $"  ($styled)"
     }
+    print ""
 }
 
 export def print-stream [res: record, is_verbose: bool, is_err: bool]: nothing -> nothing {

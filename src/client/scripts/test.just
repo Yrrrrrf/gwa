@@ -1,10 +1,3 @@
-# test.just — prove · dynamic categorized test suite
-
-[doc('Run workspace tests via vitest')]
-[group('test')]
-test-vp:
-    ^deno run -A npm:vitest run --config ./config/vitest.config.ts
-
 [doc('Run dynamic categorized test dashboard across SDK and Apps (pass -v for detailed logs, -b for timing)')]
 [group('test')]
 [positional-arguments]

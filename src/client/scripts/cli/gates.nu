@@ -7,6 +7,8 @@ export def run-types-dashboard [is_verbose: bool = false, is_bench: bool = false
     ensure-node-compat
 
     let resolver = {|pkg|
+        let rel_pkg = ($pkg.path | path relative-to $env.PWD)
+
         if $pkg.is_svelte {
             let vcfg = if ($"($pkg.path)/vite.config.mts" | path exists) {
                 "./vite.config.mts"
@@ -26,6 +28,22 @@ export def run-types-dashboard [is_verbose: bool = false, is_bench: bool = false
                 ["--tsconfig", $tsc]
             }
 
+            let display_tsc = if ($"($pkg.path)/tsconfig.json" | path exists) {
+                $"($rel_pkg)/tsconfig.json"
+            } else {
+                "config/tsconfig.json"
+            }
+            let display_vcfg = if ($vcfg | is-not-empty) {
+                $"($rel_pkg)/($vcfg | str replace './' '')"
+            } else {
+                ""
+            }
+            let display_cmd = if ($display_vcfg | is-not-empty) {
+                $"deno run -A npm:svelte-check --tsconfig ($display_tsc) --config <($display_vcfg)>"
+            } else {
+                $"deno run -A npm:svelte-check --tsconfig <($display_tsc)>"
+            }
+
             let pre = if $pkg.is_app {
                 {
                     do {
@@ -39,6 +57,7 @@ export def run-types-dashboard [is_verbose: bool = false, is_bench: bool = false
                 engine: "svelte-check"
                 cwd: $pkg.path
                 cmd: ["deno", "run", "-A", "npm:svelte-check@^4.7.5", ...$cfg_flags]
+                display_cmd: $display_cmd
                 pre: $pre
             }
         } else {
@@ -46,6 +65,7 @@ export def run-types-dashboard [is_verbose: bool = false, is_bench: bool = false
                 engine: "deno"
                 cwd: $pkg.path
                 cmd: ["deno", "check", "src/mod.ts"]
+                display_cmd: $"deno check <($rel_pkg)/src/mod.ts>"
             }
         }
     }
@@ -67,6 +87,7 @@ export def run-types-dashboard [is_verbose: bool = false, is_bench: bool = false
 
 export def run-tests-dashboard [is_verbose: bool = false, is_bench: bool = false]: nothing -> nothing {
     let resolver = {|pkg|
+        let rel_pkg = ($pkg.path | path relative-to $env.PWD)
         let engine = if $pkg.is_svelte { "vitest" } else { "deno" }
         if not $pkg.has_tests {
             {
@@ -79,12 +100,14 @@ export def run-tests-dashboard [is_verbose: bool = false, is_bench: bool = false
                 engine: "vitest"
                 cwd: ""
                 cmd: ["deno", "run", "-A", "npm:vitest", "run", "--config", "./config/vitest.config.ts", "--project", $pkg.name]
+                display_cmd: $"deno run -A npm:vitest run --config ./config/vitest.config.ts --project <($pkg.name)>"
             }
         } else {
             {
                 engine: "deno"
                 cwd: ""
                 cmd: ["deno", "test", "--allow-all", $pkg.path]
+                display_cmd: $"deno test --allow-all <($rel_pkg)>"
             }
         }
     }
@@ -109,6 +132,7 @@ export def run-build-dashboard [app: string = "", is_verbose: bool = false, is_b
     }
 
     let resolver = {|pkg|
+        let rel_pkg = ($pkg.path | path relative-to $env.PWD)
         {
             engine: "vite build"
             cwd: $pkg.path
@@ -120,6 +144,7 @@ export def run-build-dashboard [app: string = "", is_verbose: bool = false, is_b
                 } | complete | ignore
             }
             cmd: ["deno", "run", "-A", "npm:vite", "build"]
+            display_cmd: $"deno run -A npm:vite build \(in <($rel_pkg)>\)"
         }
     }
 
