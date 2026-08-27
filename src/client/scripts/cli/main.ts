@@ -207,7 +207,7 @@ const cli = new Command()
       colors.bold.magenta("📦 Stage 1: Quality Gates (fmt, lint, types)"),
     );
     const fmtCmd = new Deno.Command("biome", {
-      args: ["format", "--config-path=config/biome.json", "."],
+      args: ["format", "--config-path=config/biome.json", "--write", "."],
       stdout: "inherit",
       stderr: "inherit",
     });
