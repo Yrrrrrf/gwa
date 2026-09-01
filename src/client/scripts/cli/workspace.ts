@@ -45,9 +45,9 @@ export function inspectPackage(pkgDir: string): ClientPackage {
     join(clean, "src"),
     /\.(svelte|svelte\.ts)$/,
   );
-  const isSvelte = isApp || hasVite || hasSvelteFiles;
+  const isSvelte = hasSvelteFiles;
 
-  const hasTests = hasPattern(clean, /\.(test|spec)\.ts$/);
+  const hasTests = hasPattern(clean, /\.(test|spec)\.(ts|tsx)$/);
 
   return {
     name,
@@ -55,7 +55,7 @@ export function inspectPackage(pkgDir: string): ClientPackage {
     isApp,
     isSvelte,
     hasTests,
-    engine: isSvelte ? "vitest" : "deno",
+    engine: (isSvelte || hasVite) ? "vitest" : "deno",
     typeEngine: isSvelte ? "svelte-check" : "deno",
   };
 }

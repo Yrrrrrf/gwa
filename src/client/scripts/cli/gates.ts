@@ -85,7 +85,8 @@ export async function runTypesGate(
           ? `deno run -A npm:svelte-check --tsconfig ${displayTsc} --config <${displayVcfg}>`
           : `deno run -A npm:svelte-check --tsconfig <${displayTsc}>`;
 
-        const pre = pkg.isApp
+        const isSvelteKit = existsSync(join(pkg.path, "src/routes"));
+        const pre = (pkg.isApp && isSvelteKit)
           ? async () => {
             try {
               const syncCmd = new Deno.Command("deno", {
@@ -115,11 +116,17 @@ export async function runTypesGate(
         };
       }
 
+      const checkTarget = existsSync(join(pkg.path, "src/main.tsx"))
+        ? "src/main.tsx"
+        : existsSync(join(pkg.path, "src/main.ts"))
+        ? "src/main.ts"
+        : "src/mod.ts";
+
       return {
         engine: "deno",
         cwd: pkg.path,
-        cmd: ["deno", "check", "src/mod.ts"],
-        displayCmd: `deno check <${pkg.path}/src/mod.ts>`,
+        cmd: ["deno", "check", checkTarget],
+        displayCmd: `deno check <${pkg.path}/${checkTarget}>`,
       };
     },
     evaluator: (res: ProcessResult, pkg: ClientPackage) => {
@@ -244,15 +251,23 @@ export async function runBuildGate(
           // Ignored
         }
         try {
-          const syncCmd = new Deno.Command("deno", {
-            args: ["run", "-A", "npm:@sveltejs/kit@next/svelte-kit", "sync"],
-            cwd: pkg.path,
-            stdout: "null",
-            stderr: "null",
-          });
-          await syncCmd.spawn().status;
+          await Deno.remove(join(pkg.path, "dist"), { recursive: true });
         } catch {
           // Ignored
+        }
+        const isSvelteKit = existsSync(join(pkg.path, "src/routes"));
+        if (isSvelteKit) {
+          try {
+            const syncCmd = new Deno.Command("deno", {
+              args: ["run", "-A", "npm:@sveltejs/kit@next/svelte-kit", "sync"],
+              cwd: pkg.path,
+              stdout: "null",
+              stderr: "null",
+            });
+            await syncCmd.spawn().status;
+          } catch {
+            // Ignored
+          }
         }
       },
       cmd: ["deno", "run", "-A", "npm:vite", "build"],

@@ -4,5 +4,13 @@
 	"description": "Vision lab app for GWA",
 	"license": "MIT",
 	"authors": ["Yrrrrrf <fer.rezac@outlook.com>"],
-	"exports": "./src/lib/mod.ts"
+	"exports": "./src/lib/mod.ts",
+	"imports": {
+		"svelte": "npm:svelte@5.56.10",
+		"@sveltejs/kit": "npm:@sveltejs/kit@next",
+		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static@next",
+		"@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte@next",
+		"@lucide/svelte": "npm:@lucide/svelte",
+		"rune-lab": "npm:rune-lab@0.5.2-rc.2"
+	}
 }

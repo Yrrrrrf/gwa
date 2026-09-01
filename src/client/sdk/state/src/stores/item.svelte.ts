@@ -1,4 +1,4 @@
-import type { Item } from "@sdk";
+import type { Item } from "@sdk/core";
 
 export interface ItemStore {
 	readonly all: Item[];

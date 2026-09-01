@@ -1,5 +1,9 @@
 {
 	"name": "@sdk/state",
 	"version": "0.0.1",
-	"exports": "./src/mod.ts"
+	"exports": "./src/mod.ts",
+	"imports": {
+		"svelte": "npm:svelte@5.56.10",
+		"@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte@next"
+	}
 }

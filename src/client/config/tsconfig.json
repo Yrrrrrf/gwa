@@ -26,6 +26,5 @@
 		"**/*.test.ts",
 		"node_modules",
 		"../sdk/**/*.test.ts"
-	],
-	"include": ["../sdk/**/*.ts", "../sdk/**/*.svelte"]
+	]
 }
