@@ -6,8 +6,6 @@
 	"authors": ["Yrrrrrf <fer.rezac@outlook.com>"],
 	"exports": "./src/lib/mod.ts",
 	"imports": {
-		"#lib": "./src/lib/mod.ts",
-		"#lib/*": "./src/lib/*",
 		"vue": "npm:vue",
 		"@vitejs/plugin-vue": "npm:@vitejs/plugin-vue"
 	}

@@ -29,3 +29,4 @@ export function defineGWA(options: GwaConfig = {}) {
 }
 
 export default defineGWA();
+export type { PluginOption };
