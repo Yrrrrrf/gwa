@@ -1,0 +1,14 @@
+{
+	"name": "@apps/vue",
+	"version": "0.0.1",
+	"description": "Vue variant for GWA Client",
+	"license": "MIT",
+	"authors": ["Yrrrrrf <fer.rezac@outlook.com>"],
+	"exports": "./src/lib/mod.ts",
+	"imports": {
+		"#lib": "./src/lib/mod.ts",
+		"#lib/*": "./src/lib/*",
+		"vue": "npm:vue",
+		"@vitejs/plugin-vue": "npm:@vitejs/plugin-vue"
+	}
+}
