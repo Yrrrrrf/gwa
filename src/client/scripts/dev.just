@@ -8,10 +8,26 @@ dev *flags:
 
 alias run := dev
 
-[doc('Prune all node_modules, .svelte-kit, .vite, deno.lock, build/')]
+[doc('Prune all node_modules, .svelte-kit, .vite, deno.lock, build/, dist/, paraglide')]
 [group('dev')]
+[script]
 prune:
-    fd -u --prune '^(node_modules|\.svelte-kit|\.vite|deno\.lock|build|dist)$' | lines | each {|p| rm -r -f $p } | ignore
+    let targets = [
+        "node_modules"
+        ".svelte-kit"
+        ".vite"
+        "deno.lock"
+        "build"
+        "dist"
+        "paraglide"
+    ]
+    let pattern = ("^(" + ($targets | str join "|") + ")$")
+    let matches = (fd -u --prune $pattern | lines)
+    $matches | each {|p|
+        rm -r -f $p
+        print $"rm ($p)"
+    } | ignore
+    print "Workspace clean\n"
 
 [doc('Purge caches & lockfiles, reinstall deps, resync generated code')]
 [group('dev')]
