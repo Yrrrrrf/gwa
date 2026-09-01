@@ -1,6 +1,26 @@
 # deploy.just — ship · build, preview, publish, and release
 
-[doc('Run quality gate (check + test) (pass -v for detailed logs)')]
+[doc('Build React app')]
+[group('deploy')]
+build-react:
+    cd apps/react; ^deno run -A npm:vite build
+
+[doc('Build Vue app')]
+[group('deploy')]
+build-vue:
+    cd apps/vue; ^deno run -A npm:vite build
+
+[doc('Build Svelte app')]
+[group('deploy')]
+build-svelte:
+    cd apps/svelte; ^deno run -A npm:vite build
+
+[doc('Build Vision app')]
+[group('deploy')]
+build-vision:
+    cd apps/vision; ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync; ^deno run -A npm:vite build
+
+[doc('Run quality gate (check + test) (pass -v for detailed logs, -p for parallel)')]
 [group('ci')]
 [positional-arguments]
 ci *flags: (check flags) (test flags)
@@ -11,7 +31,7 @@ ci *flags: (check flags) (test flags)
 build *flags:
     {{ CLI }} build {{ flags }}
 
-[doc('Preview production build (builds first, then launches preview server)')]
+[doc('Preview production build (builds first, then launches preview server) (pass -A for all apps)')]
 [group('deploy')]
 [positional-arguments]
 preview *flags: (build flags)

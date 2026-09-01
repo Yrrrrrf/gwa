@@ -3,6 +3,7 @@ import {
   Command,
   CompletionsCommand,
   HelpCommand,
+  runMatrixSuite,
 } from "../../../cli/src/mod.ts";
 import {
   runBuildGate,
@@ -38,6 +39,35 @@ const cli = new Command()
   .globalOption("-f, --filter <pattern:string>", "Filter targets by name")
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
+  // ── DYNAMIC PATTERN MATRIX RUNNER ────────────────────────────────────
+  .command("matrix", "Execute a declarative pattern-command matrix suite")
+  .option("--title <title:string>", "Suite title", { default: "SUITE" })
+  .option("--rules <rules:string>", "JSON string array of matrix rules", {
+    required: true,
+  })
+  .action(
+    async (
+      options: GlobalOptions & { title: string; rules: string },
+    ) => {
+      let parsedRules = [];
+      try {
+        parsedRules = JSON.parse(options.rules);
+      } catch (e) {
+        console.error("Invalid JSON rules:", e);
+        Deno.exit(1);
+      }
+      const res = await runMatrixSuite({
+        title: options.title,
+        rules: parsedRules,
+        verbose: options.verbose,
+        parallel: options.parallel,
+        bench: options.bench,
+        failFast: options.failFast,
+        filter: options.filter,
+      });
+      if (!res.success) Deno.exit(1);
+    },
+  )
   // ── TYPES ───────────────────────────────────────────────────────────
   .command(
     "types [target:string]",
@@ -90,4 +120,3 @@ const cli = new Command()
 if (import.meta.main) {
   await cli.parse(Deno.args);
 }
-

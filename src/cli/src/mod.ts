@@ -8,6 +8,7 @@ export * from "./ui.ts";
 export * from "./runner.ts";
 export * from "./parsers.ts";
 export * from "./fs.ts";
+export * from "./matrix.ts";
 
 // Direct Cliffy and ANSI re-exports so consumers don't need separate imports
 export { Command } from "jsr:@cliffy/command@1.2.1";

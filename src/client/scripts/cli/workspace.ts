@@ -9,14 +9,13 @@ import {
   walkSync,
 } from "../../../cli/src/mod.ts";
 
-
 export interface ClientPackage extends BaseTarget {
   readonly path: string;
   readonly isApp: boolean;
   readonly isSvelte: boolean;
   readonly hasTests: boolean;
   readonly engine: string;
-  readonly typeEngine: string;
+  readonly entrypoint: string;
 }
 
 function hasPattern(dir: string, regex: RegExp): boolean {
@@ -45,9 +44,20 @@ export function inspectPackage(pkgDir: string): ClientPackage {
     join(clean, "src"),
     /\.(svelte|svelte\.ts)$/,
   );
-  const isSvelte = hasSvelteFiles;
+  const isSvelteKit = existsSync(join(clean, "src/routes"));
+  const isSvelte = hasSvelteFiles || isSvelteKit;
 
-  const hasTests = hasPattern(clean, /\.(test|spec)\.(ts|tsx)$/);
+  const hasTests = hasPattern(clean, /\.(test|spec)\.(ts|tsx|js|jsx)$/);
+
+  const entrypoint = existsSync(join(clean, "src/lib/mod.ts"))
+    ? "src/lib/mod.ts"
+    : existsSync(join(clean, "src/mod.ts"))
+    ? "src/mod.ts"
+    : existsSync(join(clean, "src/main.tsx"))
+    ? "src/main.tsx"
+    : existsSync(join(clean, "src/main.ts"))
+    ? "src/main.ts"
+    : "src/mod.ts";
 
   return {
     name,
@@ -56,7 +66,7 @@ export function inspectPackage(pkgDir: string): ClientPackage {
     isSvelte,
     hasTests,
     engine: (isSvelte || hasVite) ? "vitest" : "deno",
-    typeEngine: isSvelte ? "svelte-check" : "deno",
+    entrypoint,
   };
 }
 
@@ -89,7 +99,7 @@ export function getWorkspaceCategories(): TargetCategory<ClientPackage>[] {
 
 export function getAppTargets(appFilter?: string): ClientPackage[] {
   const apps = discoverPackages("apps");
-  if (!appFilter) return apps;
+  if (!appFilter || appFilter === "all") return apps;
 
   const clean = appFilter.replaceAll("\\", "").replace(/^apps\//, "");
   const match = apps.find((a) => a.name === clean);
@@ -132,4 +142,3 @@ export function ensureNodeCompat(): void {
     }
   }
 }
-

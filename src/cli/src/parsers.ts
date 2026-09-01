@@ -60,17 +60,26 @@ export function parseSvelteCheck(
 
 /**
  * Parses test output across Vitest and Deno Test.
- * Scans for the LAST summary line to prevent intermediate streaming lines from corrupting totals.
+ * Scans for the summary line to accurately report passed, failed, and skipped counts.
  */
 export function parseTestStats(output: string, exitCode: number): TestStats {
   const clean = stripAnsiCode(output);
-  const lines = clean.split("\n");
-  const summaryLines = lines.filter(
-    (l) =>
-      /ok\s+\|/i.test(l) || /FAILED\s+\|/i.test(l) || /Tests\s+/i.test(l) ||
-      /passed/i.test(l),
+  const lines = clean.split("\n").map((l) => l.trim());
+
+  // Prioritize explicit summary line like "Tests  1 passed (1)" or "ok | 1 passed"
+  const testLines = lines.filter(
+    (l) => /^Tests\s+/i.test(l) || /^(ok|FAILED)\s+\|/i.test(l),
   );
-  const summary = summaryLines[summaryLines.length - 1] ?? clean;
+  const fallbackLines = lines.filter(
+    (l) =>
+      /(\d+)\s+passed/i.test(l) ||
+      /(\d+)\s+failed/i.test(l) ||
+      /(\d+)\s+skipped/i.test(l),
+  );
+
+  const summary = testLines[testLines.length - 1] ??
+    fallbackLines[fallbackLines.length - 1] ??
+    clean;
 
   const pMatch = summary.match(/(\d+)\s+passed/);
   const fMatch = summary.match(/(\d+)\s+failed/);

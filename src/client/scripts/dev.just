@@ -1,6 +1,26 @@
 # dev.just — run, live preview, and prepare workspace
 
-[doc('Run an app on the dev server')]
+[doc('Run React app on dev server')]
+[group('dev')]
+dev-react:
+    cd apps/react; ^deno run -A npm:vite dev --host
+
+[doc('Run Vue app on dev server')]
+[group('dev')]
+dev-vue:
+    cd apps/vue; ^deno run -A npm:vite dev --host
+
+[doc('Run Svelte app on dev server')]
+[group('dev')]
+dev-svelte:
+    cd apps/svelte; ^deno run -A npm:vite dev --host
+
+[doc('Run Vision app on dev server')]
+[group('dev')]
+dev-vision:
+    cd apps/vision; ^deno run -A npm:vite dev --host
+
+[doc('Run an app on the dev server (pass -A for all apps)')]
 [group('dev')]
 [positional-arguments]
 dev *flags:
