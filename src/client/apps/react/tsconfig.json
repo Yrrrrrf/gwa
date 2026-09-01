@@ -1,0 +1,7 @@
+{
+	"extends": "../../config/tsconfig.json",
+	"compilerOptions": {
+		"jsx": "react-jsx"
+	},
+	"include": ["src/**/*", "vite.config.mts"]
+}
