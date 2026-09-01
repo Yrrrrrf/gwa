@@ -13,12 +13,12 @@ JUSTFILE := CLIENT_DIR / "justfile"
 list:
     @just --justfile '{{ JUSTFILE }}' --list --unsorted
 
-[private]
 [group('meta')]
+[private]
 _clean-tree:
     git diff --quiet || (echo "working tree dirty" && exit 1)
 
 [doc('Compile an inlang project into a paraglide runtime')]
 [group('build')]
 _paraglide project outdir:
-    deno run -A npm:@inlang/paraglide-js compile --project "{{ project }}" --outdir "{{ outdir }}" --emit-ts-declarations
+    ^deno run -A npm:@inlang/paraglide-js compile --project "{{ project }}" --outdir "{{ outdir }}" --emit-ts-declarations

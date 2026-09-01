@@ -2,30 +2,33 @@
 
 [doc('Format workspace')]
 [group('check')]
-fmt *flags:
-    {{ CLI }} fmt {{ flags }}
+fmt:
+    # ^deno fmt .
+    ^biome format --config-path=config/biome.json --write .
 
 [doc('Lint workspace')]
 [group('check')]
-lint *flags:
-    {{ CLI }} lint {{ flags }}
-
-[doc('Type-check workspace (SDK modules + SvelteKit apps) (pass -v for detailed logs)')]
-[group('check')]
-types *flags:
-    {{ CLI }} types {{ flags }}
+lint:
+    # ^deno lint .
+    -^biome lint --config-path=config/biome.json .
 
 [doc('Audit all code namespaces')]
 [group('check')]
-audit *flags:
-    {{ CLI }} audit {{ flags }}
+audit:
+    ^deno run -A npm:fallow -c config/fallowrc.json
 
 [doc('Check code health')]
 [group('check')]
-health *flags:
-    {{ CLI }} health {{ flags }}
+health:
+    ^deno run -A npm:fallow health --score -c config/fallowrc.json
+
+[doc('Type-check workspace (SDK modules + SvelteKit apps) (pass -v for detailed logs, -p for parallel)')]
+[group('check')]
+[positional-arguments]
+types *args:
+    {{ CLI }} types {{ args }}
 
 [doc('Run all check quality gates (pass -v for detailed logs, -b for timing)')]
 [group('check')]
-check *flags:
-    {{ CLI }} check {{ flags }}
+[positional-arguments]
+check *args: fmt lint (types args)

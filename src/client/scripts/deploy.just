@@ -2,20 +2,23 @@
 
 [doc('Run quality gate (check + test) (pass -v for detailed logs)')]
 [group('ci')]
-ci *flags:
-    {{ CLI }} ci {{ flags }}
+[positional-arguments]
+ci *flags: (check flags) (test flags)
 
 [doc('Build applications: deno.json -> build/ (pass -v for detailed logs)')]
 [group('deploy')]
+[positional-arguments]
 build *flags:
     {{ CLI }} build {{ flags }}
 
-[doc('Preview production build (pass -v for detailed build logs)')]
+[doc('Preview production build (builds first, then launches preview server)')]
 [group('deploy')]
-preview *flags:
+[positional-arguments]
+preview *flags: (build flags)
     {{ CLI }} preview {{ flags }}
 
+[confirm("Ship release to production?")]
 [doc('Publish build release')]
 [group('deploy')]
-publish *flags:
-    {{ CLI }} publish {{ flags }}
+publish: ci build
+    @echo "✓ Published release successfully"

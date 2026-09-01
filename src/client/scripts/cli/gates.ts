@@ -318,7 +318,6 @@ export async function runDev(
 
 export async function runPreview(
   targetApp?: string,
-  options: GateOptions = {},
 ): Promise<void> {
   const apps = discoverPackages("apps");
   if (apps.length === 0) {
@@ -327,21 +326,7 @@ export async function runPreview(
   }
 
   let selectedApp = targetApp?.replace(/^apps\//, "");
-
-  if (selectedApp) {
-    // Specific app targeted
-    const appPath = `apps/${selectedApp}`;
-    if (!existsSync(appPath)) {
-      console.error(colors.red(`Application not found: ${appPath}`));
-      Deno.exit(1);
-    }
-    const buildResult = await runBuildGate(options, selectedApp);
-    if (!buildResult.success) Deno.exit(1);
-  } else {
-    // No specific app targeted: build all apps first ("create them and then let me select")
-    const buildResult = await runBuildGate(options);
-    if (!buildResult.success) Deno.exit(1);
-
+  if (!selectedApp) {
     if (apps.length === 1) {
       selectedApp = apps[0].name;
     } else {
@@ -354,6 +339,11 @@ export async function runPreview(
   }
 
   const appPath = `apps/${selectedApp}`;
+  if (!existsSync(appPath)) {
+    console.error(colors.red(`Application not found: ${appPath}`));
+    Deno.exit(1);
+  }
+
   console.log(banner(`🎪 Previewing production build: ${appPath}`, "magenta"));
 
   const cmd = new Deno.Command("deno", {
@@ -365,3 +355,4 @@ export async function runPreview(
   const status = await cmd.spawn().status;
   if (!status.success) Deno.exit(status.code);
 }
+
