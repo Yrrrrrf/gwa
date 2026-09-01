@@ -1,0 +1,14 @@
+{
+	"name": "@apps/svelte",
+	"version": "0.0.1",
+	"description": "Svelte variant for GWA Client",
+	"license": "MIT",
+	"authors": ["Yrrrrrf <fer.rezac@outlook.com>"],
+	"exports": "./src/lib/mod.ts",
+	"imports": {
+		"svelte": "npm:svelte@5.56.10",
+		"@sveltejs/kit": "npm:@sveltejs/kit@next",
+		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static@next",
+		"@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte@next"
+	}
+}
