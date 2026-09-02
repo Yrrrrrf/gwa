@@ -218,30 +218,36 @@ export async function runSuite<
           }
 
           // If parallel verbose mode: flush coherent buffered log block once task finishes
-          if (options.isVerbose && tty) {
+          if (options.isVerbose) {
             const logs = bufferedLogs.get(idx) ?? [];
             if (logs.length > 0) {
-              Deno.stdout.writeSync(
-                new TextEncoder().encode(
-                  `${cursorUp(tableHeight)}${eraseDown}\r`,
-                ),
-              );
+              if (tty) {
+                Deno.stdout.writeSync(
+                  new TextEncoder().encode(
+                    `${cursorUp(tableHeight)}${eraseDown}\r`,
+                  ),
+                );
+              }
               const rawCmd = state.plan.displayCmd ??
                 state.plan.cmd?.join(" ") ?? "";
+              console.log("");
               console.log(rawCmd.replace(/<|>/g, ""));
               for (const l of logs) {
                 console.log(`    ${colors.gray("│")} ${l}`);
               }
               console.log("");
-              const updatedTbl = buildTableLines(
-                stateRecords,
-                "⠋",
-                options.isBench,
-              );
-              console.log(updatedTbl.join("\n"));
-              tableHeight = updatedTbl.length;
+              if (tty) {
+                const updatedTbl = buildTableLines(
+                  stateRecords,
+                  "⠋",
+                  options.isBench,
+                );
+                console.log(updatedTbl.join("\n"));
+                tableHeight = updatedTbl.length;
+              }
             }
-          } else if (headless) {
+          }
+          if (headless) {
             console.log(
               `  ${chevron()} ${colors.gray(state.plan.engine)} ${
                 colors.bold(state.target.name)
@@ -346,16 +352,21 @@ export async function runSuite<
           );
         }
 
-        // In verbose mode, clear table, print command above, redraw table below
-        if (options.isVerbose && tty) {
+        // In verbose mode, print triggering command
+        if (options.isVerbose) {
           const rawCmd = rec.plan.displayCmd ?? rec.plan.cmd?.join(" ") ?? "";
-          Deno.stdout.writeSync(
-            new TextEncoder().encode(`${cursorUp(tableHeight)}${eraseDown}\r`),
-          );
+          if (tty) {
+            Deno.stdout.writeSync(
+              new TextEncoder().encode(`${cursorUp(tableHeight)}${eraseDown}\r`),
+            );
+          }
+          console.log("");
           console.log(rawCmd.replace(/<|>/g, ""));
-          const curTbl = buildTableLines(stateRecords, "⠋", options.isBench);
-          console.log(curTbl.join("\n"));
-          tableHeight = curTbl.length;
+          if (tty) {
+            const curTbl = buildTableLines(stateRecords, "⠋", options.isBench);
+            console.log(curTbl.join("\n"));
+            tableHeight = curTbl.length;
+          }
         }
 
         if (!rec.plan.cmd) {

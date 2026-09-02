@@ -4,7 +4,6 @@ import {
   banner,
   colors,
   existsSync,
-  installSignalTraps,
   join,
   parseDenoCheck,
   parseSvelteCheck,
@@ -12,7 +11,6 @@ import {
   type ProcessResult,
   runSuite,
   Select,
-  spawnStreamingProcess,
   type SuiteResult,
   walkSync,
 } from "../../../cli/src/mod.ts";
@@ -32,12 +30,6 @@ export interface GateOptions {
   readonly filter?: string;
 }
 
-export interface ServerOptions {
-  readonly all?: boolean;
-  readonly port?: number;
-  readonly extraArgs?: readonly string[];
-}
-
 function countSourceFiles(pkgPath: string): number {
   const srcDir = join(pkgPath, "src");
   if (!existsSync(srcDir)) return 0;
@@ -52,20 +44,6 @@ function countSourceFiles(pkgPath: string): number {
   return count;
 }
 
-const APP_COLOR_FNS = [
-  colors.bold.cyan,
-  colors.bold.magenta,
-  colors.bold.yellow,
-  colors.bold.green,
-  colors.bold.blue,
-];
-
-function formatAppTag(name: string, index: number, maxLen: number = 7): string {
-  const colorFn = APP_COLOR_FNS[index % APP_COLOR_FNS.length];
-  const padded = name.padEnd(maxLen, " ");
-  return colorFn(`[${padded}]`);
-}
-
 // ── TYPES GATE ─────────────────────────────────────────────────────────
 
 export async function runTypesGate(
@@ -76,42 +54,61 @@ export async function runTypesGate(
   return await runSuite<ClientPackage>({
     title: "TYPES",
     categories: getWorkspaceCategories(),
-    cmdPreview: "just type-<app> ;; just _type-<engine> <target>",
+    cmdPreview:
+      "deno check <src/*.ts> ;; svelte-check <tsconfig.json> ;; vue-tsc <tsconfig.json> ;; tsc <tsconfig.json>",
     isVerbose: Boolean(options.verbose),
     isParallel: Boolean(options.parallel),
     isBench: Boolean(options.bench),
     failFast: Boolean(options.failFast),
     filter: options.filter,
     resolver: (pkg) => {
-      // 1. App-specific recipes from check.just
-      if (pkg.isApp) {
-        return {
-          engine: pkg.name,
-          cmd: ["just", `type-${pkg.name}`],
-          displayCmd: `just type-${pkg.name}`,
-        };
-      }
-
-      // 2. Svelte SDK packages
       if (pkg.isSvelte) {
+        const vcfg = existsSync(join(pkg.path, "vite.config.mts"))
+          ? "./vite.config.mts"
+          : existsSync(join(pkg.path, "vite.config.ts"))
+          ? "./vite.config.ts"
+          : "";
+
+        const tsc = existsSync(join(pkg.path, "tsconfig.json"))
+          ? "./tsconfig.json"
+          : "../../config/tsconfig.json";
+
+        const cfgFlags = vcfg
+          ? ["--tsconfig", tsc, "--config", vcfg]
+          : ["--tsconfig", tsc];
+
+        if (!pkg.isApp) {
+          cfgFlags.push("--threshold", "error");
+        }
+
+        const displayTsc = existsSync(join(pkg.path, "tsconfig.json"))
+          ? `${pkg.path}/tsconfig.json`
+          : "config/tsconfig.json";
+
+        const displayVcfg = vcfg ? `${pkg.path}/${vcfg.replace("./", "")}` : "";
+        const displayCmd = displayVcfg
+          ? `deno run -A npm:svelte-check --tsconfig ${displayTsc} --config <${displayVcfg}>`
+          : `deno run -A npm:svelte-check --tsconfig <${displayTsc}>`;
+
         return {
-          engine: "svelte",
-          cmd: [
-            "just",
-            "_type-svelte",
-            pkg.path,
-            "../../config/tsconfig.json",
-            "./vite.config.ts",
-          ],
-          displayCmd: `just _type-svelte <${pkg.path}>`,
+          engine: "svelte-check",
+          cwd: pkg.path,
+          cmd: ["deno", "run", "-A", "npm:svelte-check@^4.7.5", ...cfgFlags],
+          displayCmd,
         };
       }
 
-      // 3. Pure Deno SDK packages
+      const checkTarget = existsSync(join(pkg.path, "src/lib/mod.ts"))
+        ? "src/lib/mod.ts"
+        : existsSync(join(pkg.path, "src/mod.ts"))
+        ? "src/mod.ts"
+        : "src/main.ts";
+
       return {
         engine: "deno",
-        cmd: ["just", "_type-deno", `${pkg.path}/${pkg.entrypoint}`],
-        displayCmd: `just _type-deno <${pkg.path}/${pkg.entrypoint}>`,
+        cwd: pkg.path,
+        cmd: ["deno", "check", checkTarget],
+        displayCmd: `deno check <${pkg.path}/${checkTarget}>`,
       };
     },
     evaluator: (res: ProcessResult, pkg: ClientPackage) => {
@@ -146,7 +143,8 @@ export async function runTestsGate(
   return await runSuite<ClientPackage>({
     title: "TEST",
     categories: getWorkspaceCategories(),
-    cmdPreview: "just test-<app> ;; just _test-<engine> <target>",
+    cmdPreview:
+      "deno run -A npm:vitest run --config ./config/vitest.config.ts --project <sdk/*>",
     isVerbose: Boolean(options.verbose),
     isParallel: Boolean(options.parallel),
     isBench: Boolean(options.bench),
@@ -161,24 +159,31 @@ export async function runTestsGate(
         };
       }
 
-      // 1. App-specific test recipes from test.just
-      if (pkg.isApp) {
+      if (pkg.engine === "vitest") {
         return {
-          engine: pkg.name,
-          cmd: ["just", `test-${pkg.name}`],
-          displayCmd: `just test-${pkg.name}`,
+          engine: "vitest",
+          cwd: "",
+          cmd: [
+            "deno",
+            "run",
+            "-A",
+            "npm:vitest",
+            "run",
+            "--config",
+            "./config/vitest.config.ts",
+            "--project",
+            pkg.name,
+          ],
+          displayCmd:
+            `deno run -A npm:vitest run --config ./config/vitest.config.ts --project <${pkg.name}>`,
         };
       }
 
-      // 2. SDK test recipes
       return {
-        engine: pkg.engine,
-        cmd: pkg.engine === "vitest"
-          ? ["just", "_test-vitest", pkg.name]
-          : ["just", "_test-deno", pkg.path],
-        displayCmd: pkg.engine === "vitest"
-          ? `just _test-vitest <${pkg.name}>`
-          : `just _test-deno <${pkg.path}>`,
+        engine: "deno",
+        cwd: "",
+        cmd: ["deno", "test", "--allow-all", pkg.path],
+        displayCmd: `deno test --allow-all <${pkg.path}>`,
       };
     },
     evaluator: (res: ProcessResult) => {
@@ -216,13 +221,26 @@ export async function runBuildGate(
   return await runSuite<ClientPackage>({
     title: "BUILDING",
     categories: [{ name: "APP", targets }],
-    cmdPreview: "just build-<app>",
+    cmdPreview: "cd <apps/*> ;; deno run -A npm:vite build",
     isVerbose: Boolean(options.verbose),
     isParallel: Boolean(options.parallel),
     resolver: (pkg) => ({
-      engine: "build",
-      cmd: ["just", `build-${pkg.name}`],
-      displayCmd: `just build-${pkg.name}`,
+      engine: "vite build",
+      cwd: pkg.path,
+      pre: async () => {
+        try {
+          await Deno.remove(join(pkg.path, "build"), { recursive: true });
+        } catch {
+          // Ignored
+        }
+        try {
+          await Deno.remove(join(pkg.path, "dist"), { recursive: true });
+        } catch {
+          // Ignored
+        }
+      },
+      cmd: ["deno", "run", "-A", "npm:vite", "build"],
+      displayCmd: `cd <${pkg.path}> ;; deno run -A npm:vite build`,
     }),
     evaluator: (res: ProcessResult) => {
       const isOk = res.exitCode === 0;
@@ -237,63 +255,15 @@ export async function runBuildGate(
   });
 }
 
-// ── DEV SERVER (SINGLE & CONCURRENT MULTI-APP) ─────────────────────────
+// ── DEV SERVER ─────────────────────────────────────────────────────────
 
 export async function runDev(
   targetApp?: string,
-  options: ServerOptions = {},
+  extraArgs: string[] = [],
 ): Promise<void> {
   const apps = discoverPackages("apps");
   if (apps.length === 0) {
     console.warn(colors.yellow("No applications found in apps/"));
-    return;
-  }
-
-  // Multi-app concurrent dev mode via --all / -A
-  if (options.all || targetApp === "all") {
-    installSignalTraps();
-    const basePort = options.port ?? 5173;
-    console.log(
-      banner(
-        `🚀 Starting ${apps.length} dev servers concurrently across apps:`,
-        "magenta",
-      ),
-    );
-
-    const maxNameLen = Math.max(...apps.map((a) => a.name.length));
-    for (let i = 0; i < apps.length; i++) {
-      const app = apps[i];
-      const port = basePort + i;
-      const tag = formatAppTag(app.name, i, maxNameLen);
-      console.log(`  • ${tag} ➜ http://localhost:${port}/ (${app.path})`);
-    }
-    console.log("");
-
-    const abortController = new AbortController();
-    const tasks = apps.map((app, i) => {
-      const port = String(basePort + i);
-      const tag = formatAppTag(app.name, i, maxNameLen);
-      return spawnStreamingProcess({
-        cmd: [
-          "deno",
-          "run",
-          "-A",
-          "npm:vite",
-          "dev",
-          "--port",
-          port,
-          "--host",
-          ...(options.extraArgs ?? []),
-        ],
-        cwd: app.path,
-        signal: abortController.signal,
-        onLine: (line) => {
-          console.log(`  ${tag} ${colors.gray("│")} ${line}`);
-        },
-      });
-    });
-
-    await Promise.all(tasks);
     return;
   }
 
@@ -318,8 +288,9 @@ export async function runDev(
 
   console.log(banner(`🚀 Starting dev server: ${appPath}`, "magenta"));
 
-  const cmd = new Deno.Command("just", {
-    args: [`dev-${selectedApp}`],
+  const cmd = new Deno.Command("deno", {
+    args: ["run", "-A", "npm:vite", "dev", "--host", ...extraArgs],
+    cwd: appPath,
     stdout: "inherit",
     stderr: "inherit",
   });
@@ -327,63 +298,14 @@ export async function runDev(
   if (!status.success) Deno.exit(status.code);
 }
 
-// ── PREVIEW SERVER (SINGLE & CONCURRENT MULTI-APP) ─────────────────────
+// ── PREVIEW SERVER ─────────────────────────────────────────────────────
 
 export async function runPreview(
   targetApp?: string,
-  options: ServerOptions = {},
 ): Promise<void> {
   const apps = discoverPackages("apps");
   if (apps.length === 0) {
     console.warn(colors.yellow("No applications found in apps/"));
-    return;
-  }
-
-  // Multi-app concurrent preview mode via --all / -A
-  if (options.all || targetApp === "all") {
-    installSignalTraps();
-    const basePort = options.port ?? 4173;
-    console.log(
-      banner(
-        `🎪 Previewing ${apps.length} production builds concurrently across apps:`,
-        "magenta",
-      ),
-    );
-
-    const maxNameLen = Math.max(...apps.map((a) => a.name.length));
-    for (let i = 0; i < apps.length; i++) {
-      const app = apps[i];
-      const port = basePort + i;
-      const tag = formatAppTag(app.name, i, maxNameLen);
-      console.log(`  • ${tag} ➜ http://localhost:${port}/ (${app.path})`);
-    }
-    console.log("");
-
-    const abortController = new AbortController();
-    const tasks = apps.map((app, i) => {
-      const port = String(basePort + i);
-      const tag = formatAppTag(app.name, i, maxNameLen);
-      return spawnStreamingProcess({
-        cmd: [
-          "deno",
-          "run",
-          "-A",
-          "npm:vite",
-          "preview",
-          "--port",
-          port,
-          "--host",
-          ...(options.extraArgs ?? []),
-        ],
-        cwd: app.path,
-        signal: abortController.signal,
-        onLine: (line) => {
-          console.log(`  ${tag} ${colors.gray("│")} ${line}`);
-        },
-      });
-    });
-
-    await Promise.all(tasks);
     return;
   }
 
@@ -408,18 +330,8 @@ export async function runPreview(
 
   console.log(banner(`🎪 Previewing production build: ${appPath}`, "magenta"));
 
-  const cmdArgs = [
-    "run",
-    "-A",
-    "npm:vite",
-    "preview",
-    "--host",
-    ...(options.port ? ["--port", String(options.port)] : []),
-    ...(options.extraArgs ?? []),
-  ];
-
   const cmd = new Deno.Command("deno", {
-    args: cmdArgs,
+    args: ["run", "-A", "npm:vite", "preview"],
     cwd: appPath,
     stdout: "inherit",
     stderr: "inherit",

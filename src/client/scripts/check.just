@@ -22,40 +22,41 @@ health:
 
 # ── Dynamic Matrix Quality Gates ────────────────────────────────────────
 
+TYPES_RULES := '''
+[
+  {
+    "pattern": "sdk/**/*.svelte.ts",
+    "engine": "svelte-check",
+    "cmd": "deno run -A npm:svelte-check@^4.7.5 --tsconfig config/tsconfig.json --config {dir}/vite.config.ts --threshold error"
+  },
+  {
+    "pattern": "sdk/**/src/mod.ts",
+    "engine": "deno",
+    "cmd": "deno check {file}"
+  },
+  {
+    "pattern": "apps/**/src/routes",
+    "engine": "svelte-check",
+    "cmd": "deno run -A npm:svelte-check@^4.7.5 --tsconfig {dir}/tsconfig.json --config {dir}/vite.config.mts"
+  },
+  {
+    "pattern": "apps/**/src/App.vue",
+    "engine": "vue-tsc",
+    "cmd": "deno check {dir}/src/lib/mod.ts"
+  },
+  {
+    "pattern": "apps/**/src/App.tsx",
+    "engine": "tsc",
+    "cmd": "deno check {dir}/src/lib/mod.ts"
+  }
+]
+'''
+
 [doc('Type-check workspace across SDKs and Apps using declarative rules')]
 [group('check')]
-[script]
+[positional-arguments]
 types *flags:
-    let rules = [
-        {
-            pattern: "sdk/**/*.svelte.ts"
-            engine: "svelte-check"
-            cmd: "deno run -A npm:svelte-check@^4.7.5 --tsconfig config/tsconfig.json --config {dir}/vite.config.ts --threshold error"
-        }
-        {
-            pattern: "sdk/**/src/mod.ts"
-            engine: "deno"
-            cmd: "deno check {file}"
-        }
-        {
-            pattern: "apps/**/src/routes"
-            engine: "svelte-check"
-            cmd: "deno run -A npm:svelte-check@^4.7.5 --tsconfig {dir}/tsconfig.json --config {dir}/vite.config.mts"
-        }
-        {
-            pattern: "apps/**/src/App.vue"
-            engine: "vue-tsc"
-            cmd: "deno check {dir}/src/lib/mod.ts"
-        }
-        {
-            pattern: "apps/**/src/App.tsx"
-            engine: "tsc"
-            cmd: "deno check {dir}/src/lib/mod.ts"
-        }
-    ]
-
-    let extra = ($env.flags? | default "" | split row " " | where { $in != "" })
-    ^deno run -A scripts/cli/main.ts matrix --title "TYPES" --rules ($rules | to json -r) ...$extra
+    ^deno run -A scripts/cli/main.ts matrix --title "TYPES" --rules '{{ TYPES_RULES }}' {{ flags }}
 
 [doc('Run all check quality gates (pass -v for detailed logs, -b for timing, -p for parallel)')]
 [group('check')]

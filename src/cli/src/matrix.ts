@@ -164,10 +164,10 @@ export async function runMatrixSuite(
   const categories = discoverMatrixTargets(options.rules);
   const isTest = options.title.toUpperCase().includes("TEST");
 
-  // Format distinct command preview list
-  const previewCmds = Array.from(
-    new Set(options.rules.map((r) => r.cmd.split(/\s+/)[0] ?? r.engine)),
-  ).join(" ;; ");
+  const distinctEngines = Array.from(new Set(options.rules.map((r) => r.engine)));
+  const previewCmds = isTest
+    ? "deno test <sdk/*> ;; vitest <apps/*>"
+    : distinctEngines.map((e) => `${e} <tsconfig/mod>`).join(" ;; ");
 
   return await runSuite<MatrixTarget>({
     title: options.title,
