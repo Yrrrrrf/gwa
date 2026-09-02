@@ -71,7 +71,7 @@ const cli = new Command()
   // ── TYPES ───────────────────────────────────────────────────────────
   .command(
     "types [target:string]",
-    "Type-check workspaces (SDK modules + SvelteKit apps)",
+    "Type-check workspaces across SDKs and Apps",
   )
   .action(async (options: GlobalOptions, target?: string) => {
     const res = await runTypesGate({
@@ -97,24 +97,36 @@ const cli = new Command()
   })
   // ── BUILD ───────────────────────────────────────────────────────────
   .command("build [app:string]", "Build production bundle for apps")
-  .action(async (options: GlobalOptions, app?: string) => {
+  .option("-A, --all", "Build all applications")
+  .action(async (options: GlobalOptions & { all?: boolean }, app?: string) => {
+    const targetApp = options.all ? undefined : app;
     const res = await runBuildGate({
       verbose: options.verbose,
       parallel: options.parallel,
       bench: options.bench,
       failFast: options.failFast,
-    }, app);
+    }, targetApp);
     if (!res.success) Deno.exit(1);
   })
   // ── DEV ─────────────────────────────────────────────────────────────
   .command("dev [app:string]", "Start development server for app")
-  .action(async (_options: GlobalOptions, app?: string) => {
-    await runDev(app);
+  .option("-A, --all", "Start dev servers for all applications concurrently")
+  .option("--port <port:number>", "Base port number", { default: 5173 })
+  .action(async (options: GlobalOptions & { all?: boolean; port?: number }, app?: string) => {
+    await runDev(app, {
+      all: options.all || app === "all" || app === "--all" || app === "-A",
+      port: options.port,
+    });
   })
   // ── PREVIEW ─────────────────────────────────────────────────────────
   .command("preview [app:string]", "Preview production bundle")
-  .action(async (_options: GlobalOptions, app?: string) => {
-    await runPreview(app);
+  .option("-A, --all", "Preview all applications concurrently")
+  .option("--port <port:number>", "Base port number", { default: 4173 })
+  .action(async (options: GlobalOptions & { all?: boolean; port?: number }, app?: string) => {
+    await runPreview(app, {
+      all: options.all || app === "all" || app === "--all" || app === "-A",
+      port: options.port,
+    });
   });
 
 if (import.meta.main) {

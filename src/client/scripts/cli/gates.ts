@@ -4,6 +4,7 @@ import {
   banner,
   colors,
   existsSync,
+  installSignalTraps,
   join,
   parseDenoCheck,
   parseSvelteCheck,
@@ -11,6 +12,7 @@ import {
   type ProcessResult,
   runSuite,
   Select,
+  spawnStreamingProcess,
   type SuiteResult,
   walkSync,
 } from "../../../cli/src/mod.ts";
@@ -30,6 +32,12 @@ export interface GateOptions {
   readonly filter?: string;
 }
 
+export interface ServerOptions {
+  readonly all?: boolean;
+  readonly port?: number;
+  readonly extraArgs?: readonly string[];
+}
+
 function countSourceFiles(pkgPath: string): number {
   const srcDir = join(pkgPath, "src");
   if (!existsSync(srcDir)) return 0;
@@ -42,6 +50,20 @@ function countSourceFiles(pkgPath: string): number {
     // Ignored
   }
   return count;
+}
+
+const APP_COLOR_FNS = [
+  colors.bold.cyan,
+  colors.bold.magenta,
+  colors.bold.yellow,
+  colors.bold.green,
+  colors.bold.blue,
+];
+
+function formatAppTag(name: string, index: number, maxLen: number = 7): string {
+  const colorFn = APP_COLOR_FNS[index % APP_COLOR_FNS.length];
+  const padded = name.padEnd(maxLen, " ");
+  return colorFn(`[${padded}]`);
 }
 
 // ── TYPES GATE ─────────────────────────────────────────────────────────
@@ -255,15 +277,63 @@ export async function runBuildGate(
   });
 }
 
-// ── DEV SERVER ─────────────────────────────────────────────────────────
+// ── DEV SERVER (SINGLE & CONCURRENT MULTI-APP) ─────────────────────────
 
 export async function runDev(
   targetApp?: string,
-  extraArgs: string[] = [],
+  options: ServerOptions = {},
 ): Promise<void> {
   const apps = discoverPackages("apps");
   if (apps.length === 0) {
     console.warn(colors.yellow("No applications found in apps/"));
+    return;
+  }
+
+  // Multi-app concurrent dev mode via --all / -A
+  if (options.all || targetApp === "all" || targetApp === "--all" || targetApp === "-A") {
+    installSignalTraps();
+    const basePort = options.port ?? 5173;
+    console.log(
+      banner(
+        `🚀 Starting ${apps.length} dev servers concurrently across apps:`,
+        "magenta",
+      ),
+    );
+
+    const maxNameLen = Math.max(...apps.map((a) => a.name.length));
+    for (let i = 0; i < apps.length; i++) {
+      const app = apps[i];
+      const port = basePort + i;
+      const tag = formatAppTag(app.name, i, maxNameLen);
+      console.log(`  • ${tag} ➜ http://localhost:${port}/ (${app.path})`);
+    }
+    console.log("");
+
+    const abortController = new AbortController();
+    const tasks = apps.map((app, i) => {
+      const port = String(basePort + i);
+      const tag = formatAppTag(app.name, i, maxNameLen);
+      return spawnStreamingProcess({
+        cmd: [
+          "deno",
+          "run",
+          "-A",
+          "npm:vite",
+          "dev",
+          "--port",
+          port,
+          "--host",
+          ...(options.extraArgs ?? []),
+        ],
+        cwd: app.path,
+        signal: abortController.signal,
+        onLine: (line) => {
+          console.log(`  ${tag} ${colors.gray("│")} ${line}`);
+        },
+      });
+    });
+
+    await Promise.all(tasks);
     return;
   }
 
@@ -289,7 +359,7 @@ export async function runDev(
   console.log(banner(`🚀 Starting dev server: ${appPath}`, "magenta"));
 
   const cmd = new Deno.Command("deno", {
-    args: ["run", "-A", "npm:vite", "dev", "--host", ...extraArgs],
+    args: ["run", "-A", "npm:vite", "dev", "--host", ...(options.extraArgs ?? [])],
     cwd: appPath,
     stdout: "inherit",
     stderr: "inherit",
@@ -298,14 +368,63 @@ export async function runDev(
   if (!status.success) Deno.exit(status.code);
 }
 
-// ── PREVIEW SERVER ─────────────────────────────────────────────────────
+// ── PREVIEW SERVER (SINGLE & CONCURRENT MULTI-APP) ─────────────────────
 
 export async function runPreview(
   targetApp?: string,
+  options: ServerOptions = {},
 ): Promise<void> {
   const apps = discoverPackages("apps");
   if (apps.length === 0) {
     console.warn(colors.yellow("No applications found in apps/"));
+    return;
+  }
+
+  // Multi-app concurrent preview mode via --all / -A
+  if (options.all || targetApp === "all" || targetApp === "--all" || targetApp === "-A") {
+    installSignalTraps();
+    const basePort = options.port ?? 4173;
+    console.log(
+      banner(
+        `🎪 Previewing ${apps.length} production builds concurrently across apps:`,
+        "magenta",
+      ),
+    );
+
+    const maxNameLen = Math.max(...apps.map((a) => a.name.length));
+    for (let i = 0; i < apps.length; i++) {
+      const app = apps[i];
+      const port = basePort + i;
+      const tag = formatAppTag(app.name, i, maxNameLen);
+      console.log(`  • ${tag} ➜ http://localhost:${port}/ (${app.path})`);
+    }
+    console.log("");
+
+    const abortController = new AbortController();
+    const tasks = apps.map((app, i) => {
+      const port = String(basePort + i);
+      const tag = formatAppTag(app.name, i, maxNameLen);
+      return spawnStreamingProcess({
+        cmd: [
+          "deno",
+          "run",
+          "-A",
+          "npm:vite",
+          "preview",
+          "--port",
+          port,
+          "--host",
+          ...(options.extraArgs ?? []),
+        ],
+        cwd: app.path,
+        signal: abortController.signal,
+        onLine: (line) => {
+          console.log(`  ${tag} ${colors.gray("│")} ${line}`);
+        },
+      });
+    });
+
+    await Promise.all(tasks);
     return;
   }
 
