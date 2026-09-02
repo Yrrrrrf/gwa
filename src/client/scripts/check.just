@@ -40,7 +40,6 @@ types *flags:
         {
             pattern: "apps/**/src/routes"
             engine: "svelte-check"
-            pre: "deno run -A npm:@sveltejs/kit@next/svelte-kit sync"
             cmd: "deno run -A npm:svelte-check@^4.7.5 --tsconfig {dir}/tsconfig.json --config {dir}/vite.config.mts"
         }
         {

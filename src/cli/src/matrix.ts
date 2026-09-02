@@ -14,7 +14,6 @@ export interface MatrixRule {
   readonly pattern: string;
   readonly engine: string;
   readonly cmd: string;
-  readonly pre?: string;
   readonly evaluator?: "diagnostics" | "svelte-check" | "test" | "exitCode";
 }
 
@@ -183,32 +182,11 @@ export async function runMatrixSuite(
       const rawCmd = interpolate(target.rule.cmd, target);
       const cmdParts = rawCmd.split(/\s+/).filter(Boolean);
 
-      const pre = target.rule.pre
-        ? async () => {
-          const rawPre = interpolate(target.rule.pre!, target);
-          const parts = rawPre.split(/\s+/).filter(Boolean);
-          if (parts.length > 0) {
-            try {
-              const cmd = new Deno.Command(parts[0], {
-                args: parts.slice(1),
-                cwd: target.dir,
-                stdout: "null",
-                stderr: "null",
-              });
-              await cmd.spawn().status;
-            } catch {
-              // Ignore pre step errors
-            }
-          }
-        }
-        : undefined;
-
       return {
         engine: target.rule.engine,
         cwd: Deno.cwd(),
         cmd: cmdParts,
         displayCmd: rawCmd,
-        pre,
       };
     },
     evaluator: (res: ProcessResult, target: MatrixTarget) => {
