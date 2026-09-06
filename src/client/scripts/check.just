@@ -42,12 +42,12 @@ TYPES_RULES := '''
   {
     "pattern": "apps/**/src/App.vue",
     "engine": "vue-tsc",
-    "cmd": "deno check {dir}/src/lib/mod.ts"
+    "cmd": "deno run -A npm:vue-tsc -p {dir}/tsconfig.json --noEmit"
   },
   {
     "pattern": "apps/**/src/App.tsx",
     "engine": "tsc",
-    "cmd": "deno check {dir}/src/lib/mod.ts"
+    "cmd": "deno run -A npm:typescript/tsc -p {dir}/tsconfig.json --noEmit"
   }
 ]
 '''

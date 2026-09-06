@@ -116,31 +116,35 @@ export function getAppTargets(appFilter?: string): ClientPackage[] {
  * Ensures node_modules/vite symlink is present for Deno module resolution compatibility.
  */
 export function ensureNodeCompat(): void {
-  const cwd = Deno.cwd();
-  const nm = join(cwd, "node_modules");
-  const viteSymlink = join(nm, "vite");
+  const clientRoot = new URL("../..", import.meta.url).pathname;
+  const candidateRoots = [Deno.cwd(), clientRoot];
 
-  if (existsSync(nm) && !existsSync(viteSymlink)) {
-    try {
-      const denoNm = join(nm, ".deno");
-      if (existsSync(denoNm)) {
-        for (const entry of Deno.readDirSync(denoNm)) {
-          if (entry.name.startsWith("vite@")) {
-            const viteTarget = join(denoNm, entry.name, "node_modules", "vite");
-            if (existsSync(viteTarget)) {
-              const rel = relative(nm, viteTarget);
-              try {
-                Deno.symlinkSync(rel, viteSymlink);
-              } catch {
-                // Ignore symlink failure if already exists
+  for (const root of candidateRoots) {
+    const nm = join(root, "node_modules");
+    const viteSymlink = join(nm, "vite");
+
+    if (existsSync(nm) && !existsSync(viteSymlink)) {
+      try {
+        const denoNm = join(nm, ".deno");
+        if (existsSync(denoNm)) {
+          for (const entry of Deno.readDirSync(denoNm)) {
+            if (entry.name.startsWith("vite@")) {
+              const viteTarget = join(denoNm, entry.name, "node_modules", "vite");
+              if (existsSync(viteTarget)) {
+                const rel = relative(nm, viteTarget);
+                try {
+                  Deno.symlinkSync(rel, viteSymlink);
+                } catch {
+                  // Ignore symlink failure if already exists
+                }
+                break;
               }
-              break;
             }
           }
         }
+      } catch {
+        // Ignored
       }
-    } catch {
-      // Ignored
     }
   }
 }

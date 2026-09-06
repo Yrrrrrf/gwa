@@ -12,6 +12,7 @@ import {
   runTestsGate,
   runTypesGate,
 } from "./gates.ts";
+import { ensureNodeCompat } from "./workspace.ts";
 
 interface GlobalOptions {
   readonly verbose?: boolean;
@@ -56,6 +57,7 @@ const cli = new Command()
         console.error("Invalid JSON rules:", e);
         Deno.exit(1);
       }
+      ensureNodeCompat();
       const res = await runMatrixSuite({
         title: options.title,
         rules: parsedRules,

@@ -10,6 +10,6 @@ export default defineGWA({
 				fallback: "index.html",
 				strict: true,
 			}),
-		}) as unknown as PluginOption,
+		}) as PluginOption,
 	],
 });

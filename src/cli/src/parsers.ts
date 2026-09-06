@@ -23,8 +23,12 @@ export function parseDenoCheck(
   text: string,
   exitCode: number,
 ): DiagnosticStats {
-  const matches = text.match(/TS\d+\s+\[ERROR\]/g);
-  const count = matches ? matches.length : 0;
+  const tscFound = text.match(/Found\s+(\d+)\s+errors?/i);
+  const tscMatches = text.match(/error\s+TS\d+:/gi);
+  const denoMatches = text.match(/TS\d+\s+\[ERROR\]/g);
+  const count = tscFound
+    ? parseInt(tscFound[1], 10)
+    : (tscMatches ? tscMatches.length : (denoMatches ? denoMatches.length : 0));
   const isErr = exitCode !== 0 || count > 0;
   return {
     isErr,

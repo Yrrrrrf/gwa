@@ -120,6 +120,24 @@ export async function runTypesGate(
         };
       }
 
+      if (existsSync(join(pkg.path, "src/App.vue"))) {
+        return {
+          engine: "vue-tsc",
+          cwd: pkg.path,
+          cmd: ["deno", "run", "-A", "npm:vue-tsc", "-p", "./tsconfig.json", "--noEmit"],
+          displayCmd: `deno run -A npm:vue-tsc -p <${pkg.path}/tsconfig.json> --noEmit`,
+        };
+      }
+
+      if (existsSync(join(pkg.path, "src/App.tsx"))) {
+        return {
+          engine: "tsc",
+          cwd: pkg.path,
+          cmd: ["deno", "run", "-A", "npm:typescript/tsc", "-p", "./tsconfig.json", "--noEmit"],
+          displayCmd: `deno run -A npm:typescript/tsc -p <${pkg.path}/tsconfig.json> --noEmit`,
+        };
+      }
+
       const checkTarget = existsSync(join(pkg.path, "src/lib/mod.ts"))
         ? "src/lib/mod.ts"
         : existsSync(join(pkg.path, "src/mod.ts"))

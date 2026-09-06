@@ -1,3 +1,3 @@
-import { defineSveltePkg } from "../../config/sdk.config.ts";
+import { defineSveltePkg } from "../sdk.config.ts";
 
 export default defineSveltePkg();
