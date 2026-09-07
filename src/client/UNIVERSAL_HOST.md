@@ -103,6 +103,8 @@ sequenceDiagram
 
 ### Usage in React 19:
 
+Components can be invoked directly as native React components (pre-adapted via `toReact`), or dynamically via the `<Svelte />` host wrapper:
+
 ```tsx
 import { Counter, Icon, Svelte } from "#lib";
 
@@ -111,8 +113,12 @@ export function App() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Svelte this={Icon} route="/dashboard" size={24} color="currentColor" />
-      <Svelte this={Counter} count={count} onchange={setCount} />
+      {/* 1. Direct invocation (adapted via toReact) */}
+      <Icon route="/dashboard" size={24} color="currentColor" />
+      <Counter count={count} onchange={setCount} />
+
+      {/* 2. Dynamic host invocation (when component is dynamic) */}
+      <Svelte this={Icon} route="/settings" size={20} />
     </div>
   );
 }
@@ -152,6 +158,8 @@ Vue 3.5 uses explicit render functions and composition API primitives (`defineCo
 
 ### Usage in Vue 3.5:
 
+Components can be invoked directly as native Vue components (pre-adapted via `toVue`), or dynamically via the `<Svelte />` host wrapper:
+
 ```vue
 <script setup lang="ts">
 import { Counter, Icon, Svelte } from "#lib";
@@ -159,8 +167,12 @@ import { Counter, Icon, Svelte } from "#lib";
 
 <template>
   <div class="flex flex-col gap-4">
-    <Svelte :this="Icon" route="/dashboard" :size="24" color="currentColor" />
-    <Svelte :this="Counter" />
+    <!-- 1. Direct invocation (adapted via toVue) -->
+    <Icon route="/dashboard" :size="24" color="currentColor" />
+    <Counter />
+
+    <!-- 2. Dynamic host invocation (when component is dynamic) -->
+    <Svelte :this="Icon" route="/settings" :size="20" />
   </div>
 </template>
 ```

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Counter, Icon, Svelte, faviconUrl } from "#lib";
+import { Counter, Icon, faviconUrl } from "#lib";
 import pkg from "../deno.json" with { type: "json" };
 </script>
 
@@ -16,9 +16,9 @@ import pkg from "../deno.json" with { type: "json" };
     </div>
     <p class="text-sm opacity-70 max-w-md">{{ pkg.description }}</p>
     <div class="flex items-center gap-2">
-      <Svelte :this="Icon" route="/dashboard" :size="24" color="currentColor" />
+      <Icon route="/dashboard" :size="24" color="currentColor" />
       <span class="text-sm opacity-60">Universal Svelte Component</span>
     </div>
-    <Svelte :this="Counter" />
+    <Counter />
   </div>
 </template>

@@ -55,3 +55,36 @@ export const Svelte = defineComponent({
 			});
 	},
 });
+
+export type ToVueOptions = {
+	/** HTML container tag. Defaults to 'span' with display: contents */
+	as?: string;
+};
+
+/**
+ * Higher-order adapter that wraps a Svelte 5 component into a native Vue 3 component.
+ * Allows direct template invocation (<Component ... />) without manually writing <Svelte :this="Component" />.
+ */
+export function toVue<C extends Parameters<typeof mount>[0]>(
+	SvelteComponent: C,
+	options?: ToVueOptions,
+) {
+	const name = (SvelteComponent as { name?: string }).name || "Component";
+
+	return defineComponent({
+		name: `toVue(${name})`,
+		inheritAttrs: false,
+		setup(_, { attrs, slots }) {
+			return () =>
+				h(
+					Svelte,
+					{
+						this: SvelteComponent,
+						as: options?.as ?? "span",
+						...attrs,
+					},
+					slots,
+				);
+		},
+	});
+}

@@ -57,3 +57,42 @@ export function Svelte<
 		style: { display: "contents" },
 	});
 }
+
+export type ToReactOptions = {
+	/** HTML container tag. Defaults to 'span' with display: contents */
+	as?: "span" | "div" | "section";
+	/** Optional class name applied to the host container */
+	className?: string;
+};
+
+/**
+ * Higher-order adapter that wraps a Svelte 5 component into a native React component.
+ * Allows direct JSX invocation (<Component ... />) without manually writing <Svelte this={Component} />.
+ */
+export function toReact<
+	C extends Component<Record<string, unknown>, Record<string, unknown>>,
+>(SvelteComponent: C, options?: ToReactOptions) {
+	type ComponentP =
+		ComponentProps<C> extends Record<string, unknown>
+			? ComponentProps<C>
+			: Record<string, unknown>;
+
+	type Props = ComponentP & {
+		as?: "span" | "div" | "section";
+		className?: string;
+	};
+
+	const ReactSvelteBridge = ({ as, className, ...props }: Props) => {
+		return React.createElement(Svelte, {
+			this: SvelteComponent,
+			as: as ?? options?.as ?? "span",
+			className: className ?? options?.className,
+			...(props as Record<string, unknown>),
+		});
+	};
+
+	const name = (SvelteComponent as { name?: string }).name || "Component";
+	ReactSvelteBridge.displayName = `toReact(${name})`;
+
+	return ReactSvelteBridge;
+}
