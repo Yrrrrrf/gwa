@@ -47,7 +47,7 @@ TYPES_RULES := '''
   {
     "pattern": "apps/**/src/App.tsx",
     "engine": "tsc",
-    "cmd": "deno run -A npm:typescript/tsc -p {dir}/tsconfig.json --noEmit"
+    "cmd": "deno run -A npm:typescript@6/tsc -p {dir}/tsconfig.json --noEmit"
   }
 ]
 '''
