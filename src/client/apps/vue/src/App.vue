@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { faviconUrl } from "#lib";
-import { ref } from "vue";
+import { Counter, Icon, Svelte, faviconUrl } from "#lib";
 import pkg from "../deno.json" with { type: "json" };
-
-const count = ref(0);
 </script>
 
 <template>
@@ -18,24 +15,10 @@ const count = ref(0);
       <h1 class="text-3xl font-bold">{{ pkg.name }}</h1>
     </div>
     <p class="text-sm opacity-70 max-w-md">{{ pkg.description }}</p>
-    <div class="card bg-base-200 shadow-md p-6 flex flex-col items-center gap-4">
-      <span class="text-4xl font-mono font-bold">{{ count }}</span>
-      <div class="flex gap-2">
-        <button
-          type="button"
-          class="btn btn-primary btn-sm"
-          @click="count++"
-        >
-          Increment
-        </button>
-        <button
-          type="button"
-          class="btn btn-ghost btn-sm"
-          @click="count = 0"
-        >
-          Reset
-        </button>
-      </div>
+    <div class="flex items-center gap-2">
+      <Svelte :this="Icon" route="/dashboard" :size="24" color="currentColor" />
+      <span class="text-sm opacity-60">Universal Svelte Component</span>
     </div>
+    <Svelte :this="Counter" />
   </div>
 </template>

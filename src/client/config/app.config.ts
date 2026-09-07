@@ -24,6 +24,9 @@ export function defineGWA(options: GwaConfig = {}) {
 			],
 		},
 		plugins: [tailwindcss() as PluginOption, ...plugins, ...extraPlugins],
+		ssr: {
+			noExternal: ["rune-lab"],
+		},
 		...overrides,
 	});
 }

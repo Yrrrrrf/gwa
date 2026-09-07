@@ -7,7 +7,6 @@
 	"exports": "./src/lib/mod.ts",
 	"imports": {
 		"vue": "npm:vue",
-		"@vitejs/plugin-vue": "npm:@vitejs/plugin-vue",
-		"typescript": "npm:typescript@^5.8.0"
+		"@vitejs/plugin-vue": "npm:@vitejs/plugin-vue"
 	}
 }

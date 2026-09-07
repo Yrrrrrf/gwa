@@ -1,4 +1,12 @@
 {
 	"extends": "../../config/tsconfig.json",
+	"compilerOptions": {
+		"paths": {
+			"@sdk": ["../../sdk/mod.ts"],
+			"@sdk/*": ["../../sdk/*/src/mod.ts"],
+			"#lib": ["./src/lib/mod.ts"],
+			"#lib/*": ["./src/lib/*"]
+		}
+	},
 	"include": ["src/**/*", "vite.config.mts"]
 }
