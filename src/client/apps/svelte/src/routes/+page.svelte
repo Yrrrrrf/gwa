@@ -1,8 +1,7 @@
 <script lang="ts">
+import { Counter, Icon } from "#lib";
 import faviconUrl from "#lib/assets/img/svelte.svg";
 import pkg from "../../deno.json" with { type: "json" };
-
-let count = $state(0);
 </script>
 
 <svelte:head>
@@ -16,23 +15,9 @@ let count = $state(0);
     <h1 class="text-3xl font-bold">{pkg.name}</h1>
   </div>
   <p class="text-sm opacity-70 max-w-md">{pkg.description}</p>
-  <div class="card bg-base-200 shadow-md p-6 flex flex-col items-center gap-4">
-    <span class="text-4xl font-mono font-bold">{count}</span>
-    <div class="flex gap-2">
-      <button
-        type="button"
-        class="btn btn-primary btn-sm"
-        onclick={() => count++}
-      >
-        Increment
-      </button>
-      <button
-        type="button"
-        class="btn btn-ghost btn-sm"
-        onclick={() => count = 0}
-      >
-        Reset
-      </button>
-    </div>
+  <div class="flex items-center gap-2">
+    <Icon route="/dashboard" size={24} color="currentColor" />
+    <span class="text-sm opacity-60">Universal Svelte Component</span>
   </div>
+  <Counter />
 </div>

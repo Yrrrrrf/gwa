@@ -3,7 +3,7 @@
 [doc('Run quality gate (check + test) (pass -v for detailed logs, -p for parallel)')]
 [group('ci')]
 [positional-arguments]
-ci *flags: (check flags) (test flags)
+ci *flags: (test flags) (check flags)
 
 [doc('Build applications: deno.json -> build/ (pass -v for detailed logs)')]
 [group('deploy')]

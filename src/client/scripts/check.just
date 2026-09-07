@@ -27,7 +27,7 @@ TYPES_RULES := '''
   {
     "pattern": "sdk/**/*.svelte.ts",
     "engine": "svelte-check",
-    "cmd": "deno run -A npm:svelte-check@^4.7.5 --tsconfig config/tsconfig.json --config {dir}/vite.config.ts --threshold error"
+    "cmd": "deno run -A npm:svelte-check --tsconfig sdk/tsconfig.json --config {dir}/vite.config.ts"
   },
   {
     "pattern": "sdk/**/src/mod.ts",
@@ -37,7 +37,7 @@ TYPES_RULES := '''
   {
     "pattern": "apps/**/src/routes",
     "engine": "svelte-check",
-    "cmd": "deno run -A npm:svelte-check@^4.7.5 --tsconfig {dir}/tsconfig.json --config {dir}/vite.config.mts"
+    "cmd": "deno run -A npm:svelte-check --tsconfig {dir}/tsconfig.json --config {dir}/vite.config.mts"
   },
   {
     "pattern": "apps/**/src/App.vue",

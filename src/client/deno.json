@@ -4,7 +4,10 @@
 	"license": "MIT",
 	"nodeModulesDir": "auto",
 	"minimumDependencyAge": "0",
-	"workspace": ["./sdk/**", "./apps/**"],
+	"workspace": [
+		"./sdk/**",
+		"./apps/**"
+	],
 	"imports": {
 		"@sdk": "./sdk/mod.ts",
 		"@sdk/*": "./sdk/*",

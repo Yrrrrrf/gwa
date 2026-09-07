@@ -34,3 +34,4 @@ prune:
 prepare: prune
     ^deno install
     cd apps/vision; ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync
+    cd apps/svelte; ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync
