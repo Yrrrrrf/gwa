@@ -113,7 +113,7 @@ export function getAppTargets(appFilter?: string): ClientPackage[] {
 }
 
 /**
- * Ensures node_modules/vite symlink is present for Deno module resolution compatibility.
+ * Ensures node_modules/vite symlink and native tsgo binary compatibility are present for Deno.
  */
 export function ensureNodeCompat(): void {
   const clientRoot = new URL("../..", import.meta.url).pathname;
@@ -123,27 +123,103 @@ export function ensureNodeCompat(): void {
     const nm = join(root, "node_modules");
     const viteSymlink = join(nm, "vite");
 
-    if (existsSync(nm) && !existsSync(viteSymlink)) {
-      try {
-        const denoNm = join(nm, ".deno");
-        if (existsSync(denoNm)) {
-          for (const entry of Deno.readDirSync(denoNm)) {
-            if (entry.name.startsWith("vite@")) {
-              const viteTarget = join(denoNm, entry.name, "node_modules", "vite");
-              if (existsSync(viteTarget)) {
-                const rel = relative(nm, viteTarget);
-                try {
-                  Deno.symlinkSync(rel, viteSymlink);
-                } catch {
-                  // Ignore symlink failure if already exists
+    if (existsSync(nm)) {
+      const denoNm = join(nm, ".deno");
+      if (existsSync(denoNm)) {
+        try {
+          if (!existsSync(viteSymlink)) {
+            for (const entry of Deno.readDirSync(denoNm)) {
+              if (entry.name.startsWith("vite@")) {
+                const viteTarget = join(denoNm, entry.name, "node_modules", "vite");
+                if (existsSync(viteTarget)) {
+                  const rel = relative(nm, viteTarget);
+                  try {
+                    Deno.symlinkSync(rel, viteSymlink);
+                  } catch {
+                    // Ignore symlink failure if already exists
+                  }
+                  break;
                 }
-                break;
               }
             }
           }
+
+          // Ensure @typescript/native-preview symlink & native TSGO_BIN for svelte-check-native
+          const tsScopeDir = join(nm, "@typescript");
+          const tsPreviewSymlink = join(tsScopeDir, "native-preview");
+
+          for (const entry of Deno.readDirSync(denoNm)) {
+            if (entry.name.startsWith("@typescript+native-preview@")) {
+              const previewTarget = join(denoNm, entry.name, "node_modules", "@typescript", "native-preview");
+              if (existsSync(previewTarget)) {
+                if (!existsSync(tsScopeDir)) {
+                  try {
+                    Deno.mkdirSync(tsScopeDir, { recursive: true });
+                  } catch {
+                    // Ignore
+                  }
+                }
+                if (!existsSync(tsPreviewSymlink)) {
+                  const rel = relative(tsScopeDir, previewTarget);
+                  try {
+                    Deno.symlinkSync(rel, tsPreviewSymlink);
+                  } catch {
+                    // Ignore
+                  }
+                }
+                const tsgoBin = join(previewTarget, "bin", "tsgo");
+                const tsgoJs = join(previewTarget, "bin", "tsgo.js");
+                if (existsSync(tsgoBin) && !existsSync(tsgoJs)) {
+                  try {
+                    Deno.symlinkSync("tsgo", tsgoJs);
+                  } catch {
+                    // Ignore
+                  }
+                }
+              }
+            }
+
+            if (!Deno.env.get("TSGO_BIN")) {
+              if (entry.name.includes("native-preview-linux-") || entry.name.includes("native-preview-darwin-")) {
+                const pkgName = entry.name.replace(/^@typescript\+/, "").split("@")[0];
+                const bin = join(denoNm, entry.name, "node_modules", "@typescript", pkgName, "lib", "tsgo");
+                if (existsSync(bin)) {
+                  Deno.env.set("TSGO_BIN", bin);
+                }
+              } else if (entry.name.includes("typescript-linux-") || entry.name.includes("typescript-darwin-")) {
+                const pkgName = entry.name.replace(/^@typescript\+/, "").split("@")[0];
+                const bin = join(denoNm, entry.name, "node_modules", "@typescript", pkgName, "lib", "tsc");
+                if (existsSync(bin)) {
+                  Deno.env.set("TSGO_BIN", bin);
+                }
+              }
+            }
+
+            // Ensure vue-tsc resolves typescript@6 instead of breaking under typescript@7
+            if (entry.name.startsWith("vue-tsc@")) {
+              const vtTs = join(denoNm, entry.name, "node_modules", "typescript");
+              if (existsSync(vtTs)) {
+                try {
+                  const target = Deno.readLinkSync(vtTs);
+                  if (target.includes("typescript@7")) {
+                    for (const e of Deno.readDirSync(denoNm)) {
+                      if (e.name.startsWith("typescript@6")) {
+                        const ts6Target = join(denoNm, e.name, "node_modules", "typescript");
+                        Deno.removeSync(vtTs);
+                        Deno.symlinkSync(relative(join(denoNm, entry.name, "node_modules"), ts6Target), vtTs);
+                        break;
+                      }
+                    }
+                  }
+                } catch {
+                  // Ignore
+                }
+              }
+            }
+          }
+        } catch {
+          // Ignored
         }
-      } catch {
-        // Ignored
       }
     }
   }

@@ -77,13 +77,31 @@ export async function runTypesGate(
     title: "TYPES",
     categories: getWorkspaceCategories(),
     cmdPreview:
-      "deno check <src/*.ts> ;; svelte-check <tsconfig.json> ;; vue-tsc <tsconfig.json> ;; tsc <tsconfig.json>",
+      "deno check <src/*.ts> ;; svelte-check-native <tsconfig.json> ;; vue-tsc <tsconfig.json> ;; tsc <tsconfig.json>",
     isVerbose: Boolean(options.verbose),
     isParallel: Boolean(options.parallel),
     isBench: Boolean(options.bench),
     failFast: Boolean(options.failFast),
     filter: options.filter,
     resolver: (pkg) => {
+      if (existsSync(join(pkg.path, "src/App.vue"))) {
+        return {
+          engine: "vue-tsc",
+          cwd: pkg.path,
+          cmd: ["deno", "run", "-A", "npm:vue-tsc", "-p", "./tsconfig.json", "--noEmit"],
+          displayCmd: `deno run -A npm:vue-tsc -p <${pkg.path}/tsconfig.json> --noEmit`,
+        };
+      }
+
+      if (existsSync(join(pkg.path, "src/App.tsx"))) {
+        return {
+          engine: "tsc",
+          cwd: pkg.path,
+          cmd: ["deno", "run", "-A", "npm:typescript@6/tsc", "-p", "./tsconfig.json", "--noEmit"],
+          displayCmd: `deno run -A npm:typescript@6/tsc -p <${pkg.path}/tsconfig.json> --noEmit`,
+        };
+      }
+
       if (pkg.isSvelte) {
         const vcfg = existsSync(join(pkg.path, "vite.config.mts"))
           ? "./vite.config.mts"
@@ -109,32 +127,14 @@ export async function runTypesGate(
 
         const displayVcfg = vcfg ? `${pkg.path}/${vcfg.replace("./", "")}` : "";
         const displayCmd = displayVcfg
-          ? `deno run -A npm:svelte-check --tsconfig ${displayTsc} --config <${displayVcfg}>`
-          : `deno run -A npm:svelte-check --tsconfig <${displayTsc}>`;
+          ? `deno run -A npm:svelte-check-native --tsconfig ${displayTsc} --config <${displayVcfg}>`
+          : `deno run -A npm:svelte-check-native --tsconfig <${displayTsc}>`;
 
         return {
-          engine: "svelte-check",
+          engine: "svelte-check-native",
           cwd: pkg.path,
-          cmd: ["deno", "run", "-A", "npm:svelte-check@^4.7.5", ...cfgFlags],
+          cmd: ["deno", "run", "-A", "npm:svelte-check-native", ...cfgFlags],
           displayCmd,
-        };
-      }
-
-      if (existsSync(join(pkg.path, "src/App.vue"))) {
-        return {
-          engine: "vue-tsc",
-          cwd: pkg.path,
-          cmd: ["deno", "run", "-A", "npm:vue-tsc", "-p", "./tsconfig.json", "--noEmit"],
-          displayCmd: `deno run -A npm:vue-tsc -p <${pkg.path}/tsconfig.json> --noEmit`,
-        };
-      }
-
-      if (existsSync(join(pkg.path, "src/App.tsx"))) {
-        return {
-          engine: "tsc",
-          cwd: pkg.path,
-          cmd: ["deno", "run", "-A", "npm:typescript/tsc", "-p", "./tsconfig.json", "--noEmit"],
-          displayCmd: `deno run -A npm:typescript/tsc -p <${pkg.path}/tsconfig.json> --noEmit`,
         };
       }
 
@@ -152,7 +152,10 @@ export async function runTypesGate(
       };
     },
     evaluator: (res: ProcessResult, pkg: ClientPackage) => {
-      const stats = pkg.isSvelte
+      const isPureSvelte = pkg.isSvelte &&
+        !existsSync(join(pkg.path, "src/App.vue")) &&
+        !existsSync(join(pkg.path, "src/App.tsx"));
+      const stats = isPureSvelte
         ? parseSvelteCheck(res.combined, res.exitCode)
         : parseDenoCheck(res.combined, res.exitCode);
       const filesCount = countSourceFiles(pkg.path);

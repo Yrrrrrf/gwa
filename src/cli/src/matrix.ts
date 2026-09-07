@@ -193,7 +193,7 @@ export async function runMatrixSuite(
       const evalType = target.rule.evaluator ??
         (isTest || target.rule.engine === "vitest"
           ? "test"
-          : target.rule.engine === "svelte-check"
+          : target.rule.engine.includes("svelte-check")
           ? "svelte-check"
           : "diagnostics");
 
