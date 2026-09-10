@@ -1,15 +1,9 @@
 /// <reference types="vite/client" />
-/// <reference types="svelte" />
+/// <reference types="arkano/vite/client" />
 
 declare module "*.svg" {
 	const content: string;
 	export default content;
-}
-
-declare module "*.svelte" {
-	import type { Component } from "svelte";
-	const component: Component<Record<string, unknown>, Record<string, unknown>>;
-	export default component;
 }
 
 declare module "*.vue" {

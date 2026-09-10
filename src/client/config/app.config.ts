@@ -10,6 +10,34 @@ export interface GwaConfig {
 	overrides?: UserConfig;
 }
 
+function arkanoCompatPlugin(): PluginOption {
+	return {
+		name: "arkano-compat",
+		enforce: "pre",
+		async resolveId(source, importer) {
+			if (source.includes(".svelte") && importer?.includes("node_modules")) {
+				return this.resolve(source, importer, { skipSelf: true });
+			}
+			return null;
+		},
+		load(id) {
+			if (id.includes("svelte&type=style&lang.css")) {
+				const base = id.replace(/\?svelte&type=style&lang\.css.*$/, "");
+				const rawInfo = this.getModuleInfo?.(`${base}?arkano-raw`);
+				if (rawInfo?.meta?.svelte?.css) {
+					return rawInfo.meta.svelte.css;
+				}
+				const plainInfo = this.getModuleInfo?.(base);
+				if (plainInfo?.meta?.svelte?.css) {
+					return plainInfo.meta.svelte.css;
+				}
+				return "";
+			}
+			return null;
+		},
+	};
+}
+
 export function defineGWA(options: GwaConfig = {}) {
 	const { plugins = [], extraPlugins = [], overrides = {} } = options;
 
@@ -21,11 +49,19 @@ export function defineGWA(options: GwaConfig = {}) {
 				{ find: /^@sdk$/, replacement: SDK_ENTRY },
 				{ find: /^#lib\/(.*)/, replacement: "/src/lib/$1" },
 				{ find: /^#lib$/, replacement: "/src/lib/mod.ts" },
+				{ find: "@arkano/core", replacement: "arkano" },
+				{ find: "@arkano/react", replacement: "arkano/react" },
+				{ find: "@arkano/vue", replacement: "arkano/vue" },
 			],
 		},
-		plugins: [tailwindcss() as PluginOption, ...plugins, ...extraPlugins],
+		plugins: [
+			arkanoCompatPlugin() as PluginOption,
+			tailwindcss() as PluginOption,
+			...plugins,
+			...extraPlugins,
+		],
 		ssr: {
-			noExternal: ["rune-lab"],
+			noExternal: ["rune-lab", "arkano"],
 		},
 		...overrides,
 	});
