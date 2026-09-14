@@ -1,12 +1,5 @@
 <script lang="ts">
-interface Props {
-	route?: string;
-	name?: string;
-	size?: number;
-	color?: string;
-	class?: string;
-	onselect?: (route: string) => void;
-}
+import type { IconProps as Props } from "./props.ts";
 
 let {
 	route = "/dashboard",

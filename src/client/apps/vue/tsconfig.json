@@ -5,8 +5,16 @@
 			"@sdk": ["../../sdk/mod.ts"],
 			"@sdk/*": ["../../sdk/*/src/mod.ts"],
 			"#lib": ["./src/lib/mod.ts"],
-			"#lib/*": ["./src/lib/*"]
-		}
+			"#lib/*": ["./src/lib/*"],
+			"@sdk/ui": ["../../sdk/ui/types/vue.d.ts"]
+		},
+		"types": ["vite/client"]
 	},
-	"include": ["src/**/*", "vite.config.mts"]
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx",
+		"src/**/*.vue",
+		"src/**/*.d.ts",
+		"vite.config.mts"
+	]
 }

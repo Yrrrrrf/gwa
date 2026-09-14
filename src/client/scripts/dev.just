@@ -3,10 +3,8 @@
 [doc('Run an app on the dev server')]
 [group('dev')]
 [positional-arguments]
-dev *flags:
+run *flags:
     {{ CLI }} dev {{ flags }}
-
-alias run := dev
 
 [doc('Prune all node_modules, .svelte-kit, .vite, deno.lock, build/, dist/, paraglide')]
 [group('dev')]
@@ -33,5 +31,5 @@ prune:
 [group('dev')]
 prepare: prune
     ^deno install
-    cd apps/vision; ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync
-    cd apps/svelte; ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync
+    cd apps/vision; ^deno run -A npm:@sveltejs/kit/svelte-kit sync
+    cd apps/svelte; ^deno run -A npm:@sveltejs/kit/svelte-kit sync

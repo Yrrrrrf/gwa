@@ -1,9 +1,5 @@
 <script lang="ts">
-interface Props {
-	initial?: number;
-	count?: number;
-	onchange?: (count: number) => void;
-}
+import type { CounterProps as Props } from "./props.ts";
 
 let { initial = 0, count = $bindable(initial), onchange }: Props = $props();
 

@@ -22,3 +22,5 @@ preview *flags: (build flags)
 [group('deploy')]
 publish: ci build
     @echo "✓ Published release successfully"
+
+cycle: prepare (ci "-vp") build

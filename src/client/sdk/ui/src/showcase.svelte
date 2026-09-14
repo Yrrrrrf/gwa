@@ -2,10 +2,7 @@
 import { getToastStore } from "rune-lab/palettes";
 import { onMount } from "svelte";
 
-interface Props {
-	title?: string;
-	backHref?: string;
-}
+import type { ShowcaseProps as Props } from "./props.ts";
 
 let { title = "Showcase", backHref = "/" }: Props = $props();
 

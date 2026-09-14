@@ -1,8 +1,5 @@
 <script lang="ts">
-interface Props {
-	label?: string;
-	status?: string;
-}
+import type { SdkBadgeProps as Props } from "./props.ts";
 
 let { label = "SDK", status = "wired" }: Props = $props();
 </script>

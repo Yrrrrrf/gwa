@@ -57,7 +57,7 @@ TYPES_RULES := '''
 [positional-arguments]
 types *flags:
     # needed by scn
-    ^deno install --entrypoint npm:svelte-check-native npm:@typescript/native-preview npm:typescript@6
+    ^deno install --entrypoint npm:svelte-check-native npm:@typescript/native-preview npm:typescript@6 npm:vue-tsc@3.3.11
     ^deno run -A scripts/cli/main.ts matrix --title "TYPES" --rules '{{ TYPES_RULES }}' {{ flags }}
 
 [doc('Run all check quality gates (pass -v for detailed logs, -b for timing, -p for parallel)')]
