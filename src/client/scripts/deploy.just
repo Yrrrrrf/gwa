@@ -9,13 +9,13 @@ ci *flags: (test flags) (check flags)
 [group('deploy')]
 [positional-arguments]
 build *flags:
-    {{ CLI }} build {{ flags }}
+    ^{{ CLI }} exec {{ flags }} --title BUILD --select all --cwd 'apps/*' -- deno run -A npm:vite build
 
 [doc('Preview production build (builds first, then launches preview server)')]
 [group('deploy')]
 [positional-arguments]
 preview *flags: (build flags)
-    {{ CLI }} preview {{ flags }}
+    ^{{ CLI }} exec {{ flags }} --title PREVIEW --select one --cwd 'apps/*' -- deno run -A npm:vite preview
 
 [confirm("Ship release to production?")]
 [doc('Publish build release')]

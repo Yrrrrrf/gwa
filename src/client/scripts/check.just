@@ -25,29 +25,39 @@ health:
 TYPES_RULES := '''
 [
   {
+    "packages": "sdk/*",
     "pattern": "sdk/**/*.svelte.ts",
     "engine": "svelte-check-native",
-    "cmd": "deno run -A npm:svelte-check-native --tsconfig sdk/tsconfig.json --config {dir}/vite.config.ts"
+    "cwd": "{root}",
+    "command": ["deno", "run", "-A", "npm:svelte-check-native", "--tsconfig", "sdk/tsconfig.json", "--config", "{package}/vite.config.ts"]
   },
   {
+    "packages": "sdk/*",
     "pattern": "sdk/**/src/mod.ts",
     "engine": "deno",
-    "cmd": "deno check {file}"
+    "cwd": "{package}",
+    "command": ["deno", "check", "{file}"]
   },
   {
+    "packages": "apps/*",
     "pattern": "apps/**/src/routes",
     "engine": "svelte-check-native",
-    "cmd": "deno run -A npm:svelte-check-native --workspace {dir} --tsconfig tsconfig.json --config vite.config.mts"
+    "cwd": "{root}",
+    "command": ["deno", "run", "-A", "npm:svelte-check-native", "--workspace", "{package}", "--tsconfig", "tsconfig.json", "--config", "vite.config.mts"]
   },
   {
+    "packages": "apps/*",
     "pattern": "apps/**/src/App.vue",
     "engine": "vue-tsc",
-    "cmd": "deno run -A npm:vue-tsc -p {dir}/tsconfig.json --noEmit"
+    "cwd": "{root}",
+    "command": ["deno", "run", "-A", "npm:vue-tsc", "-p", "{package}/tsconfig.json", "--noEmit"]
   },
   {
+    "packages": "apps/*",
     "pattern": "apps/**/src/App.tsx",
     "engine": "tsc",
-    "cmd": "deno run -A npm:typescript@6/tsc -p {dir}/tsconfig.json --noEmit"
+    "cwd": "{root}",
+    "command": ["deno", "run", "-A", "npm:typescript@6/tsc", "-p", "{package}/tsconfig.json", "--noEmit"]
   }
 ]
 '''
@@ -58,7 +68,8 @@ TYPES_RULES := '''
 types *flags:
     # needed by scn
     ^deno install --entrypoint npm:svelte-check-native npm:@typescript/native-preview npm:typescript@6 npm:vue-tsc@3.3.11
-    ^deno run -A scripts/cli/main.ts matrix --title "TYPES" --rules '{{ TYPES_RULES }}' {{ flags }}
+    ^deno run -A scripts/compat.ts
+    ^{{ CLI }} matrix --title "TYPES" --rules '{{ TYPES_RULES }}' {{ flags }}
 
 [doc('Run all check quality gates (pass -v for detailed logs, -b for timing, -p for parallel)')]
 [group('check')]

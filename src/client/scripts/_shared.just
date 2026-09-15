@@ -4,14 +4,19 @@
 PROJECT := "gwa-client"
 VERSION := "0.1.0"
 CLIENT_DIR := parent_directory(source_directory())
-CLI := "deno run -A " + CLIENT_DIR / "scripts/cli/main.ts"
+CLI := "deno run -A jsr:@yrrrrrf/dv"
 JUSTFILE := CLIENT_DIR / "justfile"
 
 [default]
 [doc('List all available client recipes')]
 [group('meta')]
 list:
-    @just --justfile '{{ JUSTFILE }}' --list --unsorted
+    ^{{ CLI }} list --justfile '{{ JUSTFILE }}'
+
+[group('meta')]
+[doc('Choose a recipe and app target')]
+menu:
+    ^{{ CLI }} menu --justfile '{{ JUSTFILE }}' --complete run 'apps/*' --complete preview 'apps/*' --complete build 'apps/*'
 
 [group('meta')]
 [private]
