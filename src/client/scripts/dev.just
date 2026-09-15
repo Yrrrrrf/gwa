@@ -30,6 +30,6 @@ prune:
 [doc('Purge caches & lockfiles, reinstall deps, resync generated code')]
 [group('dev')]
 prepare: prune
-    ^deno install
-    cd apps/vision; ^deno run -A npm:@sveltejs/kit/svelte-kit sync
-    cd apps/svelte; ^deno run -A npm:@sveltejs/kit/svelte-kit sync
+    ^deno install --entrypoint npm:typescript@6
+    cd apps/vision; ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync
+    cd apps/svelte; ^deno run -A npm:@sveltejs/kit@next/svelte-kit sync

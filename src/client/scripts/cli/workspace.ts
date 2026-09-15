@@ -127,18 +127,66 @@ export function ensureNodeCompat(): void {
       const denoNm = join(nm, ".deno");
       if (existsSync(denoNm)) {
         try {
-          if (!existsSync(viteSymlink)) {
+          // Ensure node_modules/vite points to @voidzero-dev/vite-plus-core
+          for (const entry of Deno.readDirSync(denoNm)) {
+            if (entry.name.startsWith("@voidzero-dev+vite-plus-core@")) {
+              const coreTarget = join(denoNm, entry.name, "node_modules", "@voidzero-dev", "vite-plus-core");
+              if (existsSync(coreTarget)) {
+                try {
+                  if (existsSync(viteSymlink)) {
+                    const current = Deno.readLinkSync(viteSymlink);
+                    if (!current.includes("vite-plus-core")) {
+                      Deno.removeSync(viteSymlink);
+                      Deno.symlinkSync(relative(nm, coreTarget), viteSymlink);
+                    }
+                  } else {
+                    Deno.symlinkSync(relative(nm, coreTarget), viteSymlink);
+                  }
+                } catch {
+                  // Ignore
+                }
+              }
+              break;
+            }
+          }
+
+          // Ensure node_modules/typescript symlink is present
+          const tsSymlink = join(nm, "typescript");
+          if (!existsSync(tsSymlink)) {
             for (const entry of Deno.readDirSync(denoNm)) {
-              if (entry.name.startsWith("vite@")) {
-                const viteTarget = join(denoNm, entry.name, "node_modules", "vite");
-                if (existsSync(viteTarget)) {
-                  const rel = relative(nm, viteTarget);
+              if (entry.name.startsWith("typescript@6") || entry.name.startsWith("typescript@")) {
+                const tsTarget = join(denoNm, entry.name, "node_modules", "typescript");
+                if (existsSync(tsTarget)) {
                   try {
-                    Deno.symlinkSync(rel, viteSymlink);
+                    Deno.symlinkSync(relative(nm, tsTarget), tsSymlink);
                   } catch {
-                    // Ignore symlink failure if already exists
+                    // Ignore
                   }
                   break;
+                }
+              }
+            }
+          }
+
+          // Ensure @sveltejs/kit uses @voidzero-dev/vite-plus-core as vite
+          for (const entry of Deno.readDirSync(denoNm)) {
+            if (entry.name.startsWith("@sveltejs+kit@")) {
+              const kitVite = join(denoNm, entry.name, "node_modules", "vite");
+              if (existsSync(kitVite)) {
+                try {
+                  const current = Deno.readLinkSync(kitVite);
+                  if (!current.includes("vite-plus-core")) {
+                    for (const e of Deno.readDirSync(denoNm)) {
+                      if (e.name.startsWith("@voidzero-dev+vite-plus-core@")) {
+                        const coreTarget = join(denoNm, e.name, "node_modules", "@voidzero-dev", "vite-plus-core");
+                        Deno.removeSync(kitVite);
+                        Deno.symlinkSync(relative(join(denoNm, entry.name, "node_modules"), coreTarget), kitVite);
+                        break;
+                      }
+                    }
+                  }
+                } catch {
+                  // Ignore
                 }
               }
             }
@@ -210,6 +258,37 @@ export function ensureNodeCompat(): void {
                         break;
                       }
                     }
+                  }
+                } catch {
+                  // Ignore
+                }
+              }
+            }
+
+            // Ensure @volar/typescript supports Deno CJS module compilation
+            if (entry.name.startsWith("@volar+typescript@")) {
+              const runTscPath = join(
+                denoNm,
+                entry.name,
+                "node_modules",
+                "@volar",
+                "typescript",
+                "lib",
+                "quickstart",
+                "runTsc.js",
+              );
+              if (existsSync(runTscPath)) {
+                try {
+                  let content = Deno.readTextFileSync(runTscPath);
+                  if (!content.includes("Module.prototype._compile")) {
+                    const targetHook = "const proxyApiPath = require.resolve('../node/proxyCreateProgram');";
+                    const hookCode = `const proxyApiPath = require.resolve('../node/proxyCreateProgram');\n    const Module = require('module');\n    const origCompile = Module.prototype._compile;\n    Module.prototype._compile = function (content, filename, ...rest) {\n        if (filename === tscPath || filename === path.join(path.dirname(tscPath), '_tsc.js')) {\n            try {\n                content = transformTscContent(content, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, typescriptObject);\n            } catch {\n                const requireRegex = /module\\.exports\\s*=\\s*require\\((?:\"|')(?<path>\\.\\/\\w+\\.js)(?:\"|')\\)/;\n                const requirePath = requireRegex.exec(content)?.groups?.path;\n                if (requirePath) {\n                    const realContent = fs.readFileSync(path.join(path.dirname(tscPath), requirePath), 'utf8');\n                    content = transformTscContent(realContent, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, typescriptObject);\n                }\n            }\n        }\n        return origCompile.call(this, content, filename, ...rest);\n    };`;
+                    content = content.replace(targetHook, hookCode);
+                    content = content.replace(
+                      "delete require.cache[tscPath];",
+                      "Module.prototype._compile = origCompile;\n        delete require.cache[tscPath];",
+                    );
+                    Deno.writeTextFileSync(runTscPath, content);
                   }
                 } catch {
                   // Ignore

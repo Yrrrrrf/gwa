@@ -10,12 +10,10 @@
 		"@sdk/*": "./sdk/*",
 		"arkano": "npm:arkano@^0.0.2",
 		"vite-plus": "npm:vite-plus",
-		"vite": "npm:vite",
 		"tailwindcss": "npm:tailwindcss",
 		"@tailwindcss/vite": "npm:@tailwindcss/vite",
 		"daisyui": "npm:daisyui",
 		"esm-env": "npm:esm-env",
-		"arktype": "npm:arktype",
-		"vue-tsc": "npm:vue-tsc@3.3.11"
+		"arktype": "npm:arktype"
 	}
 }
