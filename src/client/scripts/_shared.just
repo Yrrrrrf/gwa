@@ -4,7 +4,7 @@
 PROJECT := "gwa-client"
 VERSION := "0.1.0"
 CLIENT_DIR := parent_directory(source_directory())
-CLI := "deno run -A jsr:@yrrrrrf/dv"
+CLI := "deno run -A jsr:@yrrrrrf/dv@0.0.3"
 JUSTFILE := CLIENT_DIR / "justfile"
 
 [default]
@@ -13,8 +13,8 @@ JUSTFILE := CLIENT_DIR / "justfile"
 list:
     ^{{ CLI }} list --justfile '{{ JUSTFILE }}'
 
-[group('meta')]
 [doc('Choose a recipe and app target')]
+[group('meta')]
 menu:
     ^{{ CLI }} menu --justfile '{{ JUSTFILE }}' --complete run 'apps/*' --complete preview 'apps/*' --complete build 'apps/*'
 
