@@ -62,7 +62,7 @@ To prevent ecosystem version drift and ABI breakage across Deno and Node tooling
 | **`@voidzero-dev/vite-plus-core`** | Linked to `node_modules/vite` | Canonical Vite 8 runtime | Avoids version collision with standalone Vite 6. |
 | **`typescript`** | `npm:typescript@6` | Core type checking and AST parsing | Typescript 7 is experimental/preview and breaks Volar/Svelte compiler AST contracts. |
 | **`@typescript/native-preview`** | `7.0.0-dev.20260707.2` | Native Go-based compiler binary (`tsgo`) | Powers `svelte-check-native` for **10x–40x faster** Svelte type-checking. |
-| **`@sveltejs/kit`** | `npm:@sveltejs/kit@next` | SvelteKit framework sync & routing | Required for Svelte 5 and Vite 8 compatibility during `svelte-kit sync`. |
+| **`@sveltejs/kit`** | `npm:@sveltejs/kit` | SvelteKit framework sync & routing | Required for Svelte 5 and Vite 8 compatibility during `svelte-kit sync`. |
 | **`vue-tsc`** | `npm:vue-tsc@3.3.11` | Vue 3 Single-File Component type checker | Pinned in `scripts/check.just` for deterministic SFC diagnostics. |
 | **`@volar/typescript`** | `2.4.28` (via `vue-tsc`) | Virtual TypeScript program generator | Core Volar program proxy patched for Deno CJS runtime execution. |
 
@@ -137,7 +137,7 @@ just cycle   # The atomic end-to-end gate: prepare ➔ (test + check -vp) ➔ bu
 1. **`just prepare`** (`scripts/dev.just`):
    - Purges caches and stale lock artifacts.
    - Runs `deno install --entrypoint npm:typescript@6`.
-   - Runs `npm:@sveltejs/kit@next/svelte-kit sync` on `apps/vision` and `apps/svelte`.
+   - Runs `npm:@sveltejs/kit/svelte-kit sync` on `apps/vision` and `apps/svelte`.
 2. **`just test`** (`scripts/test.just`):
    - Executes Vitest suites across `sdk/core`, `sdk/state`, `apps/react`, `apps/vue`, `apps/svelte`, and `apps/vision` using the unified config [`config/vitest.config.ts`](file:///home/yrrrrrf/Documents/lab/tek/packages/gwa/template/src/client/config/vitest.config.ts).
 3. **`just check`** (`scripts/check.just`):

@@ -7,8 +7,8 @@
 	"exports": "./src/lib/mod.ts",
 	"imports": {
 		"svelte": "npm:svelte",
-		"@sveltejs/kit": "npm:@sveltejs/kit@next",
-		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static@next",
+		"@sveltejs/kit": "npm:@sveltejs/kit",
+		"@sveltejs/adapter-static": "npm:@sveltejs/adapter-static",
 		"@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte"
 	}
 }
