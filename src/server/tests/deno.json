@@ -1,0 +1,12 @@
+{
+  "imports": {
+    "dv": "jsr:@yrrrrrf/dv@0.0.4",
+    "up-fetch": "npm:up-fetch@2.6.1",
+    "protobufjs": "npm:protobufjs@7.6.6",
+    "@grpc/grpc-js": "npm:@grpc/grpc-js@1.14.5",
+    "@grpc/proto-loader": "npm:@grpc/proto-loader@0.8.1"
+  },
+  "compilerOptions": { "strict": true },
+  "fmt": { "lineWidth": 100 },
+  "nodeModulesDir": "auto"
+}

@@ -1,21 +1,12 @@
-FROM debian:bookworm-slim
-
-RUN apt-get update && apt-get install -y curl tzdata ca-certificates && rm -rf /var/lib/apt/lists/*
-
-# Copy the precompiled surreal binary from the official image
-COPY --from=surrealdb/surrealdb:v3 /surreal /bin/surreal
-
-# Copy the precompiled nushell binary from the official image
-COPY --from=ghcr.io/nushell/nushell:0.112.2-bookworm /usr/bin/nu /bin/nu
-
-ENV LANG=C.UTF-8
-ENV TZ=UTC
-
-COPY scripts/ /scripts/
-COPY init/    /init/
-
-RUN chmod +x /scripts/entrypoint.nu /scripts/init-db.nu
-
-EXPOSE 8000
-
-ENTRYPOINT ["/bin/nu", "/scripts/entrypoint.nu"]
+ARG DB_VERSION
+FROM alpine:3.22 AS tools
+ARG NU_VERSION
+RUN apk add --no-cache curl tar && \
+    case "$(uname -m)" in x86_64) arch=x86_64 ;; aarch64) arch=aarch64 ;; *) exit 1 ;; esac && \
+    curl -fsSL "https://github.com/nushell/nushell/releases/download/${NU_VERSION}/nu-${NU_VERSION}-${arch}-unknown-linux-musl.tar.gz" | tar -xz -C /tmp && \
+    find /tmp -type f -name nu -exec cp {} /bin/nu \; && mkdir /data && chmod 0770 /data
+FROM surrealdb/surrealdb:v${DB_VERSION}
+COPY --from=tools /bin/nu /bin/nu
+COPY --from=tools --chown=65532:65532 /data /data
+USER 65532:65532
+ENTRYPOINT ["/surreal"]

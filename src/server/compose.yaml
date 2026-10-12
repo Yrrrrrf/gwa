@@ -1,0 +1,45 @@
+services:
+  db:
+    image: localhost/gwa-db:${GWA_VERSION}
+    container_name: ${GWA_PROJECT}-db
+    command: ["start", "--deny-guests", "--bind", "${GWA_DB_BIND}", "--user", "${GWA_DB_USER}", "--pass", "${GWA_DB_PASSWORD}", "${GWA_DB_PATH}"]
+    environment:
+      GWA_DB_INTERNAL_PORT: ${GWA_DB_INTERNAL_PORT}
+    ports:
+      - "${GWA_HOST}:${GWA_DB_PORT}:${GWA_DB_INTERNAL_PORT}"
+    volumes:
+      - database:/data
+    healthcheck:
+      test: ["CMD", "/bin/nu", "--no-config-file", "-c", "http get ('http://127.0.0.1:' + $$env.GWA_DB_INTERNAL_PORT + '/health') | ignore"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    stop_grace_period: 20s
+    restart: unless-stopped
+  engine:
+    image: localhost/gwa-engine:${GWA_VERSION}
+    container_name: ${GWA_PROJECT}-engine
+    environment:
+      - "${GWA_API_TOKEN_ENV}=${GWA_API_TOKEN}"
+      - GWA_CONFIG=/config/runtime.toml
+      - "GWA_HTTP_INTERNAL_PORT=${GWA_HTTP_INTERNAL_PORT}"
+    ports:
+      - "${GWA_HOST}:${GWA_HTTP_PORT}:${GWA_HTTP_INTERNAL_PORT}"
+      - "${GWA_HOST}:${GWA_GRPC_PORT}:${GWA_GRPC_INTERNAL_PORT}"
+    volumes:
+      - "${GWA_CONFIG}:/config/runtime.toml:ro,Z"
+      - artifacts:/artifacts
+    healthcheck:
+      test: ["CMD", "/bin/nu", "--no-config-file", "-c", "http get ('http://127.0.0.1:' + $$env.GWA_HTTP_INTERNAL_PORT + '/ready') | get ready | if $$in {} else { exit 1 }"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    stop_grace_period: 20s
+    restart: unless-stopped
+volumes:
+  database:
+    external: true
+    name: ${GWA_DB_VOLUME}
+  artifacts:
+    external: true
+    name: ${GWA_ARTIFACT_VOLUME}

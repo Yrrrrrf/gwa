@@ -1,9 +1,89 @@
-[doc('Run server CI pipeline (check + test)')]
-[group('deploy')]
-ci: check test
+# Initialize an empty database; refuse existing business data.
+[script]
+db-init profile="dev":
+    def main [profile: string] { ^just _up $profile db; ^just _ready $profile db; ^just _db init $profile }
 
-# Server deploy requires consolidating and rewriting the docker-compose configuration.
-[doc('Deploy server stack')]
-[group('deploy')]
-deploy:
-    error make {msg: "Server deploy is currently blocked on the docker-compose.yml rewrite. See docs/todo.md for details."}
+# Apply append-only migrations with checksums and a database lock.
+[script]
+db-migrate profile="dev":
+    def main [profile: string] { ^just _up $profile db; ^just _ready $profile db; ^just _db upgrade $profile }
+
+[private, script]
+_db action profile="dev" upto="all":
+    def main [action: string, profile: string, upto: string] {
+        if $action not-in [init upgrade verify] { error make {msg: "action must be init, upgrade or verify"} }
+        ^just _environment $profile
+        let project = ($env.GWA_PROJECT? | default (open $"config/profiles/($profile).toml").profile.project)
+        let state = (open $".state/($project).json")
+        def sql [file: string, project: string, params: record = {}] {
+            let result = (^just _sql $file $project ($params | to json --raw) | complete)
+            if $result.exit_code != 0 { error make {msg: $result.stderr} }
+            $result.stdout | from json
+        }
+        mut baseline = ""
+        for dir in $state.config.database.definition_order {
+            for file in (glob $"db/definitions/($dir)/*.surql" | sort) { $baseline = ($baseline + (char newline) + (open --raw $file)) }
+        }
+        mut expected = [{version: '0001-baseline', checksum: ($baseline | hash sha256), body: $baseline}]
+        for file in (glob 'db/migrations/*.surql' | sort) {
+            let version = ($file | path parse | get stem)
+            let body = (open --raw $file)
+            $expected = ($expected | append {version: $version, checksum: ($body | hash sha256), body: $body})
+        }
+        if $upto != all {
+            if $upto not-in ($expected | get version) { error make {msg: "unknown migration boundary"} }
+            $expected = ($expected | take until {|row| $row.version > $upto})
+        }
+        if $action != verify {
+            sql db/operations/bootstrap.surql $project {NS_IDENT: $state.env.GWA_DB_NS, DB_IDENT: $state.env.GWA_DB_NAME} | ignore
+        }
+        let owner = (random uuid)
+        if $action != verify { sql db/operations/lock.surql $project {OWNER: $owner} | ignore }
+        try {
+            print -e "Inspect migration ledger"
+            let applied = (sql db/operations/inspect.surql $project | last | get result)
+            if ($applied | length) > ($expected | length) { error make {msg: "database is ahead of this migration history"} }
+            for pair in ($applied | enumerate) {
+                let wanted = ($expected | get $pair.index)
+                if $pair.item.version != $wanted.version or $pair.item.checksum != $wanted.checksum { error make {msg: "applied migration checksum/history mismatch"} }
+            }
+            if $action == init {
+                let tables = (sql db/operations/info.surql $project | last | get result.tables | columns | where {|name| $name not-in [migration migration_lock]})
+                if ($applied | is-not-empty) or ($tables | is-not-empty) { error make {msg: "initialization requires an empty database"} }
+            } else if ($applied | is-empty) { error make {msg: "database is not initialized"} }
+            let pending = ($expected | skip ($applied | length))
+            if $action == verify and ($pending | is-not-empty) { error make {msg: "pending migrations"} }
+            if $action != verify {
+                for migration in $pending {
+                    print -e $"Apply ($migration.version)"
+                    sql db/operations/apply.surql $project {BODY: $migration.body, VERSION: $migration.version, CHECKSUM: $migration.checksum} | ignore
+                }
+                if $action == init {
+                    let seed = if ($project | str starts-with gwa-test-) {"test"} else {$state.config.profile.seed}
+                    if ($seed | is-not-empty) { print -e $"Seed ($seed)"; sql $"db/seeds/($seed).surql" $project | ignore }
+                }
+            }
+        } catch {|failure|
+            if $action != verify { sql db/operations/unlock.surql $project {OWNER: $owner} | ignore }
+            error make {msg: $failure.msg}
+        }
+        if $action != verify { sql db/operations/unlock.surql $project {OWNER: $owner} | ignore }
+    }
+
+# Validate and build both images before selecting production storage policy.
+[script]
+deploy policy="reset": build
+    def main [policy: string] {
+        if $policy not-in [reset initialize upgrade] { error make {msg: "policy must be reset, initialize or upgrade"} }
+        ^just _environment prod
+        if $policy == reset {
+            print 'RESET deletes gwa-prod-database and gwa-prod-artifacts. No backup is created.'
+            let answer = (input 'Type gwa-prod to confirm: ')
+            if $answer != gwa-prod { error make {msg: "reset cancelled"} }
+            $env.GWA_RESET_PROJECT = gwa-prod
+            ^just _reset prod
+        }
+        if $policy in [reset initialize] { ^just db-init prod } else { ^just db-migrate prod }
+        ^just _up prod engine
+        ^just _ready prod engine
+    }

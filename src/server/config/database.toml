@@ -1,0 +1,10 @@
+[database]
+namespace = "gwa"
+database = "main"
+bind = "0.0.0.0:8000"
+path = "surrealkv:/data/gwa"
+user = "root"
+password_env = "GWA_DB_PASSWORD"
+definition_order = ["tables", "fields", "indexes", "functions", "events", "access"]
+readiness_attempts = 60
+readiness_delay_ms = 500

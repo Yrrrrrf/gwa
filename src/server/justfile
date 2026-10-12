@@ -1,0 +1,11 @@
+set shell := ["nu", "--no-config-file", "-c"]
+set script-interpreter := ["nu", "--no-config-file"]
+set positional-arguments
+set dotenv-load
+set quiet
+import "scripts/_shared.just"
+import "scripts/dev.just"
+import "scripts/test.just"
+import "scripts/check.just"
+import "scripts/deploy.just"
+default: list

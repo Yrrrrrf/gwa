@@ -1,0 +1,14 @@
+[server]
+http_bind = "0.0.0.0:8080"
+grpc_bind = "0.0.0.0:50051"
+max_body_bytes = 65536
+operation_timeout_seconds = 10
+shutdown_timeout_seconds = 15
+artifacts_dir = "/artifacts"
+[worker]
+capacity = 32
+retained_jobs = 256
+[auth]
+token_env = "GWA_API_TOKEN"
+[network]
+host = "127.0.0.1"

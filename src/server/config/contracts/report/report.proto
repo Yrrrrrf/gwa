@@ -1,0 +1,4 @@
+syntax = "proto3";
+package gwa.report;
+message GenerateRequest { string title = 1; string content = 2; string format = 3; }
+message GenerateResult { string artifact_id = 1; string content_type = 2; uint64 bytes = 3; }

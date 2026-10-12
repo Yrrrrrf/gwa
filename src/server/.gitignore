@@ -1,0 +1,5 @@
+/engine/target/
+/.state/
+/tests/node_modules/
+.env
+result

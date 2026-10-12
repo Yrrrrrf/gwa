@@ -1,0 +1,6 @@
+[profile]
+name = "prod"
+project = "gwa-prod"
+data_policy = "upgrade"
+seed = ""
+log_format = "json"
