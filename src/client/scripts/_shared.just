@@ -4,7 +4,7 @@
 PROJECT := "gwa-client"
 VERSION := "0.1.0"
 CLIENT_DIR := parent_directory(source_directory())
-CLI := "deno run -A jsr:@yrrrrrf/dv@0.0.3"
+CLI := "deno run -A jsr:@yrrrrrf/dv@0.0.5"
 JUSTFILE := CLIENT_DIR / "justfile"
 
 [default]
