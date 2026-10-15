@@ -1,0 +1,17 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "native": "deno run -A cli.ts",
+    "list": "deno run -A cli.ts list",
+    "init": "deno run -A cli.ts init",
+    "build": "deno run -A cli.ts build",
+    "dev": "deno run -A cli.ts dev",
+    "cycle": "deno run -A cli.ts cycle",
+    "fmt": "deno run -A cli.ts fmt",
+    "info": "deno run -A cli.ts info",
+    "paths": "deno run -A cli.ts paths",
+    "tauri": "deno run -A npm:@tauri-apps/cli@2.12.1",
+    "check": "deno fmt --check cli.ts cli_test.ts deno.json apps.json && deno lint cli.ts cli_test.ts && deno check cli.ts cli_test.ts && deno test -A cli_test.ts"
+  },
+  "workspace": []
+}

@@ -1,0 +1,5 @@
+/projects/
+/node_modules/
+/host/**
+*.jks
+*.keystore

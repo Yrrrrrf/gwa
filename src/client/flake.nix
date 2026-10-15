@@ -16,6 +16,10 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        nativeShells = import ./native/nix.nix {
+          inherit pkgs nixpkgs system;
+          defaultShell = self.devShells.${system}.default;
+        };
       in
       {
         devShells.default = pkgs.mkShell {
@@ -45,6 +49,9 @@
             echo "🦇 ''${PURPLE}GWA Client ''${RESET}[🦕 ''${CYAN}v''${DENO_V}''${RESET} | ✅ ''${CYAN}v''${JUST_V}''${RESET} | 📦 ''${CYAN}v''${PODMAN_V}''${RESET}]"
           '';
         };
+
+        devShells.desktop = nativeShells.desktop;
+        devShells.android = nativeShells.android;
       }
     );
 }

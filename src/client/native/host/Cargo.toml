@@ -1,0 +1,18 @@
+[package]
+name = "gwa-native"
+version = "0.0.1"
+description = "Shared GWA native host"
+authors = ["Yrrrrrf <fer.rezac@outlook.com>"]
+license = "MIT"
+edition = "2024"
+rust-version = "1.90"
+
+[lib]
+name = "gwa_native_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "=2.7.1", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.2", features = [] }
