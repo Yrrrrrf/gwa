@@ -1,8 +1,9 @@
 [profile]
 name = "dev"
 project = "gwa-dev"
-data_policy = "reset"
+data_policy = "upgrade"
 seed = "development"
 dev_api_token = "gwa-development-token"
 dev_db_password = "gwa-development-password"
 log_format = "pretty"
+restart_policy = "no"

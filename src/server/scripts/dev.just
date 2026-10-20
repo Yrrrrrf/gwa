@@ -1,30 +1,39 @@
-# Rebuild, reset disposable development data, start and follow logs.
-[script]
+# Foreground server-only session: one DB pod, one Rust engine pod.
 run:
-    ^just _images dev
-    ^just _reset dev
-    ^just db-init dev
-    ^just _up dev engine
-    ^just _ready dev engine
-    ^just _exec banner 'GWA ready: HTTP + JSON-RPC + WebSocket + gRPC'
-    let project = ($env.GWA_PROJECT? | default (open config/profiles/dev.toml).profile.project)
-    let vars = (open $".state/($project).json").env
-    print $"HTTP ($vars.GWA_HTTP_URL) | gRPC ($vars.GWA_GRPC_ADDR) | DB ($vars.GWA_DB_URL)"
-    ^just logs
+    deno run --config tests/deno.json --frozen --allow-read --allow-write=.state --allow-env --allow-run scripts/runtime.ts run dev
 
-# Stop containers while retaining both named volumes.
 stop:
-    just _down dev
+    deno run --config tests/deno.json --frozen --allow-read --allow-write=.state --allow-env --allow-run scripts/runtime.ts stop dev
+
+# Explicitly destructive development operation; ordinary run preserves data.
+[script]
+reset:
+    ^just _environment dev
+    ^just _reset dev
+
+# Install locked consumers and validate both projections without starting workloads.
+[script]
+prepare:
+    ^deno install --config tests/deno.json --frozen
+    ^just _environment dev
+    ^just _compose dev db config --quiet
+    ^just _compose dev engine config --quiet
 
 [script]
 logs unit="all":
     def main [unit: string] {
-        if $unit == all { ^just _compose dev logs -f } else if $unit in [db engine] { ^just _compose dev logs -f $unit } else { error make {msg: "unit must be all, db or engine"} }
+        if $unit not-in [all db engine] { error make {msg: "unit must be all, db or engine"} }
+        let project = (^just _project dev | str trim)
+        let names = if $unit == all {[$"($project)-db" $"($project)-engine"]} else {[$"($project)-($unit)"]}
+        ^podman logs --follow --names ...$names
     }
-status:
-    just _compose dev ps
 
-# Remove generated build artifacts only.
 [script]
+status:
+    for unit in [db engine] { ^just _compose dev $unit ps }
+    let project = (^just _project dev | str trim)
+    ^podman pod ps --filter $"label=gwa_project=($project)"
+
+# Generated outputs only; no data/locks/dependencies are removed.
 clean:
-    ^cargo clean --manifest-path engine/Cargo.toml
+    cargo clean --manifest-path engine/Cargo.toml

@@ -1,12 +1,18 @@
 import { assert } from "./assert.ts";
-export const root = new URL("../../", import.meta.url).pathname.replace(/\/$/, "");
+export const root = new URL("../../", import.meta.url).pathname.replace(
+  /\/$/,
+  "",
+);
 export async function copyTree(source: string, destination: string) {
   await Deno.mkdir(destination, { recursive: true });
   for await (const entry of Deno.readDir(source)) {
     if (entry.isDirectory) {
       await copyTree(`${source}/${entry.name}`, `${destination}/${entry.name}`);
     } else if (entry.isFile) {
-      await Deno.copyFile(`${source}/${entry.name}`, `${destination}/${entry.name}`);
+      await Deno.copyFile(
+        `${source}/${entry.name}`,
+        `${destination}/${entry.name}`,
+      );
     }
   }
 }
@@ -16,12 +22,27 @@ export async function template(name: string) {
   for (const dir of ["config", "db", "scripts"]) {
     await copyTree(`${root}/${dir}`, `${directory}/${dir}`);
   }
-  for (const file of ["justfile", "compose.yaml", "engine/Cargo.toml"]) {
+  for (
+    const file of [
+      "justfile",
+      "compose.yaml",
+      ".containerignore",
+      "engine/Cargo.toml",
+      "engine/Cargo.lock",
+      "engine/build.rs",
+      "engine/engine.Dockerfile",
+    ]
+  ) {
     await Deno.copyFile(`${root}/${file}`, `${directory}/${file}`);
   }
+  await copyTree(`${root}/engine/src`, `${directory}/engine/src`);
   return directory;
 }
-export async function just(directory: string, args: string[], env: Record<string, string> = {}) {
+export async function just(
+  directory: string,
+  args: string[],
+  env: Record<string, string> = {},
+) {
   const result = await new Deno.Command("just", {
     cwd: directory,
     args,
@@ -35,7 +56,11 @@ export async function just(directory: string, args: string[], env: Record<string
     stderr: new TextDecoder().decode(result.stderr),
   };
 }
-export async function succeeds(directory: string, args: string[], env: Record<string, string>) {
+export async function succeeds(
+  directory: string,
+  args: string[],
+  env: Record<string, string>,
+) {
   const result = await just(directory, args, env);
   assert(result.success, result.stderr);
   return result;

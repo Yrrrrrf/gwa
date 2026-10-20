@@ -1,112 +1,160 @@
 # GWA server
 
-Two runtime units: SurrealDB owns application data and the Rust engine hosts capabilities. The engine has HTTP, JSON-RPC, gRPC and WebSocket adapters, a bounded worker, shared infrastructure, and file/notification implementations. It has no database SDK or duplicated database models.
+Run `just run` **from this directory**. It starts SurrealDB and the Rust engine in
+**two separate Podman pods**, waits for database/schema and engine readiness, then
+streams labelled logs. Ctrl-C/SIGTERM stops both pods and preserves database and
+artifact volumes. No client process is launched.
 
-## Structure
+## Decisions and scope
 
-| Path | Owns |
-| --- | --- |
-| `config/*.toml` | Shared server, database, provider and tool declarations |
-| `config/profiles/dev.toml`, `prod.toml` | The only profiles; profile-specific policy and development credentials |
-| `config/contracts/{notify,report,system}/*.proto` | Canonical capability messages and the generic gRPC envelope |
-| `db/db.Dockerfile` | Database container and the reusable Nushell executable |
-| `db/definitions/{tables,fields,indexes,functions,events,access}` | Immutable baseline schema, access rules and database behavior |
-| `db/migrations` | Append-only upgrades after the baseline |
-| `db/seeds` | Development and disposable consumer fixtures |
-| `db/operations` | Bootstrap, lock, ledger, transaction and inspection statements |
-| `engine/engine.Dockerfile`, `Cargo.toml`, `build.rs` | Engine build and generated contract bindings |
-| `engine/src/api` | HTTP, JSON-RPC, gRPC and WebSocket boundaries |
-| `engine/src/worker` | Admission, execution, bounded job retention and draining |
-| `engine/src/shared` | Configuration, context, faults, readiness, shutdown and telemetry |
-| `engine/src/service/notify` | Notification validation and real file/webhook providers |
-| `engine/src/service/files` | File generation and text/HTML rendering for `report.generate` |
-| `engine/src/service/{operation,registry,mod}.rs` | Operation abstraction, duplicate-safe registry and one registration point |
-| `tests/db`, `tests/engine`, `tests/scripts` | Tests mirroring the owner and subdirectories of the tested behavior |
-| `scripts/{_shared,dev,test,check,deploy}.just` | Exactly five recipe files, with inline Nushell logic |
+This implementation follows the agreed server-only scope. Keep version `0.1.0`,
+one root `justfile`, and the existing five `scripts/*.just` files. There are no
+component Justfiles. `scripts/runtime.ts` is the small foreground process owner;
+configuration, SQL, container definitions and recipes stay with their existing
+owners. Rust application sources, canonical protobuf contracts, SurQL definitions,
+migrations and seeds retain their behavior.
 
-There is no standalone `services` library, third orchestration unit, test profile, preview command, or delivered shell/Python script. Generated bindings, runtime config, dependencies and build artifacts are excluded from the ZIP.
+`compose.yaml` is the only container definition. Its `db` and `engine` service
+profiles run as separate Compose projects (`<project>-db`, `<project>-engine`) and
+pods (`<project>-db-pod`, `<project>-engine-pod`). Both use the same owned external
+network (`<project>-network`). Separate invocations are necessary because Podman
+Compose's pod setting applies to the entire selected Compose project. Pod names,
+images, builds, mounts, published ports, health checks and restart policy are
+projected into this one file, rather than copied into another stack definition.
+Each pod deliberately uses `--infra=false --share=`; its one workload retains its
+own network namespace and joins the shared Compose network.
 
-## Start
+The engine currently has no database client. Database initialization/readiness is
+a stack startup requirement; `/ready` continues to describe the capability host.
+Neither a DB SDK nor a client API layer is introduced here. Repository-root and
+client orchestration are outside this server archive.
 
-On a Linux host with functional Podman, enter the pinned development shell and install locked consumer dependencies:
+## Tools and first start
+
+Use Linux or macOS with a working Podman runtime (start a Podman machine on macOS).
+Install Deno 2.9.7, Just 1.57+, Nushell 0.116.0, Rust compatible with the manifest's
+`rust-version`, Podman, podman-compose 1.6.0, Hurl/hurlfmt 8.0.1, and cargo-audit.
+`config/toolchains.toml` records the tested runtime and container tool versions;
+Cargo's manifest remains authoritative for Rust. No server Nix flake was included
+in the supplied source; this archive does not claim one exists.
 
 ```console
-nix develop
-deno install --config tests/deno.json --frozen
+just prepare
 just run
 ```
 
-For macOS, initialize/start a Podman machine first. The four Nix platforms are declared; validation performed here covered Linux x86_64 only. Alternatively install Rust compatible with `engine/Cargo.toml`, Just >=1.57, Nushell >=0.115.1, Deno >=2.8, Hurl 8.0.1, cargo-audit, Podman and podman-compose.
+`prepare` installs the frozen consumer dependencies and validates both Compose
+profiles without starting workloads. `run` can also start directly on a prepared
+host: it projects configuration, builds the two source-tagged images, starts DB,
+initializes an empty DB or validates/applies pending migrations, then starts the
+engine. The database image builds before the engine because the latter reuses its
+Nushell binary. Both workloads remain running concurrently after startup.
 
-`run` rebuilds the database image first, reuses its Nushell executable in the engine image, resets **development database and artifact volumes**, initializes the database, starts the engine, checks readiness and follows logs. Ctrl-C ends log following. `just stop` stops containers and retains volumes. `run` resets them again when invoked; use `db-migrate` and `_up` for intentional retention workflows.
+Published addresses default to loopback: DB `127.0.0.1:8000`, HTTP `127.0.0.1:8080`,
+gRPC `127.0.0.1:50051`. Actual endpoints are printed after readiness. Host overrides
+are `GWA_DB_PORT`, `GWA_HTTP_PORT`, `GWA_GRPC_PORT`, and `GWA_HOST`; ports must be
+distinct and the host must remain loopback. Within the shared network the database
+service's DNS alias is `db`; the engine does not currently consume it.
 
-Published addresses are loopback. Endpoint ports derive from shared bind declarations; optional `GWA_DB_PORT`, `GWA_HTTP_PORT` and `GWA_GRPC_PORT` override host ports. Development credential values live only in `config/profiles/dev.toml`. Runtime projections under `.state` are private and excluded from version control and deliverables. Keep them private; container inspection also exposes configured credentials.
-
-## Recipes
+## Commands
 
 | Command | Behavior |
 | --- | --- |
-| `just list`, `just menu` | DV command discovery and selection |
-| `just run`, `just stop` | Disposable development start; retained-storage stop |
-| `just logs [all\|db\|engine]`, `just status` | Runtime logs and container status |
-| `just test [category]` | Independent project/volumes and available host ports using dev configuration, test seeds and guaranteed teardown after the test phase |
-| `just test engine/api/grpc`, `just test db`, `just test scripts/deploy` | Select the literal mirrored directory |
+| `just`, `just list`, `just menu` | Discover the commands from this root |
+| `just run` | Foreground DB + engine session; no client and no CI run |
+| `just stop` | Request coordinated foreground shutdown, or stop a detached server stack; retain volumes |
+| `just reset` | Explicitly stop and delete development DB/artifact volumes; run again to initialize |
+| `just logs [all\|db\|engine]` | Follow existing container logs without changing configuration |
+| `just status` | Inspect both Compose projects and their pods without regenerating configuration |
+| `just prepare` | Install locked consumers, project configuration and validate Compose |
+| `just test [category]` | Build once, use an isolated project/ports/volumes, run consumers and tear down owned test storage |
+| `just test scripts/dev` | Offline process, configuration, ownership and readiness tests |
+| `just test db/migrations` | Migration retention, history, rollback and locking against a disposable DB |
 | `just test-unit` | Locked Rust unit tests |
-| `just fmt`, `just fmt-check` | Format, or verify Rust/Deno/Hurl formatting |
-| `just lint`, `just types`, `just contracts`, `just audit` | Individual validation gates |
-| `just check` | Formatting, lint, types, contracts/architecture, dependency audits; no autofixes |
-| `just ci` | Unit tests, consumer tests, then checks, in order |
-| `just build` | CI, then both images; no recursive build/test dependency |
-| `just db-init [dev\|prod]` | Initialize an empty database and reject existing business data |
-| `just db-migrate [dev\|prod]` | Validate history and apply pending upgrades without deleting retained data |
-| `just deploy [reset\|initialize\|upgrade]` | Build with CI and deploy production using the explicit storage policy |
-| `just clean` | Remove Rust build outputs; retain locks and storage |
+| `just fmt`, `just fmt-check` | Format, or verify Rust/Deno/Hurl source |
+| `just lint`, `just types`, `just contracts`, `just audit` | Individual quality gates |
+| `just check` | Formatting, lint, types, offline contracts/lifecycle tests and dependency audits |
+| `just ci` | Rust unit tests, disposable container consumers, then checks, in the existing order |
+| `just build` | The same full gate; keep the exact images built and tested by the consumer phase, without a second image-build invocation |
+| `just db-init [dev\|prod]` | Start DB and initialize an empty database; requires the images built by `run`/`build` |
+| `just db-migrate [dev\|prod]` | Start DB, validate history and upgrade retained data; no seeds |
+| `just deploy [configured\|initialize\|upgrade\|reset]` | Validate/build, then apply the explicit production storage policy |
+| `just clean` | Remove Rust build outputs; retain locks, dependencies and data |
 
-The generic DV executor receives argv directly. Configuration, container execution, volume checks, readiness, SQL rendering and migration handling have shared private recipes. Scripts need no separate lifecycle framework.
+Unknown or empty test selections fail before containers start. Script/contract
+categories run offline. Integration consumers exclude those already-owned offline
+categories. Disposable test teardown validates ownership before deletion, attempts
+both unit shutdowns, preserves the original failure, and retains the runtime
+snapshot if cleanup fails so recovery remains possible.
 
-## Capabilities and adapters
+## Configuration and retained state
 
-All adapters invoke the same context/registry. The canonical protobuf contracts generate Rust messages at build time. Consumer tests load those same protobuf files through reflection; there are no handwritten copies of capability DTOs.
+`config/server.toml`, `database.toml`, `services.toml`, `toolchains.toml` and the
+selected dev/prod profile own configuration. The public startup boundary generates
+one snapshot. Runtime helpers read it; `logs` and `status` do not rewrite it.
+Atomic replacement avoids partially written files. Concurrent foreground sessions
+for the same project are refused, and an active session prevents unrelated
+configuration regeneration.
 
-| Capability | Behavior |
-| --- | --- |
-| `notify.send` | Validates recipient/subject/body; returns a provider and unique receipt only after the chosen provider succeeds |
-| `report.generate` | Generates actual text or escaped HTML; returns artifact ID, MIME and byte count |
-| `system.enqueue` | Admits a registered capability to the bounded worker; accepts JSON in the canonical envelope |
-| `system.job` | Returns observable queued/running/succeeded/failed state and result/error |
+The private `.state/<project>.json` is mode `600` inside a mode `700` directory.
+The bind-mounted runtime TOML contains only the engine's runtime fields, omits
+profile development credentials, and is mode `644` so container UID `65532` can
+read the mounted file. Actual API/DB credentials remain in the private snapshot
+and container environment, not in the mounted TOML. Provider configuration is
+runtime configuration; do not embed credentials in provider URLs.
 
-HTTP: authenticated `GET /api`, `POST /api/{service}/{operation}`. JSON-RPC: authenticated `POST /rpc`, with notifications, batches and preserved IDs, including explicit null. WebSocket: `/ws`; the first text frame is `{"auth":"<token>"}`, followed by the same JSON-RPC messages. Tokens are not URL parameters. gRPC: `gwa.system.Capabilities/Invoke`, with `authorization: Bearer <token>` metadata and the generated envelope. `/health` and `/ready` are public, payload-free probes. `/artifacts/{id}` requires authentication and returns attachment/nosniff headers.
+Both supplied profiles now declare `data_policy = "upgrade"`. An ordinary dev run
+initializes only an empty database and otherwise applies append-only migrations.
+Reset is explicit. Production defaults to its configured upgrade policy; use
+`deploy initialize` for first initialization. Production reset still requires the
+exact typed confirmation and explicit private reset guard.
 
-Example HTTP payloads conform to `config/contracts`:
+Baseline assembly, checksums, exact-prefix history, transactional migration
+markers and database-backed locking are preserved. Initialization seeds only the
+selected dev/test fixture. Repeated starts/migrations do not reseed. An interrupted
+initialization or stale migration lock requires inspection; it never triggers an
+automatic destructive reset. Changing root credentials in environment variables
+does not rotate an existing SurrealDB root account.
 
-```json
-{"recipient":"person@example.test","subject":"Hello","body":"Message"}
-```
+Predictable pod, container, network and volume names are checked for ownership.
+An existing same-name resource belonging to another project is refused. Existing
+containers are not taken over by a foreground session: stop their owning stack
+before starting this version. Image tags include a fingerprint of the build
+inputs, so concurrent test/dev projects do not silently replace differently built
+images sharing only the package version.
 
-```json
-{"title":"Example","content":"Report body","format":"html"}
-```
+## Session failures and recovery
 
-The default notification provider writes a real spool file under `notifications`; it does not claim email delivery. The optional webhook provider performs a timed POST with an idempotency key and refuses redirects; failures propagate without file fallback. Text and HTML are supported; PDF is not implemented. The artifact endpoint serves generated reports, not notification contents.
+Startup commands run in isolated process groups. SIGINT/SIGTERM reaches their
+Just/Nushell/build descendants; a bounded cancellation deadline terminates any
+remaining startup group before container teardown. Once ready, both workloads are
+monitored for exit/unhealthy state. Failure stops the peer and returns nonzero.
+Logs stream immediately with unit prefixes and bounded partial-line buffers.
 
-To add a capability, add its canonical contract, implement `Operation` under its owning service directory, and register it **once** in `engine/src/service/mod.rs`. Add mirrored consumer tests. Adapters require no capability-specific implementations.
+`just stop` communicates with the foreground owner through its project session
+marker and waits for teardown. Without a foreground owner it stops the two
+Compose projects directly. A failure during cleanup is reported as a failure.
 
-## Database and deployment
+After an uncatchable SIGKILL or host crash, inspect the server processes/pods first.
+Use `just stop` to stop remaining pods. If the old foreground process is proved
+gone and its `.state/<project>.session` directory remains, remove that stale
+session directory before starting again. Never remove a live session's lock.
+Retained volumes are separate from this session marker.
 
-The baseline is assembled in the order declared by `config/database.toml`, and recorded as `0001-baseline`. It is not copied into an initial migration. All SQL definitions and runtime database rules remain in `db`.
+## Capabilities and extension points
 
-Initialization and upgrades acquire one database-backed lock. Every migration and its checksum marker run in one transaction. Applied history must be an exact prefix of local history; drift, downgrade, ahead-of-code history, pending verification and competing locks fail. Initialization rejects existing domain tables or history. Upgrades retain records and run no seeds. Production initialization also runs no seeds. Development and test seeds are selected explicitly on initialization.
+All four adapters share one registry/context. HTTP exposes authenticated `/api`
+and `/api/{service}/{operation}`, JSON-RPC uses `/rpc`, WebSocket uses `/ws` with
+the existing first-frame authentication, and gRPC uses the canonical generic
+`gwa.system.Capabilities/Invoke` envelope. Public `/health` and `/ready` remain
+payload-free probes; artifacts require authentication.
 
-Do not edit applied definitions or migrations. Add the next migration. The baseline is immutable after use. A failed initialization seed can leave an initialized ledger; investigate the seed failure and explicitly reset only disposable data or repair deliberately. A process crash can leave a lock: inspect its owner, establish that its runner is gone, then release that exact owner through the canonical unlock operation. Locks do not expire silently.
+`notify.send`, `report.generate`, `system.enqueue` and `system.job` retain their
+existing contracts. File notifications are real spool files, not an email-delivery
+claim. Reports support text and HTML. Worker jobs remain bounded and volatile.
+Add capabilities through their canonical contract, owning service and the single
+registration point in `engine/src/service/mod.rs`; no adapter-specific copy is
+needed.
 
-Set explicit production credentials of at least 24 characters through the environment or an untracked `.env` (see `config/env.example`). Existing root credentials in retained SurrealDB storage must still match; changing an environment value does not rotate an existing root account.
-
-`just deploy` defaults to `reset`, prints the two production volume names and that no backup is created, and requires typing `gwa-prod` before deletion. `deploy initialize` refuses existing domain data; `deploy upgrade` preserves volumes and applies pending migrations. Volume labels must match the project before reuse or removal. Container shutdown is separate from volume deletion.
-
-## Runtime limits and validation
-
-The worker is deliberately volatile: bounded queue and bounded completed-job retention, no persistence/retry guarantee, and completed jobs can be evicted. Restart loses job status. Deadlines cancel futures; external side effects already completed are not rolled back, and retries are not promised to be idempotent. Each queued task has a timeout. Shutdown stops admission and drains admitted work within the configured host deadline; forced cancellation reports failure. WebSocket sessions are tracked through shutdown.
-
-Use a separately managed TLS/authentication edge for remote access. Production file-provider choice, credential rotation, backup/restore, realistic load, failure recovery, and any webhook's downstream behavior require deployment-specific validation.
-
-See **VALIDATIONS.md** for executed evidence, the complete release checklist, and checks this environment could not complete. This archive is an implemented and tested template; full container CI is not marked passed.
+See `VALIDATIONS.md` for the checks executed for this archive and the container
+checks that remain required on a capable host.

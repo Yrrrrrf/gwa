@@ -1,0 +1,5 @@
+[toolchains]
+deno = "2.9.7"
+nushell = "0.116.0"
+surrealdb = "3.3.0"
+podman_compose = "1.6.0"

@@ -1,5 +1,4 @@
-/engine/target/
-/.state/
-/tests/node_modules/
 .env
-result
+.state/
+tests/node_modules/
+engine/target/

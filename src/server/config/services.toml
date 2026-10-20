@@ -1,0 +1,7 @@
+[services.notify]
+enabled = true
+provider = "file"
+webhook_url = ""
+
+[services.report]
+enabled = true

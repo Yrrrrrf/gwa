@@ -1,6 +1,18 @@
+# One source for both units. Each profile is a separate Compose project/pod;
+# both projects attach to the same explicitly owned network.
+x-podman:
+  in_pod: ${GWA_POD}
+  pod_args: ["--infra=false", "--share=", "--label=gwa_project=${GWA_PROJECT}"]
 services:
   db:
-    image: localhost/gwa-db:${GWA_VERSION}
+    profiles: [db]
+    image: localhost/gwa-db:${GWA_IMAGE_TAG}
+    build:
+      context: .
+      dockerfile: db/db.Dockerfile
+      args:
+        DB_VERSION: ${GWA_DB_VERSION}
+        NU_VERSION: ${GWA_NU_VERSION}
     container_name: ${GWA_PROJECT}-db
     command: ["start", "--deny-guests", "--bind", "${GWA_DB_BIND}", "--user", "${GWA_DB_USER}", "--pass", "${GWA_DB_PASSWORD}", "${GWA_DB_PATH}"]
     environment:
@@ -15,9 +27,16 @@ services:
       timeout: 3s
       retries: 30
     stop_grace_period: 20s
-    restart: unless-stopped
+    restart: ${GWA_RESTART_POLICY}
   engine:
-    image: localhost/gwa-engine:${GWA_VERSION}
+    profiles: [engine]
+    image: localhost/gwa-engine:${GWA_IMAGE_TAG}
+    build:
+      context: .
+      dockerfile: engine/engine.Dockerfile
+      args:
+        DB_IMAGE: localhost/gwa-db:${GWA_IMAGE_TAG}
+        RUST_VERSION: ${GWA_RUST_VERSION}
     container_name: ${GWA_PROJECT}-engine
     environment:
       - "${GWA_API_TOKEN_ENV}=${GWA_API_TOKEN}"
@@ -35,7 +54,11 @@ services:
       timeout: 3s
       retries: 30
     stop_grace_period: 20s
-    restart: unless-stopped
+    restart: ${GWA_RESTART_POLICY}
+networks:
+  default:
+    external: true
+    name: ${GWA_NETWORK}
 volumes:
   database:
     external: true

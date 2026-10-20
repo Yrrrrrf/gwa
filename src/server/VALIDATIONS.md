@@ -1,92 +1,86 @@
-# GWA validation record and release checklist
+# Validation record — server lifecycle integration
 
-Validated on 2026-10-05, Linux x86_64. The deliverable implements the agreed template with only dev/prod, two Dockerfiles, five Just files, `run`/`stop`, and mirrored tests. Source/contract ownership checks passed. **Full container CI and production deployment are not marked passed.**
+This record describes the server-only archive produced from the supplied source
+export. Earlier validation claims from that export are not carried forward as
+proof for this implementation. Version remains `0.1.0`.
 
-## Executed evidence
+## Executed checks
 
-| Check | Result | Evidence / scope |
+| Check | Result | Evidence and scope |
 | --- | --- | --- |
-| Rust compilation and generated bindings | PASS | Rust 1.98.1, locked build/check; Rust 1.99.0 also used during reconstruction |
-| Rust unit behavior | PASS | 7 tests: duplicate registration/unknown operation, config limits and disabled capabilities, production token/provider constraints, HTML escaping, webhook failure without fallback, queue saturation/draining/failure visibility, JSON-RPC null-ID handling |
-| Native Hurl sessions | PASS | 8 files, 23 HTTP requests, 0 failed; real SurrealDB 3.3.0 and Rust host |
-| Native Deno consumers | PASS | 12 unique tests: 10 engine tests plus config and migration lifecycle; 0 failed/skipped |
-| HTTP adapter | PASS | Registry listing, real capability dispatch, malformed/missing/extra fields, unknown capability, 401, 405, 413, attachment authorization/MIME/bytes/name validation/nosniff |
-| JSON-RPC adapter | PASS | Explicit null and string IDs, notification 204, mixed batches, empty batch, parse error, unknown method, invalid parameters |
-| gRPC adapter | PASS | Canonical generated envelope/reflected descriptor, both capabilities; unauthenticated 16, unknown 5, invalid 3 |
-| WebSocket adapter | PASS | First-frame auth/ack, both capabilities, ID preservation, unknown method, malformed JSON, wrong-auth close 1008, binary close 1003 |
-| Notification behavior | PASS | Unique file-provider receipts, invalid inputs rejected; actual HTTP-500 webhook unit test reports error with no file fallback |
-| File generation | PASS | Text/HTML contents, escaping, actual byte counts/MIME, authenticated downloads, unsupported PDF rejected |
-| Worker behavior | PASS | Observable success/failure; bounded admission rejects overflow; cancellation rejects new work and drains admitted work in unit test |
-| Database baseline | PASS | Schemafull fields, nonempty title, email uniqueness/validity, typed owner, read-only creation timestamp, enforced relation endpoints, event link and unique edge, referenced-owner deletion rejected |
-| Record permissions/access | PASS | Signup, signin, two-account isolation, unauthorized update yields no records, password hidden, relation visibility and permission-filtered function count |
-| Migration lifecycle | PASS | Baseline-only init, pending verification, upgrade, repeated upgrade, retained record, init-on-existing refusal, competing lock preserved, transaction rollback/no marker/no leaked lock, applied checksum drift rejected |
-| Seeds | PASS | Disposable fixture present; development fixture absent in the tested DB; seed selection during initialization exercised |
-| Configuration projection/guards | PASS | Only dev/prod, project/profile restrictions, canonical dev credentials refused for production, explicit production credentials accepted, private prod reset refused without explicit guard |
-| Graceful host shutdown | PASS | Real engine received SIGTERM and exited 0 after native suite; directly owned server/worker futures and tracked WebSocket sessions reviewed |
-| Formatting | PASS | `just fmt-check`: Rust, 17 Deno config/source files, Hurl parser/formatter checks |
-| Lint | PASS | `just lint`: Clippy all targets with `-D warnings`, Deno lint |
-| Types | PASS | `just types`: locked Cargo all-targets check, frozen Deno check of every test including the unexecuted container test |
-| Contracts/architecture | PASS | `just contracts`: 2 offline tests; canonical reflected messages and expected layout/dependency order |
-| Cargo audit | PASS | 235 locked crate packages checked against 1290 loaded RustSec advisories; no known vulnerabilities reported |
-| Deno/npm audit | PASS | 34 locked npm package records; no known vulnerabilities reported. The environment's proxy caused a trust failure in direct audit, so the same audit used a temporary local relay forwarding to the official npm advisory API with the supplied CA. No registry errors were ignored; no dependency auto-fix was used. Relay is excluded from source. |
-| Compose configuration | PASS | Actual `podman-compose 1.6.0 config` rendered both units, projected environment, external volumes and escaped Nushell health expressions |
-| Nix evaluation | PASS | `nix flake check --no-build` evaluated Linux x86_64 outputs; lock generated and package versions inspected |
-| Minimum Rust/tool compatibility | PASS | Rust 1.98.1 matches locked Nix package metadata; full native suite passed through Nushell 0.115.1 and Deno 2.8.0; image tool declarations pin Nu 0.116.0 and SurrealDB 3.3.0 |
-| ZIP/source integrity | PASS | 95 files, zero duplicate full-file contents, archive CRC, unique member paths, expected root/layout, source extraction, relative contract paths and offline contracts checked; build output, state, installed dependencies, git metadata and secrets excluded |
+| Exact `just check` | PASS | Formatting, Clippy with warnings denied, Deno lint, locked Rust/all-targets types, frozen Deno types, offline contracts/lifecycle tests and both dependency audits completed successfully after the final source edits |
+| Rust unit tests | PASS | 7 tests through the existing locked Cargo/DV recipe; renderer, registry, config, worker draining, JSON-RPC IDs and provider failures |
+| Offline contracts/lifecycle | PASS | 13 tests: canonical protobuf reflection; config projection/guards; real Just/Nushell ownership and error handling with a fake Podman boundary; readiness HTTP/health/deadlines; foreground streaming, retention, signal cleanup, nested startup cancellation, public stop and failure propagation |
+| Real native DB + engine consumers | PASS | SurrealDB 3.3.0 and the compiled Rust engine ran as native host processes on distinct temporary ports; the existing `_consumer` recipe passed 8 Hurl files / 23 requests and 9 Deno consumer cases |
+| Migration lifecycle | PASS | The consumer case exercised baseline-only initialization, automatic upgrade/ensure, repeated ensure, retained records, init refusal, competing-lock preservation, applied-baseline drift rejection, transaction rollback/no marker/no leaked lock, and final verification in a disposable DB |
+| Native graceful shutdown | PASS | Both native processes received SIGTERM and exited 0 after the final consumer run |
+| Compose parsing | PASS | Actual podman-compose 1.6.0 parsed the canonical file separately for `db` and `engine`; each selected exactly one service |
+| Compose pod command generation | PASS, dry run only | Actual podman-compose 1.6.0 generated distinct `<project>-db-pod` and `<project>-engine-pod` creations, joined each workload to its own pod, and attached both to the same external network; Podman inventory responses were faked for this dry run, not workload success |
+| Rust dependency audit | PASS | cargo-audit 0.22.2 scanned 235 locked crate dependencies against 1329 fetched advisories, without ignored failures or vulnerability suppressions |
+| Deno dependency audit | PASS | Frozen Deno/npm audit reported no known vulnerabilities |
+| Source/scope review | PASS | Rust application sources and all authored SurQL files remain byte-identical to the supplied export; one server root `justfile`, exactly the original five `.just` recipe files; no client or repository-root changes |
 
-The 2 offline contract checks are included in the 12 unique Deno tests; rerunning them through `just contracts` is not counted as additional coverage. Native processes exercised real functionality and the shared consumer recipes. This does not replace container lifecycle checks.
+The native and process-boundary tests are real tests of their stated boundaries.
+They do not establish that images build or that pods run correctly on a host.
+The 13 offline and 9 native consumer cases are 22 unique Deno test cases. There
+are 7 Rust unit tests. Repeated runs are not counted as additional coverage.
 
-## Duplication and ownership
+## Environment and restored inputs
 
-| Authority | Validation |
-| --- | --- |
-| Capability message shapes | Only protobuf files under `config/contracts`; generated Rust stays under target; tests use protobuf reflection, not copied DTO declarations |
-| Database application schema and rules | Only SurQL under `db`; engine has no SurrealDB/SQLx dependency or copied record models |
-| Baseline | Definitions assembled once and checksum-recorded; no copied baseline migration |
-| Capability registration | One `service/mod.rs` entry point; duplicate/reserved registrations rejected; four adapters reuse one registry/context |
-| Shared defaults | Shared TOML declarations; dev credentials only in dev profile; host ports derive from binds; generated projections are excluded from deliverables |
-| Containers | Exactly `db/db.Dockerfile` and `engine/engine.Dockerfile`; engine reuses the database image's Nushell binary |
-| Recipes | Exactly `_shared`, `dev`, `test`, `check`, `deploy`; shared executor/config/SQL/container/volume/readiness/migration logic; CI is tests-before-checks and has no build/test recursion |
-| Tests | Directories mirror ownership, including `engine/service/files` and `notify`; shared test clients/fixtures; no delivery of runtime test copies |
-| Source clones | Automated normalized-content comparison of substantive Rust/protobuf/SurQL/Just source files found no identical authored implementations |
-| Protobuf dependency | Deno lock contains one protobufjs version, 7.6.6, shared with gRPC loader |
+Tools used: Just 1.57.0, Nushell 0.116.0, Deno 2.9.7, Rust/Cargo 1.98.1, SurrealDB
+3.3.0, Hurl/hurlfmt 8.0.1, podman-compose 1.6.0, cargo-audit 0.22.2.
 
-“No duplicate implementation/models/contracts” is the checked scope. Upstream Rust dependencies still require parallel versions of base64, cpufeatures, getrandom, hashbrown, r-efi, rand, rand_core, syn, windows-sys and winnow. Their locked versions were audited; the archive does not claim that the entire external dependency graph has one version per crate. Small module declarations, protocol assertions and independent Hurl request headers necessarily repeat syntax.
+The export omitted `config/services.toml`, `config/toolchains.toml`, both lockfiles
+and referenced script/contract tests. This implementation restores those inputs.
+Cargo and Deno lockfiles were generated from the supplied manifests, then checked,
+compiled, exercised and audited; they cannot reproduce an unseen original lock.
+No dependency manifest versions or application version were changed.
 
-## Checks still required on a capable host
+The environment's SOCKS proxy was incompatible with Deno's registry requests.
+Validation cleared only that proxy setting for the tool invocation and retained
+normal TLS verification with the system trust store. No insecure TLS flags or
+registry-error success stubs were used. This environment adjustment is not part
+of the delivered source.
 
-| Check | Current status | Acceptance / command |
-| --- | --- | --- |
-| Two container image builds | BLOCKED HERE | `just run` or `just _images dev`; verify both images build with manifest/toolchain args, nonroot users, reused Nu and locked Cargo dependencies |
-| Full container suite | BLOCKED HERE | `just test`; 12 native checks must also pass inside the composed runtime; execute the additional `tests/scripts/dev/lifecycle_test.ts` |
-| Stop/retention/reset | UNVERIFIED IN CONTAINERS | `just test scripts/dev`; stop/recreate retains the record, explicit reset removes it, teardown removes only owned test volumes |
-| Development run/stop/logs/status | UNVERIFIED IN CONTAINERS | Start with active unrelated containers, ensure dev reset scope, readiness, announced endpoints, Ctrl-C log behavior, retained stop and useful status |
-| Test isolation alongside active dev | UNVERIFIED IN CONTAINERS | Tests select distinct available host ports/project/volumes; run concurrent/unrelated workloads and confirm no collision or deletion |
-| Volume ownership refusal | CODE REVIEW / PENDING RUNTIME | Create an unowned same-name volume and verify reuse/reset fail without deleting it; also verify both owner labels and volume permissions |
-| Container health and signals | PENDING | Check actual healthy transitions, HTTP/DB internal port projection, WS closure, SIGTERM, stop grace and restart after failures |
-| `just ci`, `just build`, `just check` as complete gates | NOT CLAIMED | Run with functional Podman and normal trusted registry access. Individual formatting/lint/types/contracts and audits passed; full gates were not substituted with success stubs |
-| Nix package build/shell activation | BLOCKED HERE | `nix build`, `nix develop` on a standard installed Nix host. The relocated scratch store could not execute an absolute `/nix/store/.../bash` dependency; engine derivation did not compile there |
-| Other declared platforms | NOT RUN | ARM Linux and both Darwin targets: shell/package build, generated contract tooling, Podman machine, CPU-specific Nu and image compatibility |
-| Production initialize/upgrade/reset | NOT EXECUTED | Against disposable production-named storage: no seeds; initialize refusal; upgrade retains data; default reset names both volumes, creates no backup, requires exact typed confirmation; incorrect confirmation deletes nothing |
-| Startup/component failure propagation | PARTIAL | Readiness withheld until both binds; test busy port, invalid runtime config, missing token and component failure; host exits nonzero and cancels remaining components |
-| Saturated/slow shutdown | PARTIAL | Load full queue/active WS and slow provider; admit no work after cancel, drain within deadline; force deadline and confirm nonzero exit/no retained task handles |
-| Protocol limits and timeout edges | PARTIAL | Oversized gRPC/WS, malformed envelopes/IDs, authenticated idle WS timeout, operation deadline and provider timeout, maximum batch; HTTP 413 already passed |
-| Artifact filesystem failures | PENDING | Unwritable/missing/full volume, disk errors, partial writes and missing IDs must return real failures; validate download access and retention policy under load |
-| Webhook deployment behavior | PARTIAL | Unit HTTP-500 failure passed. Validate real endpoint success, timeout, redirect refusal, TLS, downstream handling of idempotency key and secrets; no fallback or email-delivery claim |
-| Remote security and credentials | DEPLOYMENT-SPECIFIC | Loopback publication, external TLS edge, strong unique credentials, disabled guest DB access, access permissions, secret log/inspection exposure, root-account rotation with retained storage |
-| Backup/restore and lock recovery | DEPLOYMENT-SPECIFIC | Backup and restore into separate storage; verify exact migration prefix/checksums; crash a migration runner and explicitly recover only its stale lock after proving it is stopped |
-| Production capacity/durability | DEPLOYMENT-SPECIFIC | Measure throughput/latency/queue saturation, memory/disk and shutdown budget; accept volatile jobs/file spool limitations or deliberately extend capabilities with canonical contracts |
-| Supply-chain release review | PENDING | Fresh advisories, OCI tag/digest/platform review, JSR DV publisher/source review, provenance, deployment registry access and image scans |
+## Container gates still required
 
-Podman probe failed with `cannot write setgroups file ... /proc/.../setgroups`. This environment cannot create the necessary container namespace. The blocked image/lifecycle/deployment checks above were not silently skipped or reported as passes.
+`just ci` was invoked. Its Rust unit phase passed; it failed at the image phase
+because this host has no runnable Podman/podman-compose installation. A native
+user-namespace probe also failed with `write /proc/self/uid_map: Operation not
+permitted`. Package installation could not change the required UID/group setup.
+**Full container CI and `just build` are not marked passed.**
 
-## Release sequence
+On a capable Podman host, execute from the server root:
 
-1. `nix develop` (or install the documented compatible tools).
-2. `deno install --config tests/deno.json --frozen`.
-3. `just ci` — real unit tests, disposable container consumers, then checks.
-4. `just build` — same gate followed by both images, without recursion.
-5. Complete the relevant deployment-specific checks above against disposable retained storage.
-6. Configure explicit production credentials; use `just deploy initialize` or `just deploy upgrade` for retention. `just deploy` defaults to the separately confirmed destructive reset.
+```console
+just prepare
+just ci
+just build
+just run
+```
 
-No deployment was performed, and no production storage was modified during validation.
+Verify the following actual-runtime boundaries:
+
+1. Both image builds, including the reused static Nushell binary and locked Cargo
+   build, succeed for the host architecture.
+2. Exactly two project pods and two workloads appear; both use the owned shared
+   network and the published loopback ports from configuration.
+3. Container UID `65532` can read the mounted runtime TOML and write its intended
+   named volume; SELinux labelling and rootless volume initialization work.
+4. First start initializes once. Stop/restart retains an inserted DB record and
+   an artifact. Ordinary run upgrades without reseeding. Explicit reset removes
+   only the selected project's owned DB and artifact volumes.
+5. Ctrl-C, SIGTERM, stop during image build/startup, engine failure, DB failure and
+   unhealthy transitions stop the peer, drain the engine and return the correct
+   status. No startup descendants or log followers remain.
+6. Development and disposable tests can coexist without resource deletion or
+   port collisions. Port probes precede container bind and cannot reserve a port
+   against unrelated host processes; collisions must fail and clean up.
+7. Production initialize/upgrade/reset behavior is exercised against disposable
+   production-named storage with explicit credentials and the exact reset
+   confirmation. No production deployment was performed here.
+
+Production backup/restore, external TLS, credential rotation, queue durability,
+provider delivery semantics, realistic load and cross-platform container execution
+remain deployment-specific concerns; this script integration does not alter their
+existing application contracts.
