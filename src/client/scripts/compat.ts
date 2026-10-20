@@ -112,6 +112,31 @@ export function ensureNodeCompat(): void {
                   // Ignore
                 }
               }
+
+              // Ensure @sveltejs/kit runner accepts Vite SSR environment across different Vite instances
+              const runnerPath = join(
+                denoNm,
+                entry.name,
+                "node_modules",
+                "@sveltejs",
+                "kit",
+                "src",
+                "runner.js",
+              );
+              if (existsSync(runnerPath)) {
+                try {
+                  let content = Deno.readTextFileSync(runnerPath);
+                  if (!content.includes("server?.environments?.ssr?.runner")) {
+                    content = content.replace(
+                      "!isRunnableDevEnvironment(server.environments.ssr)",
+                      "!isRunnableDevEnvironment(server.environments.ssr) && !server?.environments?.ssr?.runner",
+                    );
+                    Deno.writeTextFileSync(runnerPath, content);
+                  }
+                } catch {
+                  // Ignore
+                }
+              }
             }
           }
 
