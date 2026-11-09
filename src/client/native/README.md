@@ -19,15 +19,7 @@ The Rust runner (`native/runner`) builds any client SPA in `apps/*` and packages
 
 *(An iOS IPA requires macOS with full Xcode and Apple signing configuration.)*
 
-### 2. Ensure Tauri CLI `2.12.1` is installed
-
-The runner verifies `cargo tauri` `2.12.1` on `PATH`:
-
-```sh
-cargo tauri --version || cargo install tauri-cli --version '=2.12.1' --locked
-```
-
-### 3. Commands (run from `src/client`)
+### 2. Commands (run from `src/client`)
 
 **List discovered apps (`minimal`, `react`, `svelte`, `vue`):**
 ```sh

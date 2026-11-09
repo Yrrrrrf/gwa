@@ -80,13 +80,14 @@ pub fn verify_tauri(project: &std::path::Path) -> Result<()> {
         .current_dir(project)
         .output()
         .context("Running cargo tauri --version")?;
+    let required = semver::VersionReq::parse(&format!(">={TAURI_VERSION}"))?;
+    let installed = String::from_utf8_lossy(&output.stdout)
+        .split_whitespace()
+        .last()
+        .and_then(|v| semver::Version::parse(v).ok());
     ensure!(
-        output.status.success()
-            && String::from_utf8_lossy(&output.stdout)
-                .split_whitespace()
-                .last()
-                == Some(TAURI_VERSION),
-        "Install Tauri CLI {TAURI_VERSION} with cargo install tauri-cli --version ={TAURI_VERSION} --locked"
+        output.status.success() && installed.is_some_and(|v| required.matches(&v)),
+        "Tauri CLI >= {TAURI_VERSION} is required (enter nix develop .#android or .#desktop)"
     );
     Ok(())
 }

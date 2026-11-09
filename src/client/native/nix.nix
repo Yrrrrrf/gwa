@@ -4,7 +4,10 @@ rec {
         desktop = pkgs.mkShell {
           name = "gwa-client-desktop";
           inputsFrom = [ defaultShell ];
-          packages = [ pkgs.rustup ];
+          packages = [
+            pkgs.rustup
+            pkgs.cargo-tauri
+          ];
           nativeBuildInputs = [ pkgs.pkg-config ];
           buildInputs = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux (
             with pkgs; [
@@ -67,6 +70,7 @@ rec {
               androidSdk
               androidPkgs.jdk21
               pkgs.rustup
+              pkgs.cargo-tauri
             ];
             JAVA_HOME = "${androidPkgs.jdk21}";
             ANDROID_HOME = sdkRoot;
