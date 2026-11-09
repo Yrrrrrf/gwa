@@ -33,18 +33,6 @@ async function fixture(): Promise<string> {
   await Deno.mkdir(join(root, "native/host/icons"), { recursive: true });
   for (
     const [path, value] of Object.entries({
-      "native/apps.json": JSON.stringify({
-        minimal: {
-          identifier: "dev.gwa.minimal",
-          productName: "Minimal",
-          frontendDist: "build",
-        },
-        react: {
-          identifier: "dev.gwa.react",
-          productName: "React",
-          frontendDist: "dist",
-        },
-      }),
       "native/host/Cargo.toml":
         '[package]\nname = "gwa-native"\nversion = "0.0.1"\nauthors = []\nlicense = "MIT"\n',
       "native/host/Cargo.lock":
@@ -252,14 +240,17 @@ Deno.test("materialization preserves Android customizations, is idempotent and r
 
 Deno.test("registry rejects duplicate identities and output escape paths", async () => {
   await temporary(async (root) => {
-    const path = join(root, "native/apps.json");
-    const entries = JSON.parse(await Deno.readTextFile(path));
-    entries.react.identifier = entries.minimal.identifier;
-    await Deno.writeTextFile(path, JSON.stringify(entries));
+    const minimalPath = join(root, "apps/minimal/deno.json");
+    const reactPath = join(root, "apps/react/deno.json");
+    const minimal = JSON.parse(await Deno.readTextFile(minimalPath));
+    const react = JSON.parse(await Deno.readTextFile(reactPath));
+    react.native = { identifier: "dev.yrrrrrf.gwa.minimal" };
+    await Deno.writeTextFile(reactPath, JSON.stringify(react));
     await rejects(() => readApp(root, "minimal"), "Duplicate");
-    entries.react.identifier = "dev.gwa.react";
-    entries.minimal.frontendDist = "../../secret";
-    await Deno.writeTextFile(path, JSON.stringify(entries));
+    delete react.native;
+    await Deno.writeTextFile(reactPath, JSON.stringify(react));
+    minimal.native = { frontendDist: "../../secret" };
+    await Deno.writeTextFile(minimalPath, JSON.stringify(minimal));
     await rejects(() => readApp(root, "minimal"), "must stay inside");
   });
 });
