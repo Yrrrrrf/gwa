@@ -979,6 +979,14 @@ async function buildTarget(
 		args.push("--no-bundle");
 		if (options.debug) args.push("--debug");
 	}
+	if (target === "android" || target === "ios") {
+		await tauri(root, app, [
+			"icon",
+			app.icon,
+			"--output",
+			join(app.host, ".generated-icons"),
+		], run);
+	}
 	// This invocation has already built or verified the SPA. Direct Tauri usage keeps its hook.
 	args.push(
 		"--config",
