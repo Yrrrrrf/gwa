@@ -5,11 +5,11 @@ run: client::run
 
 [doc('Build all namespaces')]
 [group('dev')]
-build: client::build server::build cli::build
+build: client::build server::build
 
 [doc('Clear cache. Remove and reinstall dependencies')]
 [group('dev')]
-prepare: client::prepare server::prepare cli::prepare
+prepare: client::prepare server::prepare
 
 [doc('Use the pi agent to create an skill based on the pkg')]
 [group('ai')]

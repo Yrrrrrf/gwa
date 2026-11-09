@@ -4,4 +4,3 @@
 test:
     client::test
     server::test
-    cli::test

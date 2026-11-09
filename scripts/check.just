@@ -1,14 +1,14 @@
 [doc('Format all code namespaces')]
 [group('check')]
-fmt: client::fmt server::fmt cli::fmt
+fmt: client::fmt server::fmt
 
 [doc('Lint all code namespaces')]
 [group('check')]
-lint: client::lint server::lint cli::lint
+lint: client::lint server::lint
 
 [doc('Type-check all code namespaces')]
 [group('check')]
-types: client::types server::types cli::types
+types: client::types server::types
 
 [doc('Audit all code namespaces')]
 [group('check')]
