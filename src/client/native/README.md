@@ -1,71 +1,124 @@
-# GWA native
+# GWA Native
 
-The Rust runner builds the existing client SPA and packages it with the shared Tauri host. The native tooling uses Cargo and the official Tauri CLI. Deno and Vite still build the existing frontend.
+The Rust runner (`native/runner`) builds any client SPA in `apps/*` and packages it with the shared Tauri host (`native/host`). Native orchestration uses Cargo and the official Tauri CLI, while Deno and Vite build the frontend.
 
-## Install or upgrade
+## Quick Start
 
-Place this directory at `src/client/native`. When upgrading, stop existing builds and back up the old directory outside `src/client`. Carry over `native/projects/` to preserve generated platform projects, signing settings and stable identities. If your old `native/host/` has custom Rust code, Tauri settings, a lockfile or artwork, carry over that host as well. The replacement includes a host reconstructed from the documented GWA template. The original host files and artwork were absent from the source export.
+### 1. Enter the Nix shell (from `src/client`)
 
-This version discovers app-local `native.json` files. Before retiring an old custom entry from `native/apps.json`, copy its settings into `apps/<folder>/native.json`. Put the old entry key in `slug` when it differs from the folder name and drop the old `directory` field. Preserve the original `identifier` and `productName` for installed apps. The runner has built-in defaults for existing `apps/minimal` and `apps/vision` folders, so those standard entries need no migration file.
+- **Desktop + Android** (recommended):
+  ```sh
+  cd src/client
+  nix develop .#android
+  ```
+- **Desktop only** (faster shell load):
+  ```sh
+  cd src/client
+  nix develop .#desktop
+  ```
 
-The first build or init for each mobile platform switches its stock callbacks from Deno to Cargo in place. Android uses `BuildTask.kt`. iOS uses `project.yml` and the existing Xcode project’s build phase. The generated Deno bridge is removed after its remaining callbacks are migrated. If a selected platform has a custom Deno callback, the runner reports its file so you can update the command without recreating the project.
+*(An iOS IPA requires macOS with full Xcode and Apple signing configuration.)*
 
-## Prerequisites
+### 2. Ensure Tauri CLI `2.12.1` is installed
 
-- Rust 1.90 or newer and the Cargo Tauri CLI pinned to 2.12.1.
-- Deno for the existing frontend. The `cycle` command also calls the existing Just recipe.
-- Platform tools for your selected target. On NixOS enter `nix develop .#android` or `nix develop .#desktop` first. Windows desktop builds use the Windows Tauri prerequisites. An iOS IPA needs macOS, full Xcode and the app's signing configuration.
-
-Install the Tauri CLI from the target build environment and ensure its Cargo bin directory is on `PATH`.
-
-```sh
-cargo install tauri-cli --version '=2.12.1' --locked
-cargo tauri --version
-```
-
-## Commands
-
-Run these from `src/client`.
+The runner verifies `cargo tauri` `2.12.1` on `PATH`:
 
 ```sh
-cargo run --locked --manifest-path native/runner/Cargo.toml -- list
-cargo run --locked --manifest-path native/runner/Cargo.toml -- build minimal
-cargo run --locked --manifest-path native/runner/Cargo.toml -- build minimal --target desktop
-cargo run --locked --manifest-path native/runner/Cargo.toml -- build minimal --target android --arch x86_64
-cargo run --locked --manifest-path native/runner/Cargo.toml -- build minimal --target ios --release --export-method app-store-connect
-cargo run --locked --manifest-path native/runner/Cargo.toml -- dev minimal
-cargo run --locked --manifest-path native/runner/Cargo.toml -- paths minimal
+cargo tauri --version || cargo install tauri-cli --version '=2.12.1' --locked
 ```
 
-`build` and `cycle` default to desktop plus Android on Linux and Windows, and desktop plus Android and iOS on macOS. Use `--target both` on macOS to select desktop plus Android. Desktop defaults to release. Mobile defaults to debug unless you pass `--release`. `init` and `dev` default to Android. Use `--dry-run` on build, init, dev, cycle or info to print configuration without invoking build tools.
+### 3. Commands (run from `src/client`)
 
-## App configuration and icons
+**List discovered apps (`minimal`, `react`, `svelte`, `vue`):**
+```sh
+cargo run --manifest-path native/runner/Cargo.toml -- list
+```
 
-Apps with their own native settings can declare them in `apps/<folder>/native.json`.
+**Inspect resolved configuration (dry run):**
+```sh
+cargo run --manifest-path native/runner/Cargo.toml -- build minimal --dry-run
+```
+
+**Build:**
+```sh
+# Build Desktop binary + Android APK (default on Linux/Windows; macOS adds iOS)
+cargo run --manifest-path native/runner/Cargo.toml -- build minimal
+
+# Build Desktop only
+cargo run --manifest-path native/runner/Cargo.toml -- build minimal --target desktop
+
+# Build Android APK only (optional --arch aarch64|armv7|i686|x86_64, --release)
+cargo run --manifest-path native/runner/Cargo.toml -- build minimal --target android
+
+# Build iOS IPA on macOS
+cargo run --manifest-path native/runner/Cargo.toml -- build minimal --target ios --release --export-method app-store-connect
+
+# Run full web cycle (just cycle) and then native build
+cargo run --manifest-path native/runner/Cargo.toml -- cycle minimal
+```
+
+**Inspect published artifacts (`apps/<app>/build/`):**
+```sh
+cargo run --manifest-path native/runner/Cargo.toml -- paths minimal
+```
+
+**Live development:**
+```sh
+# Desktop window with hot reload
+cargo run --manifest-path native/runner/Cargo.toml -- dev minimal --target desktop
+
+# Android device/emulator (defaults to --target android)
+cargo run --manifest-path native/runner/Cargo.toml -- dev minimal
+```
+
+## Zero-Config App Discovery & Icons
+
+Every folder under `apps/<slug>` containing a `deno.json` is discovered automatically with sensible defaults:
+
+- **`identifier`**: `dev.yrrrrrf.gwa.<slug>`
+- **`productName`**: `GWA <Slug>`
+- **`frontendDist`**: `build`
+- **`port`**: `1420`
+
+If an app ever needs custom native settings, add an optional `"native"` object inside its existing `apps/<folder>/deno.json`:
 
 ```json
 {
-  "identifier": "dev.yrrrrrf.gwa.minimal",
-  "productName": "GWA Minimal",
-  "frontendDist": "build",
-  "icon": "icons/minimal.png"
+  "native": {
+    "slug": "custom-name",
+    "identifier": "dev.yrrrrrf.gwa.custom",
+    "productName": "GWA Custom",
+    "frontendDist": "build",
+    "icon": "icons/custom.png",
+    "port": 1420
+  }
 }
 ```
 
-`frontendDist` is relative to the app folder, and `icon` is relative to `src/client/native`. Without an explicit icon, the runner checks the app's root `icon.png` or `icon.svg`, then `native/icons/<slug>.png` or `<slug>.svg`, the template's existing Svelte SVG, and the shared host's `icons/icon.png`. Supply the app's actual artwork. The archive contains no substitute logo.
+### Icon resolution
 
-The runner initializes the selected mobile projects before invoking Tauri’s icon generator. It supplies Android launcher resources, the iOS AppIcon catalog, the Windows executable ICO and the Linux window PNG. A desktop-only build stages the generator outside the mobile resource tree. For a Linux app menu icon, install a `.desktop` entry with `Icon=` or package the executable separately. The desktop output is a standalone executable.
+Without an explicit `native.icon` (relative to `src/client/native`), the runner automatically checks:
 
-## Outputs and validation
+1. `apps/<app>/icon.png` or `apps/<app>/icon.svg`
+2. `native/icons/<slug>.png` or `native/icons/<slug>.svg`
+3. `apps/<app>/src/lib/assets/img/<slug>.svg` (or `<folder>.svg` / `svelte.svg`)
+4. `native/host/icons/icon.png`
 
-Each successful build publishes `apps/<app>/build/spa/` and its selected native artifacts. Android and iOS outputs are named `gwa-<app>-<version>.apk` and `gwa-<app>-<version>.ipa`. A single-target build retains previously published artifacts for the other targets. The frontend is built once and staged under `native/projects/<app>/frontend`. A plain build restores the previous published output when a subprocess fails. `cycle` reuses the existing web pipeline's output and its normal cleanup rules still apply.
+The runner initializes mobile projects before running `cargo tauri icon --fit contain`, populating Android launcher mipmaps, the iOS `AppIcon` catalog, the Windows executable `.ico`, and the desktop `.png`.
 
-The runner retains the external Cargo cache layout under `$XDG_CACHE_HOME/gwa-native` or the platform fallback. Use `GWA_NATIVE_CACHE_DIR` to select an alternate base outside `src/client`. Generated Gradle and Xcode projects live under `native/projects/<app>/src-tauri/gen`.
+## Outputs, Caching & Validation
 
+Each successful build publishes to `apps/<app>/build/`:
+- `spa/` — static web bundle
+- `gwa-<app>` (or `.exe`) — standalone desktop executable
+- `gwa-<app>-<version>.apk` — Android package
+- `gwa-<app>-<version>.ipa` — iOS package
+
+Single-target builds preserve previously published artifacts for other targets, and failed builds roll back cleanly to the previous published output. Cargo build caches live outside the repo cleanup tree under `$XDG_CACHE_HOME/gwa-native` (or `GWA_NATIVE_CACHE_DIR`), while generated platform projects persist in `native/projects/<app>/src-tauri/gen`.
+
+**Validate the runner and host:**
 ```sh
-cargo fmt --manifest-path native/runner/Cargo.toml --all -- --check
-cargo clippy --locked --manifest-path native/runner/Cargo.toml --all-targets -- -D warnings
-cargo test --locked --manifest-path native/runner/Cargo.toml
+cargo run --manifest-path native/runner/Cargo.toml -- fmt
+cargo clippy --manifest-path native/runner/Cargo.toml --all-targets -- -D warnings
+cargo test --manifest-path native/runner/Cargo.toml
 ```
-
-Runner tests use fixture projects and simulated build subprocesses. A full build uses the app's frontend and the target platform tools.
