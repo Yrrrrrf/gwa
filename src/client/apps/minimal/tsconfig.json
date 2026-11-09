@@ -1,6 +1,7 @@
 {
 	"extends": ["$app/tsconfig", "../../config/tsconfig.json"],
 	"compilerOptions": {
+		"types": ["$app/types", "vite/client"],
 		"paths": {
 			"@sdk": ["../../sdk/mod.ts"],
 			"@sdk/*": ["../../sdk/*/src/mod.ts"],
