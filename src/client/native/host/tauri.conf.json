@@ -1,9 +1,11 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "GWA Native",
+  "identifier": "dev.yrrrrrf.gwa.native",
   "version": "0.0.1",
-  "identifier": "dev.gwa.native",
-  "build": {},
+  "build": {
+    "frontendDist": "../frontend"
+  },
   "app": {
     "windows": [
       {
@@ -21,22 +23,16 @@
       "capabilities": [
         {
           "identifier": "main",
-          "description": "Core permissions for the local GWA native application.",
-          "windows": [
-            "main"
-          ],
-          "permissions": [
-            "core:default"
-          ]
+          "description": "Core permissions for the local GWA application.",
+          "windows": ["main"],
+          "permissions": ["core:default"]
         }
       ]
     }
   },
   "bundle": {
     "active": false,
-    "icon": [
-      "icons/icon.png"
-    ],
+    "icon": ["icons/icon.png"],
     "android": {
       "minSdkVersion": 24
     }

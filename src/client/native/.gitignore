@@ -1,5 +1,5 @@
 /projects/
-/node_modules/
-/host/**
+/runner/target/
+/host/target/
 *.jks
 *.keystore
